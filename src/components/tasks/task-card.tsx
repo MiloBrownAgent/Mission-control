@@ -1,17 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
 import { Doc } from "../../../convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { EditTaskDialog } from "./edit-task-dialog";
 
 const priorityConfig = {
   low: { label: "Low", className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
@@ -28,7 +27,7 @@ const priorityDot = {
 };
 
 export function TaskCard({ task }: { task: Doc<"tasks"> }) {
-  const deleteTask = useMutation(api.tasks.remove);
+  const [editOpen, setEditOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -46,62 +45,59 @@ export function TaskCard({ task }: { task: Doc<"tasks"> }) {
   const priority = priorityConfig[task.priority];
 
   return (
-    <Card
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "group cursor-grab border-border bg-card p-3 transition-all duration-150 hover:border-primary/20 hover:shadow-md active:cursor-grabbing",
-        isDragging && "z-50 opacity-50 shadow-xl"
-      )}
-    >
-      <div className="flex items-start gap-2">
-        <button
-          className="mt-0.5 touch-none text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="h-4 w-4" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", priorityDot[task.priority])} />
-              <h4 className="text-sm font-medium leading-snug">{task.title}</h4>
+    <>
+      <Card
+        ref={setNodeRef}
+        style={style}
+        onClick={() => setEditOpen(true)}
+        className={cn(
+          "group cursor-pointer border-border bg-card p-3 transition-all duration-150 hover:border-primary/20 hover:shadow-md",
+          isDragging && "z-50 opacity-50 shadow-xl cursor-grabbing"
+        )}
+      >
+        <div className="flex items-start gap-2">
+          <button
+            className="mt-0.5 cursor-grab touch-none text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", priorityDot[task.priority])} />
+                <h4 className="text-sm font-medium leading-snug">{task.title}</h4>
+              </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-              onClick={() => deleteTask({ id: task._id })}
-            >
-              <Trash2 className="h-3 w-3 text-muted-foreground" />
-            </Button>
-          </div>
-          {task.description && (
-            <p className="mt-1 ml-3.5 line-clamp-2 text-xs text-muted-foreground">
-              {task.description}
-            </p>
-          )}
-          <div className="mt-2.5 flex items-center gap-2">
-            <Badge variant="outline" className={cn("text-[10px] border", priority.className)}>
-              {priority.label}
-            </Badge>
-            <Avatar className="h-5 w-5">
-              <AvatarFallback className={cn(
-                "text-[9px] font-medium",
-                task.assignee === "Dave"
-                  ? "bg-blue-500/15 text-blue-400"
-                  : "bg-purple-500/15 text-purple-400"
-              )}>
-                {task.assignee === "Dave" ? "D" : "M"}
-              </AvatarFallback>
-            </Avatar>
-            <span className="ml-auto text-[10px] text-muted-foreground">
-              {formatDistanceToNow(task.updatedAt, { addSuffix: true })}
-            </span>
+            {task.description && (
+              <p className="mt-1 ml-3.5 line-clamp-2 text-xs text-muted-foreground">
+                {task.description}
+              </p>
+            )}
+            <div className="mt-2.5 flex items-center gap-2">
+              <Badge variant="outline" className={cn("text-[10px] border", priority.className)}>
+                {priority.label}
+              </Badge>
+              <Avatar className="h-5 w-5">
+                <AvatarFallback className={cn(
+                  "text-[9px] font-medium",
+                  task.assignee === "Dave"
+                    ? "bg-blue-500/15 text-blue-400"
+                    : "bg-purple-500/15 text-purple-400"
+                )}>
+                  {task.assignee === "Dave" ? "D" : "M"}
+                </AvatarFallback>
+              </Avatar>
+              <span className="ml-auto text-[10px] text-muted-foreground">
+                {formatDistanceToNow(task.updatedAt, { addSuffix: true })}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+      <EditTaskDialog task={task} open={editOpen} onOpenChange={setEditOpen} />
+    </>
   );
 }

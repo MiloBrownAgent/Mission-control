@@ -58,6 +58,13 @@ export const update = mutation({
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     assignee: v.optional(v.union(v.literal("Dave"), v.literal("Milo"))),
+    status: v.optional(
+      v.union(
+        v.literal("todo"),
+        v.literal("in_progress"),
+        v.literal("done")
+      )
+    ),
     priority: v.optional(
       v.union(
         v.literal("low"),
