@@ -10,6 +10,9 @@ import {
   Menu,
   X,
   Rocket,
+  FileText,
+  Users,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,6 +24,9 @@ const navigation = [
   { name: "Tasks", href: "/tasks", icon: ListTodo },
   { name: "Memories", href: "/memories", icon: Brain },
   { name: "Calendar", href: "/calendar", icon: CalendarDays },
+  { name: "Content", href: "/content", icon: FileText },
+  { name: "Team", href: "/team", icon: Users },
+  { name: "Office", href: "/office", icon: Building2 },
 ];
 
 export function Sidebar() {

@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as contacts from "../contacts.js";
+import type * as content from "../content.js";
 import type * as events from "../events.js";
 import type * as memories from "../memories.js";
 import type * as seed from "../seed.js";
@@ -20,6 +22,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  contacts: typeof contacts;
+  content: typeof content;
   events: typeof events;
   memories: typeof memories;
   seed: typeof seed;

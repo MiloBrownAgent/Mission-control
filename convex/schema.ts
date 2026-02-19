@@ -46,4 +46,37 @@ export default defineSchema({
     ),
     createdAt: v.number(),
   }),
+
+  content: defineTable({
+    title: v.string(),
+    platform: v.union(
+      v.literal("Instagram"),
+      v.literal("Twitter"),
+      v.literal("LinkedIn"),
+      v.literal("Blog")
+    ),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("in_review"),
+      v.literal("scheduled"),
+      v.literal("published")
+    ),
+    scheduledDate: v.optional(v.string()),
+    notes: v.string(),
+    mediaUrl: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }),
+
+  contacts: defineTable({
+    name: v.string(),
+    role: v.string(),
+    company: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    notes: v.string(),
+    tags: v.array(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }),
 });
