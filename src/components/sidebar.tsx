@@ -6,8 +6,10 @@ import {
   LayoutDashboard,
   Brain,
   CalendarDays,
+  ListTodo,
   Menu,
   X,
+  Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,7 +17,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 
 const navigation = [
-  { name: "Tasks", href: "/tasks", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Tasks", href: "/tasks", icon: ListTodo },
   { name: "Memories", href: "/memories", icon: Brain },
   { name: "Calendar", href: "/calendar", icon: CalendarDays },
 ];
@@ -37,8 +40,8 @@ export function Sidebar() {
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
-            <LayoutDashboard className="h-3.5 w-3.5 text-primary-foreground" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
+            <Rocket className="h-3.5 w-3.5 text-white" />
           </div>
           <h1 className="text-sm font-semibold">Mission Control</h1>
         </div>
@@ -47,7 +50,7 @@ export function Sidebar() {
       {/* Overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -59,27 +62,31 @@ export function Sidebar() {
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Header */}
-        <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <LayoutDashboard className="h-4 w-4 text-primary-foreground" />
+        {/* Header with gradient accent */}
+        <div className="relative flex h-16 items-center gap-3 border-b border-border px-6 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-transparent" />
+          <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/20">
+            <Rocket className="h-4 w-4 text-white" />
           </div>
-          <div>
+          <div className="relative">
             <h1 className="text-sm font-semibold">Mission Control</h1>
-            <p className="text-xs text-muted-foreground">OpenClaw Dashboard</p>
+            <p className="text-[10px] text-muted-foreground">Sweeney HQ</p>
           </div>
         </div>
 
         {/* User */}
         <div className="flex items-center gap-3 border-b border-border px-6 py-4">
           <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
+            <AvatarFallback className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 text-sm font-medium text-blue-400">
               D
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-medium">Dave</p>
-            <p className="text-xs text-muted-foreground">Minneapolis, MN</p>
+            <p className="text-sm font-medium">Dave Sweeney</p>
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="text-[10px] text-muted-foreground">Online</p>
+            </div>
           </div>
         </div>
 
@@ -93,14 +100,17 @@ export function Sidebar() {
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                   isActive
-                    ? "bg-accent text-accent-foreground"
+                    ? "bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                 )}
               >
-                <item.icon className="h-4 w-4" />
+                <item.icon className={cn("h-4 w-4 transition-colors", isActive && "text-blue-400")} />
                 {item.name}
+                {isActive && (
+                  <div className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-400" />
+                )}
               </Link>
             );
           })}
@@ -108,8 +118,8 @@ export function Sidebar() {
 
         {/* Footer */}
         <div className="border-t border-border px-6 py-4">
-          <p className="text-xs text-muted-foreground">
-            Mission Control v1.0
+          <p className="text-[10px] text-muted-foreground">
+            Mission Control v2.0
           </p>
         </div>
       </aside>

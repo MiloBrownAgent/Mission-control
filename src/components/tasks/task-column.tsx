@@ -11,9 +11,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 const columnConfig = {
-  todo: { title: "To Do", color: "bg-muted-foreground" },
-  in_progress: { title: "In Progress", color: "bg-blue-500" },
-  done: { title: "Done", color: "bg-green-500" },
+  todo: { title: "To Do", color: "bg-muted-foreground", accent: "border-muted-foreground/30" },
+  in_progress: { title: "In Progress", color: "bg-blue-500", accent: "border-blue-500/30" },
+  done: { title: "Done", color: "bg-emerald-500", accent: "border-emerald-500/30" },
 };
 
 type Status = "todo" | "in_progress" | "done";
@@ -31,14 +31,14 @@ export function TaskColumn({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-xl border border-border bg-muted/30 transition-colors",
-        isOver && "border-primary/50 bg-primary/5"
+        "flex flex-col rounded-xl border border-border bg-muted/20 transition-all duration-200",
+        isOver && "border-primary/50 bg-primary/5 shadow-lg shadow-primary/5"
       )}
     >
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <div className={cn("h-2 w-2 rounded-full", config.color)} />
+      <div className={cn("flex items-center gap-2.5 border-b px-4 py-3", config.accent)}>
+        <div className={cn("h-2.5 w-2.5 rounded-full", config.color)} />
         <h3 className="text-sm font-semibold">{config.title}</h3>
-        <span className="ml-auto text-xs text-muted-foreground">
+        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
           {tasks.length}
         </span>
       </div>
@@ -53,8 +53,8 @@ export function TaskColumn({
             ))}
           </SortableContext>
           {tasks.length === 0 && (
-            <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-border">
-              <p className="text-xs text-muted-foreground">
+            <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-border/50">
+              <p className="text-xs text-muted-foreground/60">
                 Drop tasks here
               </p>
             </div>

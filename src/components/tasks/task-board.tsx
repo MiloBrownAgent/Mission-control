@@ -18,6 +18,7 @@ import { Doc } from "../../../convex/_generated/dataModel";
 import { TaskColumn } from "./task-column";
 import { TaskCard } from "./task-card";
 import { CreateTaskDialog } from "./create-task-dialog";
+import { Badge } from "@/components/ui/badge";
 
 type Status = "todo" | "in_progress" | "done";
 
@@ -59,6 +60,8 @@ export function TaskBoard() {
     done: tasks.filter((t) => t.status === "done"),
   };
 
+  const urgentCount = tasks.filter((t) => t.priority === "urgent" && t.status !== "done").length;
+
   const handleDragStart = (event: DragStartEvent) => {
     const task = event.active.data.current?.task as Doc<"tasks">;
     if (task) setActiveTask(task);
@@ -77,14 +80,12 @@ export function TaskBoard() {
     const task = active.data.current?.task as Doc<"tasks">;
     if (!task) return;
 
-    // Determine target status - "over" could be a column or another task
     let targetStatus: Status;
     const overId = over.id as string;
 
     if (["todo", "in_progress", "done"].includes(overId)) {
       targetStatus = overId as Status;
     } else {
-      // Dropped on a task — find which column that task is in
       const overTask = tasks.find((t) => t._id === overId);
       if (!overTask) return;
       targetStatus = overTask.status;
@@ -96,14 +97,20 @@ export function TaskBoard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Tasks</h2>
-          <p className="text-sm text-muted-foreground">
-            {tasks.length} total &middot; {columns.in_progress.length} in
-            progress
-          </p>
+          <div className="mt-1 flex items-center gap-2">
+            <p className="text-sm text-muted-foreground">
+              {tasks.length} total
+            </p>
+            {urgentCount > 0 && (
+              <Badge variant="outline" className="bg-red-500/10 text-red-400 text-[10px]">
+                {urgentCount} urgent
+              </Badge>
+            )}
+          </div>
         </div>
         <CreateTaskDialog />
       </div>

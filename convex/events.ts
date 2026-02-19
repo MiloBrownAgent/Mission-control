@@ -64,6 +64,18 @@ export const update = mutation({
   },
 });
 
+export const listUpcoming = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const today = new Date().toISOString().split("T")[0];
+    const events = await ctx.db.query("events").collect();
+    return events
+      .filter((e) => e.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? ""))
+      .slice(0, args.limit ?? 5);
+  },
+});
+
 export const remove = mutation({
   args: { id: v.id("events") },
   handler: async (ctx, args) => {

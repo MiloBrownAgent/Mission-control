@@ -6,6 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import { Doc } from "../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,10 @@ import {
   Calendar,
   Clock,
   Trash2,
+  ListTodo,
+  Activity,
+  Bell,
+  CalendarDays,
 } from "lucide-react";
 import { CreateEventDialog } from "./create-event-dialog";
 import {
@@ -25,7 +30,6 @@ import {
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
-  isSameMonth,
   isSameDay,
   isToday,
   addMonths,
@@ -35,10 +39,10 @@ import {
 import { cn } from "@/lib/utils";
 
 const typeConfig = {
-  event: { label: "Event", color: "bg-blue-500" },
-  task: { label: "Task", color: "bg-orange-500" },
-  cron: { label: "Cron", color: "bg-purple-500" },
-  reminder: { label: "Reminder", color: "bg-green-500" },
+  event: { label: "Event", color: "bg-blue-500", text: "text-blue-400", bg: "bg-blue-500/10", icon: CalendarDays },
+  task: { label: "Task", color: "bg-orange-500", text: "text-orange-400", bg: "bg-orange-500/10", icon: ListTodo },
+  cron: { label: "Cron", color: "bg-purple-500", text: "text-purple-400", bg: "bg-purple-500/10", icon: Activity },
+  reminder: { label: "Reminder", color: "bg-emerald-500", text: "text-emerald-400", bg: "bg-emerald-500/10", icon: Bell },
 };
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -63,7 +67,6 @@ export function CalendarView() {
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const startDayOfWeek = getDay(monthStart);
 
-  // Events for a specific date
   const getEventsForDate = (date: Date) => {
     if (!events) return [];
     const dateStr = format(date, "yyyy-MM-dd");
@@ -75,19 +78,20 @@ export function CalendarView() {
     : [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Calendar</h2>
           <p className="text-sm text-muted-foreground">
+            <CalendarDays className="mr-1 inline h-3.5 w-3.5" />
             {events?.length ?? 0} events this month
           </p>
         </div>
         <CreateEventDialog />
       </div>
 
-      {/* Calendar Header */}
-      <div className="rounded-xl border border-border bg-card">
+      {/* Calendar Grid - Desktop */}
+      <div className="hidden md:block rounded-xl border border-border bg-card animate-fade-in-up">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <Button
             variant="ghost"
@@ -108,7 +112,6 @@ export function CalendarView() {
           </Button>
         </div>
 
-        {/* Weekday headers */}
         <div className="grid grid-cols-7 border-b border-border">
           {WEEKDAYS.map((day) => (
             <div
@@ -120,13 +123,11 @@ export function CalendarView() {
           ))}
         </div>
 
-        {/* Days grid */}
         <div className="grid grid-cols-7">
-          {/* Empty cells for days before month starts */}
           {Array.from({ length: startDayOfWeek }).map((_, i) => (
             <div
               key={`empty-${i}`}
-              className="min-h-[100px] border-b border-r border-border bg-muted/10 p-2"
+              className="min-h-[100px] border-b border-r border-border bg-muted/5 p-2"
             />
           ))}
 
@@ -138,8 +139,8 @@ export function CalendarView() {
               <div
                 key={day.toISOString()}
                 className={cn(
-                  "min-h-[100px] cursor-pointer border-b border-r border-border p-2 transition-colors hover:bg-accent/30",
-                  isSelected && "bg-accent/50",
+                  "min-h-[100px] cursor-pointer border-b border-r border-border p-2 transition-all duration-150 hover:bg-accent/30",
+                  isSelected && "bg-accent/40 ring-1 ring-primary/20 ring-inset",
                   isToday(day) && "bg-primary/5"
                 )}
                 onClick={() => setSelectedDate(day)}
@@ -149,13 +150,13 @@ export function CalendarView() {
                     className={cn(
                       "flex h-7 w-7 items-center justify-center rounded-full text-sm",
                       isToday(day) &&
-                        "bg-primary font-bold text-primary-foreground"
+                        "bg-gradient-to-br from-blue-500 to-purple-600 font-bold text-white"
                     )}
                   >
                     {format(day, "d")}
                   </span>
                   {dayEvents.length > 0 && (
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-muted px-1 text-[9px] font-medium text-muted-foreground">
                       {dayEvents.length}
                     </span>
                   )}
@@ -166,8 +167,8 @@ export function CalendarView() {
                       key={event._id}
                       className={cn(
                         "flex w-full items-center gap-1 rounded px-1.5 py-0.5 text-left text-[10px] font-medium transition-colors hover:opacity-80",
-                        typeConfig[event.type].color + "/20",
-                        "text-foreground"
+                        typeConfig[event.type].color + "/15",
+                        typeConfig[event.type].text
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -195,9 +196,123 @@ export function CalendarView() {
         </div>
       </div>
 
-      {/* Selected Date Events Panel */}
+      {/* Mobile Calendar - Month nav + List view */}
+      <div className="md:hidden space-y-4">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h3 className="text-base font-semibold">
+            {format(currentMonth, "MMMM yyyy")}
+          </h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Mini day selector */}
+        <div className="grid grid-cols-7 gap-1">
+          {WEEKDAYS.map((day) => (
+            <div key={day} className="text-center text-[10px] font-medium text-muted-foreground py-1">
+              {day.charAt(0)}
+            </div>
+          ))}
+          {Array.from({ length: startDayOfWeek }).map((_, i) => (
+            <div key={`empty-${i}`} />
+          ))}
+          {days.map((day) => {
+            const dayEvents = getEventsForDate(day);
+            const isSelected = selectedDate && isSameDay(day, selectedDate);
+            return (
+              <button
+                key={day.toISOString()}
+                onClick={() => setSelectedDate(day)}
+                className={cn(
+                  "relative flex flex-col items-center rounded-lg py-1.5 text-xs transition-all",
+                  isSelected && "bg-primary text-primary-foreground",
+                  isToday(day) && !isSelected && "bg-gradient-to-br from-blue-500/20 to-purple-500/20 font-bold",
+                  !isSelected && !isToday(day) && "hover:bg-accent/50"
+                )}
+              >
+                {format(day, "d")}
+                {dayEvents.length > 0 && (
+                  <div className="flex gap-0.5 mt-0.5">
+                    {dayEvents.slice(0, 3).map((event) => (
+                      <div
+                        key={event._id}
+                        className={cn("h-1 w-1 rounded-full", isSelected ? "bg-primary-foreground" : typeConfig[event.type].color)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mobile events list */}
+        {selectedDate && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold">
+                {format(selectedDate, "EEEE, MMM d")}
+              </h4>
+              <CreateEventDialog
+                defaultDate={format(selectedDate, "yyyy-MM-dd")}
+                trigger={
+                  <Button variant="outline" size="sm" className="h-7 text-xs">
+                    Add
+                  </Button>
+                }
+              />
+            </div>
+            {selectedDateEvents.length === 0 ? (
+              <p className="py-4 text-center text-xs text-muted-foreground">No events</p>
+            ) : (
+              selectedDateEvents.map((event) => {
+                const config = typeConfig[event.type];
+                const TypeIcon = config.icon;
+                return (
+                  <Card
+                    key={event._id}
+                    className="border-border bg-card p-3 transition-all duration-150 hover:shadow-md"
+                    onClick={() => setSelectedEvent(event)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bg, config.text)}>
+                        <TypeIcon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">{event.title}</p>
+                        {event.time && (
+                          <p className="text-xs text-muted-foreground">{event.time}</p>
+                        )}
+                      </div>
+                      <Badge variant="outline" className={cn("text-[10px]", config.text)}>
+                        {config.label}
+                      </Badge>
+                    </div>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Selected Date Events Panel - Desktop */}
       {selectedDate && selectedDateEvents.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="hidden md:block rounded-xl border border-border bg-card p-4 animate-fade-in-up">
           <div className="mb-3 flex items-center justify-between">
             <h4 className="text-sm font-semibold">
               {format(selectedDate, "EEEE, MMMM d")}
@@ -212,31 +327,32 @@ export function CalendarView() {
             />
           </div>
           <div className="space-y-2">
-            {selectedDateEvents.map((event) => (
-              <div
-                key={event._id}
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-accent/30"
-                onClick={() => setSelectedEvent(event)}
-              >
+            {selectedDateEvents.map((event) => {
+              const config = typeConfig[event.type];
+              const TypeIcon = config.icon;
+              return (
                 <div
-                  className={cn(
-                    "h-2 w-2 shrink-0 rounded-full",
-                    typeConfig[event.type].color
-                  )}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium">{event.title}</p>
-                  {event.time && (
-                    <p className="text-xs text-muted-foreground">
-                      {event.time}
-                    </p>
-                  )}
+                  key={event._id}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3 transition-all duration-150 hover:bg-accent/30 hover:shadow-sm"
+                  onClick={() => setSelectedEvent(event)}
+                >
+                  <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bg, config.text)}>
+                    <TypeIcon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">{event.title}</p>
+                    {event.time && (
+                      <p className="text-xs text-muted-foreground">
+                        {event.time}
+                      </p>
+                    )}
+                  </div>
+                  <Badge variant="outline" className={cn("text-[10px]", config.text)}>
+                    {config.label}
+                  </Badge>
                 </div>
-                <Badge variant="outline" className="text-[10px]">
-                  {typeConfig[event.type].label}
-                </Badge>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -251,13 +367,17 @@ export function CalendarView() {
             <>
               <DialogHeader>
                 <div className="flex items-center gap-2">
-                  <div
-                    className={cn(
-                      "h-2.5 w-2.5 rounded-full",
-                      typeConfig[selectedEvent.type].color
-                    )}
-                  />
-                  <Badge variant="outline">
+                  <div className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-lg",
+                    typeConfig[selectedEvent.type].bg,
+                    typeConfig[selectedEvent.type].text
+                  )}>
+                    {(() => {
+                      const TypeIcon = typeConfig[selectedEvent.type].icon;
+                      return <TypeIcon className="h-3.5 w-3.5" />;
+                    })()}
+                  </div>
+                  <Badge variant="outline" className={typeConfig[selectedEvent.type].text}>
                     {typeConfig[selectedEvent.type].label}
                   </Badge>
                 </div>
