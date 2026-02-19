@@ -11,50 +11,45 @@ export const seed = mutation({
     // Seed tasks
     const tasks = [
       {
-        title: "Review photo editing workflow",
-        description:
-          "Document the current Lightroom → Photoshop pipeline and identify bottlenecks",
-        assignee: "Dave" as const,
+        title: "Build OurFable.ai MVP",
+        description: "Custom storybook platform — upload a photo, AI generates a personalized storybook with that person as the main character. Need: image upload, face swap/gen, story generation, book layout, payments.",
+        assignee: "Milo" as const,
         status: "todo" as const,
         priority: "high" as const,
       },
       {
-        title: "Set up automated backup system",
-        description:
-          "Configure incremental backups for the photo library to NAS and cloud",
+        title: "Build Look & Seen website",
+        description: "Portfolio and business site for Look & Seen, Inc. Showcase retouching/digital tech work, services, contact info. Target audience: commercial photo clients.",
         assignee: "Milo" as const,
-        status: "in_progress" as const,
-        priority: "urgent" as const,
-      },
-      {
-        title: "Update portfolio website",
-        description: "Add recent wedding shoots and update the about section",
-        assignee: "Dave" as const,
         status: "todo" as const,
         priority: "medium" as const,
       },
       {
-        title: "Research AI upscaling tools",
-        description:
-          "Compare Topaz, Gigapixel, and other AI upscaling options for print work",
+        title: "Set up Google Calendar + Gmail integration",
+        description: "Configure gog CLI with OAuth credentials for Dave's Google account. Need: Google Cloud project, OAuth client, API enablement for Gmail, Calendar, Drive, Contacts.",
+        assignee: "Dave" as const,
+        status: "in_progress" as const,
+        priority: "high" as const,
+      },
+      {
+        title: "Set up Spotify integration",
+        description: "Install and configure spotify-player skill so Milo can control playback and make recommendations.",
         assignee: "Milo" as const,
         status: "todo" as const,
         priority: "low" as const,
       },
       {
-        title: "Client delivery system",
-        description:
-          "Set up automated gallery delivery with download tracking",
-        assignee: "Milo" as const,
-        status: "done" as const,
-        priority: "high" as const,
+        title: "Install Tailscale on laptop",
+        description: "Before Naples trip — install Tailscale on laptop with same account so Dave has remote access to Mac mini.",
+        assignee: "Dave" as const,
+        status: "todo" as const,
+        priority: "urgent" as const,
       },
       {
-        title: "Color calibrate monitors",
-        description:
-          "Run SpyderX calibration on both editing monitors",
-        assignee: "Dave" as const,
-        status: "in_progress" as const,
+        title: "Configure Mission Control as persistent service",
+        description: "Set up Mission Control (Next.js + Convex) as a LaunchAgent so it auto-starts on boot, similar to OpenClaw gateway.",
+        assignee: "Milo" as const,
+        status: "todo" as const,
         priority: "medium" as const,
       },
     ];
@@ -62,7 +57,7 @@ export const seed = mutation({
     for (const task of tasks) {
       await ctx.db.insert("tasks", {
         ...task,
-        createdAt: now - Math.random() * 7 * 24 * 60 * 60 * 1000,
+        createdAt: now - Math.random() * 2 * 24 * 60 * 60 * 1000,
         updatedAt: now,
       });
     }
@@ -70,46 +65,41 @@ export const seed = mutation({
     // Seed memories
     const memories = [
       {
-        title: "Dave's Editing Preferences",
-        content:
-          "Dave prefers a warm tone in portraits with lifted shadows. Uses VSCO Film 01 as a starting point. Skin retouching should be minimal — no frequency separation unless specifically requested. Always deliver in both sRGB (web) and Adobe RGB (print).",
-        category: "Preferences",
-        tags: ["editing", "portraits", "color"],
+        title: "Day One — Bootstrap",
+        content: "Milo Brown came online for the first time on Feb 18, 2026. Dave named me, set up Telegram (@MiloBrownbot), configured Brave Search, installed QMD skill, set up Tailscale for remote access, and built Mission Control with Claude Code. Dave's communication style: no fluff, direct, mix of casual and serious. We're 51/49 partners — Dave has final say.",
+        category: "Identity",
+        tags: ["bootstrap", "setup", "day-one"],
       },
       {
-        title: "Studio Equipment List",
-        content:
-          "Main: Canon R5 Mark II, RF 28-70 f/2, RF 85 f/1.2. Lighting: 2x Profoto B10 Plus, 1x Profoto A2. Modifiers: 4ft octabox, strip boxes, beauty dish. Backgrounds: Savage seamless (thunder gray, super white).",
-        category: "Equipment",
-        tags: ["camera", "lighting", "studio"],
+        title: "Dave's Work Setup",
+        content: "Dave is a digital technician and retoucher running Look & Seen, Inc in Minneapolis. Main client: Target. Tools: Capture One, Photoshop, ChronoSync, Dropbox. Getting into AI image generation as a service offering. Runs OpenClaw on a Mac mini (Tailscale IP: 100.125.94.36).",
+        category: "Work",
+        tags: ["dave", "photography", "tools", "setup"],
       },
       {
-        title: "Client Communication Templates",
-        content:
-          "Booking confirmation: Send within 2 hours. Include date, location, package details, payment link. Follow up 1 week before shoot with preparation guide. Gallery delivery: 3-4 weeks turnaround, send preview within 48 hours.",
-        category: "Workflow",
-        tags: ["clients", "communication", "templates"],
+        title: "The Sweeney Family",
+        content: "Dave Sweeney, Amanda Sweeney (wife), Soren Sweeney (son, born 6/21/2025), and Rigs the Lagotto Romagnolo (short for Rigatoni). Dave's mom's 70th birthday is Feb 25, 2026 — celebrating in Naples, FL.",
+        category: "Family",
+        tags: ["family", "sweeney", "personal"],
       },
       {
-        title: "Minneapolis Shoot Locations",
-        content:
-          "Favorite spots: Mill City Museum ruins (golden hour), Stone Arch Bridge, Minnehaha Falls (spring/summer), Lake Harriet bandshell. Indoor alternatives: North Loop warehouses, Aria event center. Permit required for most parks if using lighting equipment.",
-        category: "Locations",
-        tags: ["minneapolis", "locations", "outdoor"],
+        title: "OurFable.ai — Product Vision",
+        content: "Custom AI storybook website. Users upload a photo of a person/child, pick a story theme, and AI generates a personalized storybook with that person as the main character. Dave's photography eye gives a quality advantage over competitors. Stack TBD but likely Next.js + Convex. Revenue: per-book purchase or subscription.",
+        category: "Projects",
+        tags: ["ourfable", "ai", "product", "startup"],
       },
       {
-        title: "Pricing Structure 2024",
-        content:
-          "Portraits: $350/hr, minimum 2 hours. Weddings: packages from $3,500 to $8,000. Commercial: $500/hr + licensing. Retouching: included for portraits (basic), $50/image for advanced compositing.",
-        category: "Business",
-        tags: ["pricing", "business", "packages"],
+        title: "Milo's Identity",
+        content: "Name: Milo Brown. Email: MiloBrownAgent@gmail.com. Emoji: 🤙. AI partner — the 49% who actually does things. Direct, proactive, no fluff. Serious when it counts, casual when it doesn't. Push back on Dave's thinking, offer alternatives, but respect the 51/49.",
+        category: "Identity",
+        tags: ["milo", "identity", "personality"],
       },
     ];
 
     for (const memory of memories) {
       await ctx.db.insert("memories", {
         ...memory,
-        createdAt: now - Math.random() * 30 * 24 * 60 * 60 * 1000,
+        createdAt: now - Math.random() * 1 * 24 * 60 * 60 * 1000,
         updatedAt: now,
       });
     }
@@ -117,45 +107,35 @@ export const seed = mutation({
     // Seed events
     const events = [
       {
-        title: "Wedding Shoot — Johnson",
-        description: "Full day wedding at Aria Event Center. Ceremony at 3pm, reception until 11pm.",
-        date: "2026-02-21",
-        time: "14:00",
+        title: "Travel to Naples, FL",
+        description: "Family trip to celebrate Dave's mom's 70th birthday",
+        date: "2026-02-19",
         type: "event" as const,
       },
       {
-        title: "Portfolio Review",
-        description: "Review and select images for website update",
-        date: "2026-02-19",
-        time: "10:00",
-        type: "task" as const,
+        title: "Mom's 70th Birthday 🎂",
+        description: "Dave's mom's 70th birthday celebration in Naples, FL",
+        date: "2026-02-25",
+        type: "event" as const,
       },
       {
-        title: "Backup Cron — Weekly",
-        description: "Automated weekly backup of photo library to cloud storage",
-        date: "2026-02-22",
-        time: "02:00",
-        type: "cron" as const,
-      },
-      {
-        title: "Client Gallery Delivery",
-        description: "Send final edited gallery to Martinez family",
-        date: "2026-02-20",
+        title: "Soren turns 8 months",
+        description: "Soren Sweeney — 8 months old",
+        date: "2026-02-21",
         type: "reminder" as const,
       },
       {
-        title: "Equipment Maintenance",
-        description: "Clean sensors, check lens calibration, update firmware",
-        date: "2026-02-25",
-        time: "09:00",
+        title: "Mission Control — Phase 1 Complete",
+        description: "Tasks Board, Memory Browser, Calendar built with Next.js + Convex. Phase 2: Content Pipeline, Team view, Office view.",
+        date: "2026-02-18",
+        time: "16:30",
         type: "task" as const,
       },
       {
-        title: "Headshot Session — Corporate",
-        description: "Team headshots for Bright Financial, 15 people",
-        date: "2026-02-27",
-        time: "13:00",
-        type: "event" as const,
+        title: "Google Workspace Setup",
+        description: "Finish OAuth setup for Gmail + Calendar access via gog CLI",
+        date: "2026-02-20",
+        type: "task" as const,
       },
     ];
 
