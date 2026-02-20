@@ -13,6 +13,7 @@ import {
   FileText,
   Users,
   Building2,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const navigation = [
   { name: "Calendar", href: "/calendar", icon: CalendarDays },
   { name: "Content", href: "/content", icon: FileText },
   { name: "Team", href: "/team", icon: Users },
+  { name: "CRM", href: "/crm", icon: Target },
   { name: "Office", href: "/office", icon: Building2 },
 ];
 

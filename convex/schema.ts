@@ -79,4 +79,91 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }),
+
+  clients: defineTable({
+    name: v.string(),
+    website: v.optional(v.string()),
+    category: v.union(
+      v.literal("DTC/CPG"),
+      v.literal("Agency"),
+      v.literal("E-commerce"),
+      v.literal("Fashion"),
+      v.literal("AI Opportunity")
+    ),
+    location: v.optional(v.string()),
+    estimatedRevenue: v.optional(v.string()),
+    status: v.union(
+      v.literal("prospect"),
+      v.literal("contacted"),
+      v.literal("responded"),
+      v.literal("meeting"),
+      v.literal("proposal"),
+      v.literal("active"),
+      v.literal("inactive")
+    ),
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }),
+
+  crmContacts: defineTable({
+    clientId: v.id("clients"),
+    name: v.string(),
+    title: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailConfidence: v.optional(
+      v.union(v.literal("verified"), v.literal("constructed"), v.literal("unknown"))
+    ),
+    linkedIn: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    isPrimary: v.boolean(),
+    notes: v.optional(v.string()),
+  }).index("by_client", ["clientId"]),
+
+  outreach: defineTable({
+    contactId: v.id("crmContacts"),
+    type: v.union(
+      v.literal("initial"),
+      v.literal("followUp1"),
+      v.literal("followUp2"),
+      v.literal("breakup")
+    ),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("sent"),
+      v.literal("opened"),
+      v.literal("replied"),
+      v.literal("bounced")
+    ),
+    sentAt: v.optional(v.number()),
+    subject: v.optional(v.string()),
+    templateUsed: v.optional(v.string()),
+    responseNotes: v.optional(v.string()),
+    nextFollowUpDate: v.optional(v.string()),
+  }).index("by_contact", ["contactId"])
+    .index("by_status", ["status"])
+    .index("by_nextFollowUp", ["nextFollowUpDate"]),
+
+  pipeline: defineTable({
+    clientId: v.id("clients"),
+    service: v.union(
+      v.literal("retouching"),
+      v.literal("digitalTech"),
+      v.literal("aiImageGen"),
+      v.literal("other")
+    ),
+    value: v.optional(v.number()),
+    stage: v.union(
+      v.literal("lead"),
+      v.literal("qualified"),
+      v.literal("proposal"),
+      v.literal("negotiation"),
+      v.literal("closed_won"),
+      v.literal("closed_lost")
+    ),
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_client", ["clientId"])
+    .index("by_stage", ["stage"]),
 });
