@@ -25,10 +25,18 @@ function getDaysUntil(dateStr: string) {
 
 const familyMembers = [
   {
+    name: "Dave Sweeney",
+    role: "Dad & Husband",
+    emoji: "👨",
+    note: "Photographer, retoucher, man of the house. Runs on coffee.",
+    color: "from-indigo-500/20 to-blue-500/10",
+    border: "border-indigo-500/20",
+  },
+  {
     name: "Amanda Sweeney",
     role: "Wife & Mom",
     emoji: "👩",
-    note: "The best one in the family. Don't tell Dave.",
+    note: "The real boss of the house.",
     color: "from-rose-500/20 to-pink-500/10",
     border: "border-rose-500/20",
   },
@@ -36,7 +44,7 @@ const familyMembers = [
     name: "Cammie Sweeney",
     role: "Dave's Mom",
     emoji: "🎂",
-    note: "Turning 70 on Feb 25! Celebrated in Naples, FL.",
+    note: "Turning 70 on Feb 25! Lives in Greensboro.",
     color: "from-amber-500/20 to-orange-500/10",
     border: "border-amber-500/20",
     badge: "🎉 70th Birthday!",
@@ -48,6 +56,22 @@ const familyMembers = [
     note: "Watches Soren on March 6 (5–9 PM). Grandpa on duty.",
     color: "from-blue-500/20 to-sky-500/10",
     border: "border-blue-500/20",
+  },
+  {
+    name: "Chris Barrier",
+    role: "Amanda's Dad",
+    emoji: "👴",
+    note: "Lives in Laguna Beach.",
+    color: "from-cyan-500/20 to-teal-500/10",
+    border: "border-cyan-500/20",
+  },
+  {
+    name: "Lisa Barrier",
+    role: "Amanda's Mom",
+    emoji: "👵",
+    note: "Lives in Sacramento.",
+    color: "from-purple-500/20 to-violet-500/10",
+    border: "border-purple-500/20",
   },
   {
     name: "Rigs",
