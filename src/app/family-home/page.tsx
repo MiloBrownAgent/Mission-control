@@ -36,22 +36,6 @@ interface WeatherData {
   location: string;
 }
 
-interface DayStatus {
-  status: "booked" | "not_booked" | "unknown";
-  date: string;
-}
-
-interface DaveClass {
-  name: string;
-  date: string;
-  time: string;
-}
-
-interface GymData {
-  amanda: { saturday: DayStatus; sunday: DayStatus };
-  dave: { upcoming: DaveClass[] };
-}
-
 function getGreeting() {
   const hour = new Date().getHours();
   if (hour < 12) return "Good morning";
@@ -120,7 +104,6 @@ function FamilyHomePage() {
   }, [mode, router]);
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [gymData, setGymData] = useState<GymData | null>(null);
   const [now, setNow] = useState(new Date());
   const [groceryInput, setGroceryInput] = useState("");
 
@@ -136,13 +119,7 @@ function FamilyHomePage() {
       .catch(() => null);
   }, []);
 
-  useEffect(() => {
-    fetch("/api/gym-classes")
-      .then((r) => r.json())
-      .then(setGymData)
-      .catch(() => null);
-  }, []);
-
+  const classBookings = useQuery(api.classBookings.listUpcoming, { daysAhead: 14 });
   const groceryItems = useQuery(api.groceryItems.getAll);
   const daycareReport = useQuery(api.daycareReports.getLatest);
   const weekendData = useQuery(api.weekendActivities.getLatest);
@@ -280,59 +257,52 @@ function FamilyHomePage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#A85570]/10">
             <Dumbbell className="h-4 w-4 text-[#A85570]" />
           </div>
-          <h2 className="font-bold text-[#A85570] text-xl font-[family-name:var(--font-display)]">Gym Classes 🏋️</h2>
+          <h2 className="font-bold text-[#A85570] text-xl font-[family-name:var(--font-display)]">Upcoming Classes 🏋️</h2>
         </div>
 
-        {gymData === null ? (
+        {classBookings === undefined ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-10 animate-pulse rounded-lg bg-[#E5DDD4]" />
             ))}
           </div>
+        ) : classBookings.length === 0 ? (
+          <p className="text-sm text-[#6B5B4E] italic px-1">No classes booked in the next 2 weeks.</p>
         ) : (
-          <div className="space-y-4">
-            {/* Amanda — CTR weekend auto-booking */}
-            <div>
-              <p className="text-xs font-semibold text-[#6B5B4E] uppercase tracking-wide mb-2">Amanda · CTR</p>
-              <div className="space-y-1.5">
-                {([
-                  { label: "Saturday", data: gymData.amanda.saturday },
-                  { label: "Sunday", data: gymData.amanda.sunday },
-                ] as const).map(({ label, data }) => (
-                  <div key={label} className="flex items-center gap-3 rounded-lg border border-[#A85570]/15 bg-[#A85570]/5 px-3 py-2">
-                    <span className="text-sm">
-                      {data.status === "booked" ? "✅" : data.status === "not_booked" ? "⏳" : "❓"}
-                    </span>
-                    <p className="text-sm font-medium text-[#1C1208] flex-1">{label}</p>
-                    <span className={`text-xs font-semibold ${
-                      data.status === "booked" ? "text-[#2E6B50]" : data.status === "not_booked" ? "text-[#C07A1A]" : "text-[#6B5B4E]"
-                    }`}>
-                      {data.status === "booked" ? "Booked ✓" : data.status === "not_booked" ? "Not yet" : "Unknown"}
-                    </span>
+          <div className="space-y-2">
+            {classBookings.map((cls) => {
+              const isWaitlist = cls.status === "waitlisted";
+              const memberColor = cls.member === "Amanda" ? "#A85570" : "#2A4E8A";
+              const date = new Date(cls.classDate + "T12:00:00");
+              const dateLabel = format(date, "EEE, MMM d");
+              return (
+                <div
+                  key={cls._id}
+                  className="flex items-center gap-3 rounded-lg border px-3 py-2.5"
+                  style={{ borderColor: `${memberColor}22`, backgroundColor: `${memberColor}08` }}
+                >
+                  <span className="text-base">{isWaitlist ? "⏳" : "✅"}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#1C1208] truncate">{cls.className}</p>
+                    <p className="text-xs text-[#6B5B4E]">
+                      {dateLabel} · {cls.classTime}
+                      {cls.location ? ` · ${cls.location.split(",")[0]}` : ""}
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Dave — upcoming weekend classes */}
-            <div>
-              <p className="text-xs font-semibold text-[#6B5B4E] uppercase tracking-wide mb-2">Dave · This Weekend</p>
-              {gymData.dave.upcoming.length === 0 ? (
-                <p className="text-xs text-[#6B5B4E] italic px-1">No classes booked yet</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {gymData.dave.upcoming.map((cls, i) => (
-                    <div key={i} className="flex items-center gap-3 rounded-lg border border-[#2A4E8A]/15 bg-[#2A4E8A]/5 px-3 py-2">
-                      <span className="text-sm">✅</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#1C1208] truncate">{cls.name}</p>
-                        <p className="text-xs text-[#6B5B4E]">{cls.date}{cls.time ? ` · ${cls.time}` : ""}</p>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span
+                      className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                      style={{ color: memberColor, backgroundColor: `${memberColor}18` }}
+                    >
+                      {cls.member}
+                    </span>
+                    {isWaitlist && (
+                      <span className="text-xs text-[#C07A1A]">Waitlist</span>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         )}
       </Card>

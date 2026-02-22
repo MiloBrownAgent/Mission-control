@@ -246,6 +246,26 @@ export default defineSchema({
     .index("by_week", ["weekOf"])
     .index("by_week_rank", ["weekOf", "rank"]),
 
+  classBookings: defineTable({
+    member: v.string(),                // "Amanda" | "Dave"
+    className: v.string(),             // "CTR" | "Alpha Strength: Squat + Pull"
+    classDate: v.string(),             // "2026-03-01"
+    classTime: v.string(),             // "10:00 AM"
+    location: v.optional(v.string()),  // "Reformer Studio, Highland Park"
+    instructor: v.optional(v.string()),
+    status: v.union(
+      v.literal("booked"),
+      v.literal("waitlisted"),
+      v.literal("cancelled"),
+    ),
+    regId: v.optional(v.number()),
+    spot: v.optional(v.string()),
+    waitlistSpot: v.optional(v.string()),
+    bookedAt: v.number(),
+  })
+    .index("by_date", ["classDate"])
+    .index("by_member_date", ["member", "classDate"]),
+
   actionItems: defineTable({
     title: v.string(),
     description: v.string(),
