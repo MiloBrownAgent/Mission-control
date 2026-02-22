@@ -203,41 +203,11 @@ function FamilyHomePage() {
         </div>
 
         {/* Age */}
-        <div className="mb-4 flex items-baseline gap-1.5">
+        <div className="flex items-baseline gap-1.5">
           <span className="text-4xl font-bold text-blue-300">{sorenAge.months}</span>
           <span className="text-muted-foreground text-sm">months</span>
           <span className="text-2xl font-bold text-blue-200 ml-1">{sorenAge.days}</span>
           <span className="text-muted-foreground text-sm">days old</span>
-        </div>
-
-        <div className="space-y-3 text-sm">
-          {/* Nap schedule */}
-          <div className="flex items-start gap-3 rounded-lg border border-blue-400/20 bg-blue-500/5 px-3 py-2.5">
-            <span className="text-base mt-0.5">😴</span>
-            <div>
-              <p className="font-medium text-blue-200">Nap Schedule</p>
-              <p className="text-muted-foreground text-xs mt-0.5">Nap 1 ~9 AM &middot; Nap 2 ~1 PM</p>
-            </div>
-          </div>
-
-          {/* Bedtime */}
-          <div className="flex items-start gap-3 rounded-lg border border-indigo-400/20 bg-indigo-500/5 px-3 py-2.5">
-            <span className="text-base mt-0.5">🌙</span>
-            <div>
-              <p className="font-medium text-indigo-200">Bedtime Routine</p>
-              <p className="text-muted-foreground text-xs mt-0.5">Routine starts at 6:15 PM — crib by 6:45 PM</p>
-            </div>
-          </div>
-
-          {/* Feeding */}
-          <div className="flex items-start gap-3 rounded-lg border border-sky-400/20 bg-sky-500/5 px-3 py-2.5">
-            <span className="text-base mt-0.5">🍼</span>
-            <div>
-              <p className="font-medium text-sky-200">Feeding</p>
-              <p className="text-muted-foreground text-xs mt-0.5">Breast milk + formula + solids</p>
-              <p className="text-red-400/80 text-xs mt-0.5 font-medium">⚠️ No honey · No whole milk · No added salt</p>
-            </div>
-          </div>
         </div>
       </Card>
 

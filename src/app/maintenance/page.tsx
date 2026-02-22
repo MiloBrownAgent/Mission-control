@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAppMode } from "@/lib/app-mode";
+import { getAppMode } from "@/lib/app-mode";
 import { Heart, ArrowLeft, Check } from "lucide-react";
 
 type Frequency = "monthly" | "quarterly" | "biannual" | "annual";
@@ -251,14 +251,13 @@ const statusOrder: Record<Status, number> = {
 };
 
 function MaintenancePage() {
-  const mode = useAppMode();
   const router = useRouter();
 
   useEffect(() => {
-    if (mode === "work") {
+    if (getAppMode() === "work") {
       router.replace("/");
     }
-  }, [mode, router]);
+  }, [router]);
 
   const [filter, setFilter] = useState<FilterTab>("all");
   const [lastDoneDates, setLastDoneDates] = useState<Record<string, string | null>>({});
