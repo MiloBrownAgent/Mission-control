@@ -229,6 +229,23 @@ export default defineSchema({
     parsedAt: v.number(),
   }).index("by_date", ["date"]),
 
+  weekendActivities: defineTable({
+    title: v.string(),
+    description: v.string(),
+    location: v.optional(v.string()),
+    address: v.optional(v.string()),
+    driveTime: v.optional(v.string()),
+    cost: v.optional(v.string()),
+    category: v.string(),
+    ageNote: v.optional(v.string()),
+    url: v.optional(v.string()),
+    source: v.optional(v.string()),
+    weekOf: v.string(),       // Saturday date: "2026-02-28"
+    rank: v.number(),         // 1–15
+  })
+    .index("by_week", ["weekOf"])
+    .index("by_week_rank", ["weekOf", "rank"]),
+
   actionItems: defineTable({
     title: v.string(),
     description: v.string(),

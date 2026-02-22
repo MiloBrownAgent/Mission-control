@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   Heart,
   UtensilsCrossed,
+  MapPin,
   CalendarDays,
   Baby,
   Cloud,
@@ -138,6 +139,7 @@ function FamilyHomePage() {
 
   const groceryItems = useQuery(api.groceryItems.getAll);
   const daycareReport = useQuery(api.daycareReports.getLatest);
+  const weekendData = useQuery(api.weekendActivities.getLatest);
   const addGroceryItem = useMutation(api.groceryItems.addItem);
   const uncheckedGrocery = groceryItems?.filter((i) => !i.checked) ?? [];
 
@@ -403,6 +405,72 @@ function FamilyHomePage() {
               </div>
             ))}
         </div>
+      </Card>
+
+      {/* ── Section 4c: Weekend with Soren ── */}
+      <Card className="rounded-[20px] border-[#2E6B50]/20 bg-gradient-to-br from-[#2E6B50]/5 via-[#2A4E8A]/3 to-transparent p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2E6B50]/10">
+            <MapPin className="h-4 w-4 text-[#2E6B50]" />
+          </div>
+          <h2 className="font-bold text-[#2E6B50] text-xl font-[family-name:var(--font-display)]">Weekend with Soren 🧸</h2>
+          {weekendData?.weekOf && (
+            <span className="ml-auto text-xs text-[#6B5B4E]">Wknd of {weekendData.weekOf}</span>
+          )}
+        </div>
+
+        {weekendData === undefined ? (
+          <div className="space-y-2">
+            {[1,2,3].map((i) => (
+              <div key={i} className="h-12 animate-pulse rounded-xl border border-[#E5DDD4] bg-[#F0EBE3]/30" />
+            ))}
+          </div>
+        ) : !weekendData.activities?.length ? (
+          <div className="rounded-xl border border-dashed border-[#2E6B50]/30 bg-[#2E6B50]/5 p-5 text-center">
+            <p className="text-2xl mb-1">🗓️</p>
+            <p className="text-sm font-medium text-[#1C1208]">Weekend ideas coming Thursday</p>
+            <p className="text-xs text-[#6B5B4E] mt-1">Milo searches events every Thursday and populates this list</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {weekendData.activities.map((activity) => (
+              <div
+                key={activity._id}
+                className="rounded-xl border border-[#2E6B50]/15 bg-[#FFFCF7] px-3 py-2.5 transition-all hover:border-[#2E6B50]/30"
+              >
+                <div className="flex items-start gap-2">
+                  <span className="text-sm font-bold text-[#2E6B50]/50 tabular-nums mt-0.5 w-5 shrink-0">{activity.rank}.</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold text-[#1C1208]">{activity.title}</p>
+                      <span className="rounded-full bg-[#2E6B50]/10 px-2 py-0.5 text-[10px] font-medium text-[#2E6B50]">{activity.category}</span>
+                      {activity.cost && (
+                        <span className="rounded-full bg-[#C07A1A]/10 px-2 py-0.5 text-[10px] text-[#C07A1A]">{activity.cost}</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#6B5B4E] mt-0.5 leading-relaxed">{activity.description}</p>
+                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                      {activity.location && (
+                        <span className="text-[10px] text-[#6B5B4E] flex items-center gap-1">
+                          <MapPin className="h-2.5 w-2.5" />{activity.location}
+                        </span>
+                      )}
+                      {activity.driveTime && (
+                        <span className="text-[10px] text-[#6B5B4E]">🚗 {activity.driveTime}</span>
+                      )}
+                      {activity.ageNote && (
+                        <span className="text-[10px] text-[#2A4E8A]">👶 {activity.ageNote}</span>
+                      )}
+                      {activity.url && (
+                        <a href={activity.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#C4533A] underline hover:no-underline">Details →</a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* ── Section 4b: Grocery List ── */}
