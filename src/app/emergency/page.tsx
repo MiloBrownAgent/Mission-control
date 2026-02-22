@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ShieldAlert, Phone, MapPin } from "lucide-react";
+import { ShieldAlert, Phone, MapPin, Wifi } from "lucide-react";
 
 function PhoneLink({ number, display }: { number: string; display?: string }) {
   return (
@@ -24,19 +24,21 @@ function Section({
   icon: ReactNode;
   title: string;
   children: ReactNode;
-  accent?: "red" | "blue" | "green" | "purple";
+  accent?: "red" | "blue" | "green" | "purple" | "amber";
 }) {
   const accentMap = {
     red: "border-red-500/40 bg-red-950/40",
     blue: "border-blue-500/30 bg-blue-950/30",
     green: "border-emerald-500/30 bg-emerald-950/30",
     purple: "border-purple-500/30 bg-purple-950/30",
+    amber: "border-amber-500/30 bg-amber-950/20",
   };
   const titleMap = {
     red: "text-red-300",
     blue: "text-blue-300",
     green: "text-emerald-300",
     purple: "text-purple-300",
+    amber: "text-amber-300",
   };
   const cls = accentMap[accent ?? "blue"];
   const titleCls = titleMap[accent ?? "blue"];
@@ -53,8 +55,8 @@ function Section({
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 py-2 border-b border-white/10 last:border-0">
-      <span className="text-sm text-gray-400 w-36 shrink-0">{label}</span>
+    <div className="flex flex-wrap items-start gap-3 py-2.5 border-b border-white/10 last:border-0">
+      <span className="text-sm text-gray-400 w-36 shrink-0 pt-0.5">{label}</span>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
@@ -79,7 +81,10 @@ function getLiveAge(dob: Date): string {
     return `${days} days old`;
   }
   if (months < 12) {
-    return `${months} months old`;
+    const days = Math.floor(
+      (now.getTime() - new Date(now.getFullYear(), dob.getMonth() + months, dob.getDate()).getTime()) / 86400000
+    );
+    return `${months}mo ${days}d old`;
   }
   const years = Math.floor(months / 12);
   const rem = months % 12;
@@ -112,13 +117,16 @@ export default function EmergencyPage() {
           <PhoneLink number="911" display="911" />
         </Row>
         <Row label="Dave (Dad)">
-          <div className="flex flex-wrap items-center gap-3">
-            <PhoneLink number="+16512234567" display="Dave's cell" />
-            <span className="text-gray-400 text-sm italic">← add number</span>
-          </div>
+          <PhoneLink number="19522390143" display="(952) 239-0143" />
         </Row>
         <Row label="Amanda (Mom)">
-          <PhoneLink number="+19165295298" display="(916) 929-5298" />
+          <PhoneLink number="19165295298" display="(916) 929-5298" />
+        </Row>
+        <Row label="Leah (neighbor)">
+          <div className="space-y-0.5">
+            <PhoneLink number="16122031975" display="(612) 203-1975" />
+            <p className="text-gray-400 text-sm">Family friend next door</p>
+          </div>
         </Row>
         <Row label="Poison Control">
           <PhoneLink number="18002221222" display="1-800-222-1222" />
@@ -133,8 +141,8 @@ export default function EmergencyPage() {
           </div>
         </Row>
         <Row label="Urgent Care">
-          <div className="space-y-1">
-            <span className="font-semibold text-white">Minute Clinic (Hiawatha)</span>
+          <div className="space-y-0.5">
+            <span className="font-semibold text-white">Minute Clinic — Hiawatha</span>
             <div className="flex items-center gap-1.5 text-gray-400 text-sm">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
               4040 E Lake St, Minneapolis
@@ -154,7 +162,8 @@ export default function EmergencyPage() {
         </Row>
         <Row label="Pediatrician">
           <div className="space-y-1">
-            <span className="text-white font-semibold">Pediatric Services</span>
+            <span className="text-white font-semibold">Dr. Rebecca Mahady</span>
+            <p className="text-gray-400 text-sm">Pediatric Services</p>
             <div className="flex items-center gap-1.5 text-gray-400 text-sm">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
               4700 Park Glen Rd, St. Louis Park, MN 55416
@@ -165,12 +174,21 @@ export default function EmergencyPage() {
         <Row label="Allergies">
           <span className="text-emerald-300 font-semibold">None known</span>
         </Row>
-        <Row label="Food">
-          <span className="text-white">Breastfed + solids (stage 2).</span>
-          <p className="text-red-300 text-sm mt-0.5 font-medium">⚠️ No honey · No whole milk · No added salt</p>
+        <Row label="Feeding">
+          <span className="text-white">Mix of breast milk, formula, and solids</span>
+          <p className="text-red-300 text-sm mt-1 font-medium">⚠️ No honey · No whole milk · No added salt</p>
         </Row>
-        <Row label="Bedtime">
-          <span className="text-white">Bath → bottle → white noise → <strong>sleep by 7:30 PM</strong></span>
+        <Row label="Bedtime routine">
+          <ol className="text-white space-y-1 text-sm list-none">
+            <li>1. Bottle</li>
+            <li>2. Fill humidifier</li>
+            <li>3. Bath</li>
+            <li>4. Sleep sack</li>
+            <li>5. Story time in arms — rocking chair</li>
+            <li>6. White noise on · All lights off</li>
+            <li>7. Into crib 🌙</li>
+          </ol>
+          <p className="text-blue-300 text-sm mt-2 font-medium">Target: in crib by 7:30 PM</p>
         </Row>
         <Row label="Nap schedule">
           <span className="text-white">2 naps/day — ~9 AM and ~1 PM (45–90 min each)</span>
@@ -183,46 +201,37 @@ export default function EmergencyPage() {
           <span className="text-white font-semibold">3740 48th Ave S, Minneapolis, MN 55406</span>
         </Row>
         <Row label="WiFi">
-          <span className="text-gray-400 italic">Network name / password on fridge</span>
-        </Row>
-        <Row label="Spare key">
-          <span className="text-gray-400 italic">[location placeholder]</span>
-        </Row>
-        <Row label="First aid kit">
-          <span className="text-gray-400 italic">[location placeholder]</span>
-        </Row>
-        <Row label="Rigs (dog)">
-          <span className="text-white">Lagotto Romagnolo. Friendly. Food is in the pantry — walk him if you can.</span>
-        </Row>
-      </Section>
-
-      {/* SECTION 3b — Babysitters */}
-      <Section icon="🧑‍🍼" title="Babysitters" accent="purple">
-        <Row label="Leah Dunbar">
-          <div className="space-y-1">
-            <PhoneLink number="16122031975" display="(612) 203-1975" />
-            <p className="text-gray-400 text-sm">leahgirl123@gmail.com</p>
+          <div className="flex items-center gap-2">
+            <Wifi className="h-4 w-4 text-emerald-400 shrink-0" />
+            <div>
+              <p className="text-white font-semibold">BoxerFarmer1941</p>
+              <p className="text-gray-400 text-sm">Password: <span className="text-white font-mono">Toni2Times</span></p>
+            </div>
           </div>
         </Row>
-        <Row label="Anna">
-          <span className="text-gray-400 italic">Backup — number TBD</span>
+        <Row label="First aid kit">
+          <span className="text-white">Hallway closet, bottom floor — includes LifeVac</span>
+        </Row>
+        <Row label="Rigs (dog)">
+          <span className="text-white">Lagotto Romagnolo. Very friendly 🐕 Food in pantry, leash by front door.</span>
         </Row>
       </Section>
 
       {/* SECTION 4 — Babysitter Notes */}
-      <Section icon="📋" title="Babysitter Notes" accent="purple">
-        <ul className="space-y-2 pl-1">
+      <Section icon="📋" title="Babysitter Notes" accent="amber">
+        <ul className="space-y-2.5 pl-1">
           <Note>Help yourself to anything in the kitchen 🍕</Note>
-          <Note>Soren&apos;s bedtime is <strong>7:30 PM</strong> — routine is on the fridge</Note>
-          <Note>If Rigs needs to go out, leash is by the front door</Note>
+          <Note>Soren&apos;s bedtime routine is listed above — <strong>aim for crib by 7:30 PM</strong></Note>
+          <Note>Rigs needs to go out every few hours — leash is by the front door</Note>
           <Note><span className="text-red-300 font-bold">🚫 Do NOT open the door to strangers</span></Note>
           <Note>Text Dave or Amanda if anything comes up — we respond fast 📱</Note>
+          <Note>Leah next door is a trusted neighbor — knock if you need anything</Note>
         </ul>
       </Section>
 
       {/* Footer */}
       <div className="text-center pt-2">
-        <p className="text-xs text-gray-600">🔒 Private — For household use only</p>
+        <p className="text-xs text-gray-600">🔒 Private — For household use only · Sweeney Family</p>
       </div>
     </div>
   );
