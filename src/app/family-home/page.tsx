@@ -39,12 +39,17 @@ interface WeatherData {
 interface DayStatus {
   status: "booked" | "not_booked" | "unknown";
   date: string;
-  classId?: string;
 }
 
-interface CtrData {
-  saturday: DayStatus;
-  sunday: DayStatus;
+interface DaveClass {
+  name: string;
+  date: string;
+  time: string;
+}
+
+interface GymData {
+  amanda: { saturday: DayStatus; sunday: DayStatus };
+  dave: { upcoming: DaveClass[] };
 }
 
 function getGreeting() {
@@ -115,7 +120,7 @@ function FamilyHomePage() {
   }, [mode, router]);
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [ctrStatus, setCtrStatus] = useState<CtrData | null>(null);
+  const [gymData, setGymData] = useState<GymData | null>(null);
   const [now, setNow] = useState(new Date());
   const [groceryInput, setGroceryInput] = useState("");
 
@@ -132,9 +137,9 @@ function FamilyHomePage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/ctr-status")
+    fetch("/api/gym-classes")
       .then((r) => r.json())
-      .then(setCtrStatus)
+      .then(setGymData)
       .catch(() => null);
   }, []);
 
@@ -269,45 +274,65 @@ function FamilyHomePage() {
         </Card>
       )}
 
-      {/* ── Section 2c: Amanda's CTR Classes ── */}
+      {/* ── Section 2c: Gym Classes ── */}
       <Card className="rounded-[20px] border-[#A85570]/20 bg-gradient-to-br from-[#A85570]/5 via-[#A85570]/3 to-transparent p-5">
         <div className="flex items-center gap-2 mb-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#A85570]/10">
             <Dumbbell className="h-4 w-4 text-[#A85570]" />
           </div>
-          <h2 className="font-bold text-[#A85570] text-xl font-[family-name:var(--font-display)]">Amanda&apos;s CTR Classes 🏋️</h2>
+          <h2 className="font-bold text-[#A85570] text-xl font-[family-name:var(--font-display)]">Gym Classes 🏋️</h2>
         </div>
 
-        {ctrStatus === null ? (
+        {gymData === null ? (
           <div className="space-y-2">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded-lg bg-[#E5DDD4]" />
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-10 animate-pulse rounded-lg bg-[#E5DDD4]" />
             ))}
           </div>
         ) : (
-          <div className="space-y-2">
-            {([
-              { label: "Saturday", data: ctrStatus.saturday },
-              { label: "Sunday", data: ctrStatus.sunday },
-            ] as const).map(({ label, data }) => (
-              <div
-                key={label}
-                className="flex items-center gap-3 rounded-lg border border-[#A85570]/15 bg-[#A85570]/5 px-3 py-2.5"
-              >
-                <span className="text-base">
-                  {data.status === "booked" ? "✅" : data.status === "not_booked" ? "⏳" : "❓"}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1C1208]">{label}</p>
-                  <p className="text-xs text-[#6B5B4E]">{data.date}</p>
-                </div>
-                <span className={`text-xs font-semibold ${
-                  data.status === "booked" ? "text-[#2E6B50]" : data.status === "not_booked" ? "text-[#C07A1A]" : "text-[#6B5B4E]"
-                }`}>
-                  {data.status === "booked" ? "Booked" : data.status === "not_booked" ? "Not yet" : "Unknown"}
-                </span>
+          <div className="space-y-4">
+            {/* Amanda — CTR weekend auto-booking */}
+            <div>
+              <p className="text-xs font-semibold text-[#6B5B4E] uppercase tracking-wide mb-2">Amanda · CTR</p>
+              <div className="space-y-1.5">
+                {([
+                  { label: "Saturday", data: gymData.amanda.saturday },
+                  { label: "Sunday", data: gymData.amanda.sunday },
+                ] as const).map(({ label, data }) => (
+                  <div key={label} className="flex items-center gap-3 rounded-lg border border-[#A85570]/15 bg-[#A85570]/5 px-3 py-2">
+                    <span className="text-sm">
+                      {data.status === "booked" ? "✅" : data.status === "not_booked" ? "⏳" : "❓"}
+                    </span>
+                    <p className="text-sm font-medium text-[#1C1208] flex-1">{label}</p>
+                    <span className={`text-xs font-semibold ${
+                      data.status === "booked" ? "text-[#2E6B50]" : data.status === "not_booked" ? "text-[#C07A1A]" : "text-[#6B5B4E]"
+                    }`}>
+                      {data.status === "booked" ? "Booked ✓" : data.status === "not_booked" ? "Not yet" : "Unknown"}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Dave — upcoming weekend classes */}
+            <div>
+              <p className="text-xs font-semibold text-[#6B5B4E] uppercase tracking-wide mb-2">Dave · This Weekend</p>
+              {gymData.dave.upcoming.length === 0 ? (
+                <p className="text-xs text-[#6B5B4E] italic px-1">No classes booked yet</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {gymData.dave.upcoming.map((cls, i) => (
+                    <div key={i} className="flex items-center gap-3 rounded-lg border border-[#2A4E8A]/15 bg-[#2A4E8A]/5 px-3 py-2">
+                      <span className="text-sm">✅</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#1C1208] truncate">{cls.name}</p>
+                        <p className="text-xs text-[#6B5B4E]">{cls.date}{cls.time ? ` · ${cls.time}` : ""}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Card>
