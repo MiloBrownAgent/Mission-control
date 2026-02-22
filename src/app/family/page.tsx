@@ -87,7 +87,7 @@ const upcomingEvents = [
   {
     name: "Cammie's 70th Birthday",
     date: "2026-02-25",
-    note: "Celebrated in Naples, FL. Big one!",
+    note: "Big one! 🎉",
     emoji: "🎂",
     urgent: true,
   },
@@ -97,6 +97,13 @@ const upcomingEvents = [
     time: "5:00–9:00 PM",
     note: "Grandpa duty. Date night? 👀",
     emoji: "👴",
+  },
+  {
+    name: "Savannah Trip",
+    date: "2026-03-11",
+    time: "Mar 11–17",
+    note: "Flying to Savannah — visiting Mike. Dinner at Common Thread on the 14th.",
+    emoji: "✈️",
   },
   {
     name: "Beau & Albert's 3rd Birthday Party",
