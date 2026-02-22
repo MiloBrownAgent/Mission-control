@@ -14,6 +14,7 @@ import type * as contacts from "../contacts.js";
 import type * as content from "../content.js";
 import type * as crmContacts from "../crmContacts.js";
 import type * as events from "../events.js";
+import type * as groceryItems from "../groceryItems.js";
 import type * as meals from "../meals.js";
 import type * as memories from "../memories.js";
 import type * as outreach from "../outreach.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   content: typeof content;
   crmContacts: typeof crmContacts;
   events: typeof events;
+  groceryItems: typeof groceryItems;
   meals: typeof meals;
   memories: typeof memories;
   outreach: typeof outreach;

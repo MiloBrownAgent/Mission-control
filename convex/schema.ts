@@ -204,4 +204,14 @@ export default defineSchema({
     items: v.string(),
     updatedAt: v.number(),
   }).index("by_week", ["weekStart"]),
+
+  groceryItems: defineTable({
+    text: v.string(),
+    checked: v.boolean(),
+    category: v.optional(v.string()),
+    addedAt: v.number(),
+    addedBy: v.optional(v.string()),
+  })
+    .index("by_checked", ["checked"])
+    .index("by_added", ["addedAt"]),
 });

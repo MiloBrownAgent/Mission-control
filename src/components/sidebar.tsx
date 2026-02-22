@@ -21,6 +21,8 @@ import {
   ShieldAlert,
   House,
   DollarSign,
+  ShoppingCart,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,8 @@ const familyNavigation = [
   { name: "Emergency", href: "/emergency", icon: ShieldAlert, iconClassName: "text-red-400" },
   { name: "Family", href: "/family", icon: Heart, iconClassName: undefined },
   { name: "Meals", href: "/meals", icon: UtensilsCrossed, iconClassName: undefined },
+  { name: "Grocery List", href: "/grocery", icon: ShoppingCart, iconClassName: undefined },
+  { name: "Maintenance", href: "/maintenance", icon: Wrench, iconClassName: undefined },
   { name: "Calendar", href: "/calendar", icon: CalendarDays, iconClassName: undefined },
   { name: "Home", href: "/family-home", icon: House, iconClassName: undefined },
 ];

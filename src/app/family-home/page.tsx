@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
@@ -18,6 +18,10 @@ import {
   Cloud,
   Sun,
   Moon,
+  Dumbbell,
+  ShoppingCart,
+  Plus,
+  Wrench,
 } from "lucide-react";
 
 interface WeatherData {
@@ -28,6 +32,17 @@ interface WeatherData {
   description: string;
   emoji: string;
   location: string;
+}
+
+interface DayStatus {
+  status: "booked" | "not_booked" | "unknown";
+  date: string;
+  classId?: string;
+}
+
+interface CtrData {
+  saturday: DayStatus;
+  sunday: DayStatus;
 }
 
 function getGreeting() {
@@ -98,7 +113,9 @@ function FamilyHomePage() {
   }, [mode, router]);
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [ctrStatus, setCtrStatus] = useState<CtrData | null>(null);
   const [now, setNow] = useState(new Date());
+  const [groceryInput, setGroceryInput] = useState("");
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60000);
@@ -111,6 +128,17 @@ function FamilyHomePage() {
       .then(setWeather)
       .catch(() => null);
   }, []);
+
+  useEffect(() => {
+    fetch("/api/ctr-status")
+      .then((r) => r.json())
+      .then(setCtrStatus)
+      .catch(() => null);
+  }, []);
+
+  const groceryItems = useQuery(api.groceryItems.getAll);
+  const addGroceryItem = useMutation(api.groceryItems.addItem);
+  const uncheckedGrocery = groceryItems?.filter((i) => !i.checked) ?? [];
 
   const currentWeekStart = getWeekStart(now);
   const meals = useQuery(api.meals.getWeek, { weekStart: currentWeekStart });
@@ -212,6 +240,49 @@ function FamilyHomePage() {
         </div>
       </Card>
 
+      {/* ── Section 2b: Amanda's CTR Classes ── */}
+      <Card className="border-rose-400/30 bg-gradient-to-br from-rose-500/10 via-pink-500/5 to-transparent p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/20">
+            <Dumbbell className="h-4 w-4 text-rose-400" />
+          </div>
+          <h2 className="font-semibold text-rose-300 text-base">Amanda&apos;s CTR Classes 🏋️</h2>
+        </div>
+
+        {ctrStatus === null ? (
+          <div className="space-y-2">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-12 animate-pulse rounded-lg bg-white/5" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {([
+              { label: "Saturday", data: ctrStatus.saturday },
+              { label: "Sunday", data: ctrStatus.sunday },
+            ] as const).map(({ label, data }) => (
+              <div
+                key={label}
+                className="flex items-center gap-3 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-2.5"
+              >
+                <span className="text-base">
+                  {data.status === "booked" ? "✅" : data.status === "not_booked" ? "⏳" : "❓"}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{label}</p>
+                  <p className="text-xs text-muted-foreground">{data.date}</p>
+                </div>
+                <span className={`text-xs font-semibold ${
+                  data.status === "booked" ? "text-emerald-400" : data.status === "not_booked" ? "text-amber-400" : "text-muted-foreground"
+                }`}>
+                  {data.status === "booked" ? "Booked" : data.status === "not_booked" ? "Not yet" : "Unknown"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       {/* ── Section 3: Today's Meals ── */}
       <Card className="border-amber-400/30 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent p-5">
         <div className="flex items-center gap-2 mb-4">
@@ -309,6 +380,84 @@ function FamilyHomePage() {
         </div>
       </Card>
 
+      {/* ── Section 4b: Grocery List ── */}
+      <Card className="border-amber-400/30 bg-gradient-to-br from-amber-500/10 via-rose-500/5 to-transparent p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20">
+            <ShoppingCart className="h-4 w-4 text-amber-400" />
+          </div>
+          <h2 className="font-semibold text-amber-300 text-base">Grocery List</h2>
+          <Link href="/grocery" className="ml-auto text-xs text-amber-400 hover:text-amber-300 transition-colors">
+            See full list →
+          </Link>
+        </div>
+
+        {groceryItems === undefined ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-10 animate-pulse rounded-lg bg-white/5" />
+            ))}
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground mb-3">
+              🛒 {uncheckedGrocery.length} item{uncheckedGrocery.length !== 1 ? "s" : ""} on the list
+            </p>
+
+            {uncheckedGrocery.length > 0 && (
+              <div className="space-y-1.5 mb-3">
+                {uncheckedGrocery.slice(0, 3).map((item) => (
+                  <div
+                    key={item._id}
+                    className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2"
+                  >
+                    <span className="text-xs">•</span>
+                    <span className="text-sm flex-1 truncate">{item.text}</span>
+                    {item.category && (
+                      <span className="text-[10px] text-muted-foreground">{item.category}</span>
+                    )}
+                  </div>
+                ))}
+                {uncheckedGrocery.length > 3 && (
+                  <p className="text-xs text-muted-foreground px-1">
+                    +{uncheckedGrocery.length - 3} more items
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Quick-add */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={groceryInput}
+                onChange={(e) => setGroceryInput(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter" && groceryInput.trim()) {
+                    await addGroceryItem({ text: groceryInput.trim() });
+                    setGroceryInput("");
+                  }
+                }}
+                placeholder="Quick add..."
+                className="flex-1 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+              />
+              <button
+                onClick={async () => {
+                  if (groceryInput.trim()) {
+                    await addGroceryItem({ text: groceryInput.trim() });
+                    setGroceryInput("");
+                  }
+                }}
+                className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-rose-500 to-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add
+              </button>
+            </div>
+          </>
+        )}
+      </Card>
+
       {/* ── Section 5: Quick Links ── */}
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Quick Links</h2>
@@ -343,12 +492,12 @@ function FamilyHomePage() {
             </div>
           </Link>
 
-          <Link href="/calendar">
-            <div className="group relative overflow-hidden rounded-2xl border-2 border-sky-400/30 bg-gradient-to-br from-sky-500/15 to-blue-500/10 p-5 transition-all duration-200 hover:border-sky-400/50 hover:from-sky-500/25 hover:shadow-lg hover:shadow-sky-500/15 active:scale-95 min-h-[100px] flex flex-col justify-between">
-              <span className="text-3xl">📅</span>
+          <Link href="/maintenance">
+            <div className="group relative overflow-hidden rounded-2xl border-2 border-emerald-400/30 bg-gradient-to-br from-emerald-500/15 to-teal-500/10 p-5 transition-all duration-200 hover:border-emerald-400/50 hover:from-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/15 active:scale-95 min-h-[100px] flex flex-col justify-between">
+              <span className="text-3xl">🏠</span>
               <div>
-                <p className="font-bold text-sky-300 text-sm mt-2">Calendar</p>
-                <p className="text-xs text-sky-400/70">Events &amp; schedule</p>
+                <p className="font-bold text-emerald-300 text-sm mt-2">Maintenance</p>
+                <p className="text-xs text-emerald-400/70">Home upkeep tracker</p>
               </div>
             </div>
           </Link>
