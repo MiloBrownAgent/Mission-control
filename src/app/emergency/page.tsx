@@ -221,7 +221,7 @@ export default function EmergencyPage() {
           <span className="text-white">Hallway closet, bottom floor — includes LifeVac</span>
         </Row>
         <Row label="Rigs (dog)">
-          <span className="text-white">Lagotto Romagnolo. Very friendly 🐕 Food in pantry, leash by front door.</span>
+          <span className="text-white">Lagotto Romagnolo. Very friendly 🐕 Food in pantry, leash by back door.</span>
         </Row>
       </Section>
 
@@ -230,7 +230,7 @@ export default function EmergencyPage() {
         <ul className="space-y-2.5 pl-1">
           <Note>Help yourself to anything in the kitchen 🍕</Note>
           <Note>Soren&apos;s bedtime routine is listed above — <strong>aim for crib by 6:45 PM</strong></Note>
-          <Note>Rigs needs to go out every few hours — leash is by the front door</Note>
+          <Note>Rigs needs to go out every few hours — leash is by the back door</Note>
           <Note><span className="text-red-300 font-bold">🚫 Do NOT open the door to strangers</span></Note>
           <Note>Text Dave or Amanda if anything comes up — we respond fast 📱</Note>
           <Note>Leah is a trusted family friend &amp; neighbor — reach out if you need anything</Note>
