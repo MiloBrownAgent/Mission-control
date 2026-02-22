@@ -14,6 +14,11 @@ import {
   Users,
   Building2,
   Target,
+  Heart,
+  TrendingUp,
+  Layers,
+  UtensilsCrossed,
+  Command,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,6 +30,10 @@ const navigation = [
   { name: "Tasks", href: "/tasks", icon: ListTodo },
   { name: "Memories", href: "/memories", icon: Brain },
   { name: "Calendar", href: "/calendar", icon: CalendarDays },
+  { name: "Family", href: "/family", icon: Heart },
+  { name: "Meals", href: "/meals", icon: UtensilsCrossed },
+  { name: "Finance", href: "/finance", icon: TrendingUp },
+  { name: "Projects", href: "/projects", icon: Layers },
   { name: "Content", href: "/content", icon: FileText },
   { name: "Team", href: "/team", icon: Users },
   { name: "CRM", href: "/crm", icon: Target },
@@ -99,7 +108,7 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-3">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -108,7 +117,7 @@ export function Sidebar() {
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
                   isActive
                     ? "bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -124,10 +133,25 @@ export function Sidebar() {
           })}
         </nav>
 
+        {/* ⌘K hint */}
+        <div className="border-t border-border px-3 py-3">
+          <button
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            onClick={() => {
+              const e = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
+              document.dispatchEvent(e);
+            }}
+          >
+            <Command className="h-3.5 w-3.5" />
+            <span>Command palette</span>
+            <kbd className="ml-auto rounded border border-border bg-background px-1.5 py-0.5 text-[10px]">⌘K</kbd>
+          </button>
+        </div>
+
         {/* Footer */}
-        <div className="border-t border-border px-6 py-4">
+        <div className="border-t border-border px-6 py-3">
           <p className="text-[10px] text-muted-foreground">
-            Mission Control v2.0
+            Mission Control v3.0 — Production
           </p>
         </div>
       </aside>

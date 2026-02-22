@@ -8,11 +8,13 @@
  * @module
  */
 
+import type * as activityLog from "../activityLog.js";
 import type * as clients from "../clients.js";
 import type * as contacts from "../contacts.js";
 import type * as content from "../content.js";
 import type * as crmContacts from "../crmContacts.js";
 import type * as events from "../events.js";
+import type * as meals from "../meals.js";
 import type * as memories from "../memories.js";
 import type * as outreach from "../outreach.js";
 import type * as pipeline from "../pipeline.js";
@@ -27,11 +29,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  activityLog: typeof activityLog;
   clients: typeof clients;
   contacts: typeof contacts;
   content: typeof content;
   crmContacts: typeof crmContacts;
   events: typeof events;
+  meals: typeof meals;
   memories: typeof memories;
   outreach: typeof outreach;
   pipeline: typeof pipeline;

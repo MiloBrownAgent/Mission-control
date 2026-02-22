@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { Sidebar } from "@/components/sidebar";
+import { CommandPalette } from "@/components/command-palette";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
         <ConvexClientProvider>
+          <CommandPalette />
           <Sidebar />
           <main className="min-h-screen pt-14 md:pt-0 md:pl-64">
             <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 md:px-8 md:py-8">

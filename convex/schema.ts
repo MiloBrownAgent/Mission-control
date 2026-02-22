@@ -166,4 +166,42 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_client", ["clientId"])
     .index("by_stage", ["stage"]),
+
+  activityLog: defineTable({
+    message: v.string(),
+    type: v.union(v.literal("success"), v.literal("info"), v.literal("warning")),
+    category: v.union(v.literal("cron"), v.literal("task"), v.literal("system")),
+    timestamp: v.number(),
+  }),
+
+  meals: defineTable({
+    weekStart: v.string(),
+    day: v.union(
+      v.literal("Monday"),
+      v.literal("Tuesday"),
+      v.literal("Wednesday"),
+      v.literal("Thursday"),
+      v.literal("Friday"),
+      v.literal("Saturday"),
+      v.literal("Sunday")
+    ),
+    mealType: v.union(
+      v.literal("breakfast"),
+      v.literal("lunch"),
+      v.literal("dinner")
+    ),
+    name: v.string(),
+    notes: v.optional(v.string()),
+    sorenMeal: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_week", ["weekStart"])
+    .index("by_week_day_meal", ["weekStart", "day", "mealType"]),
+
+  groceryLists: defineTable({
+    weekStart: v.string(),
+    items: v.string(),
+    updatedAt: v.number(),
+  }).index("by_week", ["weekStart"]),
 });
