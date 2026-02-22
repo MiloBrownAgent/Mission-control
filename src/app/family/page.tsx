@@ -53,7 +53,7 @@ const familyMembers = [
     name: "Mike Sweeney",
     role: "Dave's Dad",
     emoji: "👴",
-    note: "Watches Soren on March 6 (5–9 PM). Grandpa on duty.",
+    note: "Winters in Savannah, GA · Summers in Wayzata, MN. Watches Soren on March 6 (5–9 PM).",
     color: "from-blue-500/20 to-sky-500/10",
     border: "border-blue-500/20",
   },
