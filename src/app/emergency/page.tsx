@@ -196,7 +196,7 @@ export default function EmergencyPage() {
             <li>White noise on · All lights off</li>
             <li>Into crib 🌙</li>
           </ol>
-          <p className="text-blue-300 text-sm mt-2 font-medium">Target: in crib by 7:30 PM</p>
+          <p className="text-blue-300 text-sm mt-2 font-medium">Target: in crib by 6:45 PM</p>
         </Row>
         <Row label="Nap schedule">
           <span className="text-white">2 naps/day — ~9 AM and ~1 PM (45–90 min each)</span>
@@ -229,7 +229,7 @@ export default function EmergencyPage() {
       <Section icon="📋" title="Babysitter Notes" accent="amber">
         <ul className="space-y-2.5 pl-1">
           <Note>Help yourself to anything in the kitchen 🍕</Note>
-          <Note>Soren&apos;s bedtime routine is listed above — <strong>aim for crib by 7:30 PM</strong></Note>
+          <Note>Soren&apos;s bedtime routine is listed above — <strong>aim for crib by 6:45 PM</strong></Note>
           <Note>Rigs needs to go out every few hours — leash is by the front door</Note>
           <Note><span className="text-red-300 font-bold">🚫 Do NOT open the door to strangers</span></Note>
           <Note>Text Dave or Amanda if anything comes up — we respond fast 📱</Note>

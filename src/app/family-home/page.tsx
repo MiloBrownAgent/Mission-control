@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Card } from "@/components/ui/card";
@@ -66,7 +67,7 @@ const mealTypeConfig = {
   dinner: { label: "Dinner", emoji: "🌙", color: "text-purple-600" },
 } as const;
 
-export default function FamilyHomePage() {
+function FamilyHomePage() {
   const mode = useAppMode();
   const router = useRouter();
 
@@ -315,3 +316,6 @@ export default function FamilyHomePage() {
     </div>
   );
 }
+
+// Disable SSR to prevent hydration mismatch from time-dependent rendering
+export default dynamic(() => Promise.resolve(FamilyHomePage), { ssr: false });
