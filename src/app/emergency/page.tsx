@@ -180,13 +180,13 @@ export default function EmergencyPage() {
         </Row>
         <Row label="Bedtime routine">
           <ol className="text-white space-y-1 text-sm list-none">
-            <li>1. Bottle</li>
-            <li>2. Fill humidifier</li>
-            <li>3. Bath</li>
-            <li>4. Sleep sack</li>
-            <li>5. Story time in arms — rocking chair</li>
-            <li>6. White noise on · All lights off</li>
-            <li>7. Into crib 🌙</li>
+            <li><span className="text-gray-400">6:15 PM</span> — Bath</li>
+            <li>Bottle</li>
+            <li>Fill humidifier</li>
+            <li>Sleep sack</li>
+            <li>Story time in arms — rocking chair</li>
+            <li>White noise on · All lights off</li>
+            <li>Into crib 🌙</li>
           </ol>
           <p className="text-blue-300 text-sm mt-2 font-medium">Target: in crib by 7:30 PM</p>
         </Row>
