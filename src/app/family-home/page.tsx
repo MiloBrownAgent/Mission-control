@@ -58,6 +58,25 @@ function getWeekStart(date: Date): string {
   return format(mon, "yyyy-MM-dd");
 }
 
+function getDaysUntil(dateStr: string) {
+  const target = new Date(dateStr);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+const upcomingEvents = [
+  { name: "Cammie's 70th Birthday 🎂", date: "2026-02-25", emoji: "🎂" },
+  { name: "Wooster Group — Walker Art Center", date: "2026-02-28", time: "3–5 PM", emoji: "🎭" },
+  { name: "Mike watches Soren", date: "2026-03-06", time: "5–9 PM", emoji: "👴" },
+  { name: "Savannah Trip ✈️", date: "2026-03-11", time: "Mar 11–17", emoji: "✈️" },
+  { name: "Dave's 37th Birthday", date: "2026-03-30", emoji: "🎂" },
+  { name: "Japan Trip 🇯🇵", date: "2026-04-02", time: "Apr 2–11", emoji: "✈️" },
+  { name: "Beau & Albert's 3rd Birthday", date: "2026-04-11", emoji: "🎉" },
+  { name: "Kate & Tim's Wedding", date: "2026-05-16", emoji: "💍" },
+];
+
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 type DayName = typeof DAY_NAMES[number];
 
@@ -177,7 +196,7 @@ function FamilyHomePage() {
             <span className="text-base mt-0.5">🌙</span>
             <div>
               <p className="font-medium text-indigo-200">Bedtime Routine</p>
-              <p className="text-muted-foreground text-xs mt-0.5">Routine starts at 6:15 PM — crib by 7:30 PM</p>
+              <p className="text-muted-foreground text-xs mt-0.5">Routine starts at 6:15 PM — crib by 6:45 PM</p>
             </div>
           </div>
 
@@ -259,7 +278,38 @@ function FamilyHomePage() {
         )}
       </Card>
 
-      {/* ── Section 4: Quick Links ── */}
+      {/* ── Section 4: Upcoming Events ── */}
+      <Card className="border-violet-400/30 bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-transparent p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/20">
+            <CalendarDays className="h-4 w-4 text-violet-400" />
+          </div>
+          <h2 className="font-semibold text-violet-300 text-base">Upcoming</h2>
+          <Link href="/family" className="ml-auto text-xs text-violet-400 hover:text-violet-300 transition-colors">
+            See all →
+          </Link>
+        </div>
+        <div className="space-y-2">
+          {upcomingEvents
+            .map(e => ({ ...e, daysUntil: getDaysUntil(e.date) }))
+            .filter(e => e.daysUntil >= 0)
+            .slice(0, 4)
+            .map(e => (
+              <div key={e.name} className="flex items-center gap-3 rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2.5">
+                <span className="text-xl w-7 text-center shrink-0">{e.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{e.name}</p>
+                  {e.time && <p className="text-xs text-muted-foreground">{e.time}</p>}
+                </div>
+                <span className={`text-xs font-semibold shrink-0 ${e.daysUntil === 0 ? 'text-red-400' : e.daysUntil <= 7 ? 'text-amber-400' : 'text-muted-foreground'}`}>
+                  {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil}d`}
+                </span>
+              </div>
+            ))}
+        </div>
+      </Card>
+
+      {/* ── Section 5: Quick Links ── */}
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Quick Links</h2>
         <div className="grid grid-cols-2 gap-3">
