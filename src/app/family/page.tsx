@@ -106,6 +106,13 @@ const upcomingEvents = [
     emoji: "✈️",
   },
   {
+    name: "Japan Trip 🇯🇵",
+    date: "2026-04-02",
+    time: "Apr 2–11",
+    note: "Tokyo (Andaz) → Kyoto (Ace Hotel) → Tokyo. 10 days.",
+    emoji: "✈️",
+  },
+  {
     name: "Beau & Albert's 3rd Birthday Party",
     date: "2026-04-11",
     note: "Edinborough Park, Edina",
