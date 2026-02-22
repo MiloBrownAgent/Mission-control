@@ -165,12 +165,12 @@ const TASKS: MaintenanceTask[] = [
 ];
 
 const categoryColors: Record<string, { border: string; bg: string; text: string; badge: string }> = {
-  HVAC: { border: "border-blue-500/30", bg: "bg-blue-500/5", text: "text-blue-400", badge: "bg-blue-500/20 text-blue-400" },
-  Outdoor: { border: "border-green-500/30", bg: "bg-green-500/5", text: "text-green-400", badge: "bg-green-500/20 text-green-400" },
-  Safety: { border: "border-red-500/30", bg: "bg-red-500/5", text: "text-red-400", badge: "bg-red-500/20 text-red-400" },
-  Appliances: { border: "border-purple-500/30", bg: "bg-purple-500/5", text: "text-purple-400", badge: "bg-purple-500/20 text-purple-400" },
-  Cleaning: { border: "border-cyan-500/30", bg: "bg-cyan-500/5", text: "text-cyan-400", badge: "bg-cyan-500/20 text-cyan-400" },
-  General: { border: "border-amber-500/30", bg: "bg-amber-500/5", text: "text-amber-400", badge: "bg-amber-500/20 text-amber-400" },
+  HVAC: { border: "border-[#2A4E8A]/20", bg: "bg-[#2A4E8A]/5", text: "text-[#2A4E8A]", badge: "bg-[#2A4E8A]/10 text-[#2A4E8A]" },
+  Outdoor: { border: "border-[#2E6B50]/20", bg: "bg-[#2E6B50]/5", text: "text-[#2E6B50]", badge: "bg-[#2E6B50]/10 text-[#2E6B50]" },
+  Safety: { border: "border-red-500/20", bg: "bg-red-500/5", text: "text-red-600", badge: "bg-red-500/10 text-red-600" },
+  Appliances: { border: "border-[#6B5A9B]/20", bg: "bg-[#6B5A9B]/5", text: "text-[#6B5A9B]", badge: "bg-[#6B5A9B]/10 text-[#6B5A9B]" },
+  Cleaning: { border: "border-[#2A4E8A]/20", bg: "bg-[#2A4E8A]/5", text: "text-[#2A4E8A]", badge: "bg-[#2A4E8A]/10 text-[#2A4E8A]" },
+  General: { border: "border-[#C07A1A]/20", bg: "bg-[#C07A1A]/5", text: "text-[#C07A1A]", badge: "bg-[#C07A1A]/10 text-[#C07A1A]" },
 };
 
 const frequencyLabels: Record<Frequency, string> = {

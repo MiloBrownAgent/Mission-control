@@ -228,4 +228,29 @@ export default defineSchema({
     rawSubject: v.optional(v.string()),
     parsedAt: v.number(),
   }).index("by_date", ["date"]),
+
+  actionItems: defineTable({
+    title: v.string(),
+    description: v.string(),
+    category: v.union(
+      v.literal("LS"),
+      v.literal("OurFable"),
+      v.literal("Personal"),
+      v.literal("Ops"),
+    ),
+    impact: v.string(),
+    effort: v.string(),
+    status: v.union(
+      v.literal("proposed"),
+      v.literal("approved"),
+      v.literal("implementing"),
+      v.literal("done"),
+      v.literal("skipped"),
+    ),
+    generatedDate: v.string(),
+    approvedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_date", ["generatedDate"])
+    .index("by_status", ["status"]),
 });
