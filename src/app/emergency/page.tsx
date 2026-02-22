@@ -114,11 +114,11 @@ export default function EmergencyPage() {
         <Row label="Dave (Dad)">
           <div className="flex flex-wrap items-center gap-3">
             <PhoneLink number="+16512234567" display="Dave's cell" />
-            <span className="text-gray-400 text-sm italic">← update placeholder</span>
+            <span className="text-gray-400 text-sm italic">← add number</span>
           </div>
         </Row>
         <Row label="Amanda (Mom)">
-          <PhoneLink number="+16519295298" display="(651) 929-5298" />
+          <PhoneLink number="+19165295298" display="(916) 929-5298" />
         </Row>
         <Row label="Poison Control">
           <PhoneLink number="18002221222" display="1-800-222-1222" />
@@ -153,7 +153,14 @@ export default function EmergencyPage() {
           <span className="ml-2 text-blue-300 text-sm">({age})</span>
         </Row>
         <Row label="Pediatrician">
-          <span className="text-gray-400 italic">Dr. [Name] — add info</span>
+          <div className="space-y-1">
+            <span className="text-white font-semibold">Pediatric Services</span>
+            <div className="flex items-center gap-1.5 text-gray-400 text-sm">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              4700 Park Glen Rd, St. Louis Park, MN 55416
+            </div>
+            <PhoneLink number="19529224200" display="(952) 922-4200" />
+          </div>
         </Row>
         <Row label="Allergies">
           <span className="text-emerald-300 font-semibold">None known</span>
@@ -186,6 +193,19 @@ export default function EmergencyPage() {
         </Row>
         <Row label="Rigs (dog)">
           <span className="text-white">Lagotto Romagnolo. Friendly. Food is in the pantry — walk him if you can.</span>
+        </Row>
+      </Section>
+
+      {/* SECTION 3b — Babysitters */}
+      <Section icon="🧑‍🍼" title="Babysitters" accent="purple">
+        <Row label="Leah Dunbar">
+          <div className="space-y-1">
+            <PhoneLink number="16122031975" display="(612) 203-1975" />
+            <p className="text-gray-400 text-sm">leahgirl123@gmail.com</p>
+          </div>
+        </Row>
+        <Row label="Anna">
+          <span className="text-gray-400 italic">Backup — number TBD</span>
         </Row>
       </Section>
 
