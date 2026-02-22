@@ -100,13 +100,21 @@ export default function EmergencyPage() {
       {/* Header */}
       <div className="relative overflow-hidden rounded-2xl border-2 border-red-500/50 bg-gradient-to-br from-red-950 via-red-900/60 to-transparent p-6">
         <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-red-500/10 blur-3xl" />
-        <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-red-600 shadow-lg shadow-red-600/30">
-            <ShieldAlert className="h-7 w-7 text-white" />
+        <div className="relative space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-red-600 shadow-lg shadow-red-600/30">
+              <ShieldAlert className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-white">Emergency Info</h1>
+              <p className="text-red-300 text-sm mt-0.5">Sweeney Family</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Emergency Info</h1>
-            <p className="text-red-300 text-sm mt-0.5">Sweeney Family · 3740 48th Ave S, Minneapolis MN 55406</p>
+          {/* Address — prominent for emergency services */}
+          <div className="rounded-xl bg-white/10 border border-white/20 px-5 py-4">
+            <p className="text-xs text-red-300 font-semibold uppercase tracking-widest mb-1">📍 Home Address</p>
+            <p className="text-white text-2xl font-bold tracking-tight">3740 48th Ave S</p>
+            <p className="text-white text-2xl font-bold tracking-tight">Minneapolis, MN 55406</p>
           </div>
         </div>
       </div>
@@ -120,7 +128,7 @@ export default function EmergencyPage() {
           <PhoneLink number="19522390143" display="(952) 239-0143" />
         </Row>
         <Row label="Amanda (Mom)">
-          <PhoneLink number="19165295298" display="(916) 929-5298" />
+          <PhoneLink number="19165295298" display="(916) 529-5298" />
         </Row>
         <Row label="Leah (neighbor)">
           <div className="space-y-0.5">
