@@ -92,6 +92,13 @@ const upcomingEvents = [
     urgent: true,
   },
   {
+    name: "Wooster Group — Walker Art Center",
+    date: "2026-02-28",
+    time: "3:00–5:00 PM",
+    note: "Walker Art Center, Minneapolis.",
+    emoji: "🎭",
+  },
+  {
     name: "Mike watches Soren",
     date: "2026-03-06",
     time: "5:00–9:00 PM",
