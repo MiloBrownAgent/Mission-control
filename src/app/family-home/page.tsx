@@ -96,9 +96,9 @@ const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 type DayName = typeof DAY_NAMES[number];
 
 const mealTypeConfig = {
-  breakfast: { label: "Breakfast", emoji: "🌅", color: "text-amber-600" },
-  lunch: { label: "Lunch", emoji: "☀️", color: "text-sky-600" },
-  dinner: { label: "Dinner", emoji: "🌙", color: "text-purple-600" },
+  breakfast: { label: "Breakfast", emoji: "🌅", color: "text-[#C07A1A]" },
+  lunch: { label: "Lunch", emoji: "☀️", color: "text-[#2A4E8A]" },
+  dinner: { label: "Dinner", emoji: "🌙", color: "text-[#6B5A9B]" },
 } as const;
 
 function FamilyHomePage() {
@@ -157,74 +157,74 @@ function FamilyHomePage() {
     <div className="space-y-6 max-w-2xl mx-auto">
 
       {/* ── Section 1: Today at a Glance ── */}
-      <div className="relative overflow-hidden rounded-2xl border border-rose-200/30 bg-gradient-to-br from-rose-50/10 via-amber-50/5 to-transparent p-6 sm:p-8">
-        <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-rose-400/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-32 w-32 rounded-full bg-amber-400/10 blur-3xl" />
+      <div className="relative overflow-hidden rounded-[20px] border border-[#C4533A]/15 bg-gradient-to-br from-[#C4533A]/5 via-[#C07A1A]/3 to-transparent p-6 sm:p-8">
+        <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-[#C4533A]/5 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-32 w-32 rounded-full bg-[#C07A1A]/5 blur-3xl" />
         <div className="relative">
           <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-rose-400 to-amber-500 shadow-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#C4533A] to-[#C07A1A] shadow-lg">
               <GreetingIcon className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl font-[family-name:var(--font-display)] text-[#1C1208]">
                 {getGreeting()}, Sweeney Family 👋
               </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
+              <p className="text-sm text-[#6B5B4E] mt-0.5">
                 {format(now, "EEEE, MMMM d, yyyy")}
               </p>
             </div>
           </div>
 
           {/* Weather row */}
-          <div className="mt-4 flex items-center gap-3 rounded-xl border border-sky-500/20 bg-sky-500/5 px-4 py-3">
-            <Cloud className="h-4 w-4 text-sky-400 shrink-0" />
+          <div className="mt-4 flex items-center gap-3 rounded-xl border border-[#2A4E8A]/15 bg-[#2A4E8A]/5 px-4 py-3">
+            <Cloud className="h-4 w-4 text-[#2A4E8A] shrink-0" />
             {weather ? (
-              <p className="text-sm text-sky-300">
+              <p className="text-sm text-[#1C1208]">
                 <span className="text-lg mr-1">{weather.emoji}</span>
                 <span className="font-semibold">{weather.temp}°F</span>
-                <span className="text-muted-foreground"> — {weather.description}</span>
-                <span className="text-muted-foreground text-xs ml-2">↑{weather.high}° ↓{weather.low}°</span>
+                <span className="text-[#6B5B4E]"> — {weather.description}</span>
+                <span className="text-[#6B5B4E] text-xs ml-2">↑{weather.high}° ↓{weather.low}°</span>
               </p>
             ) : (
-              <div className="h-5 w-48 animate-pulse rounded bg-white/5" />
+              <div className="h-5 w-48 animate-pulse rounded bg-[#E5DDD4]" />
             )}
           </div>
         </div>
       </div>
 
       {/* ── Section 2: Soren Today ── */}
-      <Card className="border-blue-400/30 bg-gradient-to-br from-blue-500/10 via-sky-500/5 to-transparent p-5">
+      <Card className="rounded-[20px] border-[#2E6B50]/20 bg-gradient-to-br from-[#2E6B50]/5 via-[#2E6B50]/3 to-transparent p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20">
-            <Baby className="h-4 w-4 text-blue-400" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2E6B50]/10">
+            <Baby className="h-4 w-4 text-[#2E6B50]" />
           </div>
-          <h2 className="font-semibold text-blue-300 text-base">Soren Today 👶</h2>
+          <h2 className="font-semibold text-[#2E6B50] text-base font-[family-name:var(--font-display)]">Soren Today 👶</h2>
           <span className="ml-auto text-xl">🐻</span>
         </div>
 
         {/* Age */}
         <div className="flex items-baseline gap-1.5">
-          <span className="text-4xl font-bold text-blue-300">{sorenAge.months}</span>
-          <span className="text-muted-foreground text-sm">months</span>
-          <span className="text-2xl font-bold text-blue-200 ml-1">{sorenAge.days}</span>
-          <span className="text-muted-foreground text-sm">days old</span>
+          <span className="text-4xl font-bold text-[#2E6B50]">{sorenAge.months}</span>
+          <span className="text-[#6B5B4E] text-sm">months</span>
+          <span className="text-2xl font-bold text-[#2E6B50]/70 ml-1">{sorenAge.days}</span>
+          <span className="text-[#6B5B4E] text-sm">days old</span>
         </div>
       </Card>
 
       {/* ── Section 2b: Soren's Daycare Report ── */}
       {daycareReport !== undefined && (
-        <Card className="border-indigo-400/30 bg-gradient-to-br from-indigo-500/10 via-blue-500/5 to-transparent p-5">
+        <Card className="rounded-[20px] border-[#2A4E8A]/20 bg-gradient-to-br from-[#2A4E8A]/5 via-[#2A4E8A]/3 to-transparent p-5">
           <div className="flex items-center gap-2 mb-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/20">
-              <Baby className="h-4 w-4 text-indigo-400" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2A4E8A]/10">
+              <Baby className="h-4 w-4 text-[#2A4E8A]" />
             </div>
-            <h2 className="font-semibold text-indigo-300 text-base">Soren&apos;s Last Daycare Day</h2>
+            <h2 className="font-semibold text-[#2A4E8A] text-base font-[family-name:var(--font-display)]">Soren&apos;s Last Daycare Day</h2>
             {daycareReport && (
-              <span className="ml-auto text-xs text-indigo-400/70">{daycareReport.date}</span>
+              <span className="ml-auto text-xs text-[#2A4E8A]/70">{daycareReport.date}</span>
             )}
           </div>
           {!daycareReport ? (
-            <p className="text-sm text-muted-foreground">No report yet — check back after the first daycare day.</p>
+            <p className="text-sm text-[#6B5B4E]">No report yet — check back after the first daycare day.</p>
           ) : (
             <div className="space-y-3">
               {daycareReport.photoUrl && (
@@ -236,27 +236,27 @@ function FamilyHomePage() {
               )}
               <div className="grid grid-cols-2 gap-2">
                 {daycareReport.totalTime && (
-                  <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 px-3 py-2">
-                    <p className="text-xs text-muted-foreground">Time at Daycare</p>
-                    <p className="text-sm font-semibold">{daycareReport.totalTime}</p>
+                  <div className="rounded-lg border border-[#2A4E8A]/15 bg-[#2A4E8A]/5 px-3 py-2">
+                    <p className="text-xs text-[#6B5B4E]">Time at Daycare</p>
+                    <p className="text-sm font-semibold text-[#1C1208]">{daycareReport.totalTime}</p>
                     {daycareReport.checkIn && daycareReport.checkOut && (
-                      <p className="text-xs text-muted-foreground">{daycareReport.checkIn} – {daycareReport.checkOut}</p>
+                      <p className="text-xs text-[#6B5B4E]">{daycareReport.checkIn} – {daycareReport.checkOut}</p>
                     )}
                   </div>
                 )}
                 {daycareReport.totalSleep !== undefined && (
-                  <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 px-3 py-2">
-                    <p className="text-xs text-muted-foreground">Sleep</p>
-                    <p className="text-sm font-semibold">{daycareReport.totalSleep}</p>
+                  <div className="rounded-lg border border-[#2A4E8A]/15 bg-[#2A4E8A]/5 px-3 py-2">
+                    <p className="text-xs text-[#6B5B4E]">Sleep</p>
+                    <p className="text-sm font-semibold text-[#1C1208]">{daycareReport.totalSleep}</p>
                     {daycareReport.totalNaps !== undefined && (
-                      <p className="text-xs text-muted-foreground">{daycareReport.totalNaps} nap{daycareReport.totalNaps !== 1 ? 's' : ''}</p>
+                      <p className="text-xs text-[#6B5B4E]">{daycareReport.totalNaps} nap{daycareReport.totalNaps !== 1 ? 's' : ''}</p>
                     )}
                   </div>
                 )}
                 {daycareReport.meals !== undefined && (
-                  <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 px-3 py-2">
-                    <p className="text-xs text-muted-foreground">Meals</p>
-                    <p className="text-sm font-semibold">{daycareReport.meals} feedings</p>
+                  <div className="rounded-lg border border-[#2A4E8A]/15 bg-[#2A4E8A]/5 px-3 py-2">
+                    <p className="text-xs text-[#6B5B4E]">Meals</p>
+                    <p className="text-sm font-semibold text-[#1C1208]">{daycareReport.meals} feedings</p>
                   </div>
                 )}
               </div>
@@ -266,18 +266,18 @@ function FamilyHomePage() {
       )}
 
       {/* ── Section 2c: Amanda's CTR Classes ── */}
-      <Card className="border-rose-400/30 bg-gradient-to-br from-rose-500/10 via-pink-500/5 to-transparent p-5">
+      <Card className="rounded-[20px] border-[#A85570]/20 bg-gradient-to-br from-[#A85570]/5 via-[#A85570]/3 to-transparent p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/20">
-            <Dumbbell className="h-4 w-4 text-rose-400" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#A85570]/10">
+            <Dumbbell className="h-4 w-4 text-[#A85570]" />
           </div>
-          <h2 className="font-semibold text-rose-300 text-base">Amanda&apos;s CTR Classes 🏋️</h2>
+          <h2 className="font-semibold text-[#A85570] text-base font-[family-name:var(--font-display)]">Amanda&apos;s CTR Classes 🏋️</h2>
         </div>
 
         {ctrStatus === null ? (
           <div className="space-y-2">
             {[1, 2].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded-lg bg-white/5" />
+              <div key={i} className="h-12 animate-pulse rounded-lg bg-[#E5DDD4]" />
             ))}
           </div>
         ) : (
@@ -288,17 +288,17 @@ function FamilyHomePage() {
             ] as const).map(({ label, data }) => (
               <div
                 key={label}
-                className="flex items-center gap-3 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-2.5"
+                className="flex items-center gap-3 rounded-lg border border-[#A85570]/15 bg-[#A85570]/5 px-3 py-2.5"
               >
                 <span className="text-base">
                   {data.status === "booked" ? "✅" : data.status === "not_booked" ? "⏳" : "❓"}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{label}</p>
-                  <p className="text-xs text-muted-foreground">{data.date}</p>
+                  <p className="text-sm font-medium text-[#1C1208]">{label}</p>
+                  <p className="text-xs text-[#6B5B4E]">{data.date}</p>
                 </div>
                 <span className={`text-xs font-semibold ${
-                  data.status === "booked" ? "text-emerald-400" : data.status === "not_booked" ? "text-amber-400" : "text-muted-foreground"
+                  data.status === "booked" ? "text-[#2E6B50]" : data.status === "not_booked" ? "text-[#C07A1A]" : "text-[#6B5B4E]"
                 }`}>
                   {data.status === "booked" ? "Booked" : data.status === "not_booked" ? "Not yet" : "Unknown"}
                 </span>
@@ -309,25 +309,25 @@ function FamilyHomePage() {
       </Card>
 
       {/* ── Section 3: Today's Meals ── */}
-      <Card className="border-amber-400/30 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent p-5">
+      <Card className="rounded-[20px] border-[#C07A1A]/20 bg-gradient-to-br from-[#C07A1A]/5 via-[#C07A1A]/3 to-transparent p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20">
-            <UtensilsCrossed className="h-4 w-4 text-amber-400" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C07A1A]/10">
+            <UtensilsCrossed className="h-4 w-4 text-[#C07A1A]" />
           </div>
-          <h2 className="font-semibold text-amber-300 text-base">Today&apos;s Meals</h2>
-          <span className="ml-auto text-xs text-muted-foreground">{todayDayName}</span>
+          <h2 className="font-semibold text-[#C07A1A] text-base font-[family-name:var(--font-display)]">Today&apos;s Meals</h2>
+          <span className="ml-auto text-xs text-[#6B5B4E]">{todayDayName}</span>
         </div>
 
         {meals === undefined ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-14 animate-pulse rounded-lg bg-white/5" />
+              <div key={i} className="h-14 animate-pulse rounded-lg bg-[#E5DDD4]" />
             ))}
           </div>
         ) : todayMeals.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-amber-500/30 bg-amber-500/5 p-4 text-center">
-            <p className="text-sm text-muted-foreground">No meals planned for today</p>
-            <Link href="/meals" className="text-xs text-amber-400 hover:text-amber-300 mt-1 inline-block">
+          <div className="rounded-lg border border-dashed border-[#C07A1A]/30 bg-[#C07A1A]/5 p-4 text-center">
+            <p className="text-sm text-[#6B5B4E]">No meals planned for today</p>
+            <Link href="/meals" className="text-xs text-[#C07A1A] hover:text-[#C07A1A]/80 mt-1 inline-block">
               → Open Meal Planner
             </Link>
           </div>
@@ -342,7 +342,7 @@ function FamilyHomePage() {
               return (
                 <div
                   key={key}
-                  className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5"
+                  className="flex items-start gap-3 rounded-lg border border-[#C07A1A]/15 bg-[#C07A1A]/5 px-3 py-2.5"
                 >
                   <span className="text-base mt-0.5">{config.emoji}</span>
                   <div className="flex-1 min-w-0">
@@ -351,13 +351,13 @@ function FamilyHomePage() {
                     </p>
                     {meal ? (
                       <>
-                        <p className="text-sm font-medium mt-0.5">{meal.name}</p>
+                        <p className="text-sm font-medium mt-0.5 text-[#1C1208]">{meal.name}</p>
                         {meal.sorenMeal && (
-                          <p className="text-xs text-amber-400/70 mt-0.5">👶 Soren: {meal.sorenMeal}</p>
+                          <p className="text-xs text-[#C07A1A]/70 mt-0.5">👶 Soren: {meal.sorenMeal}</p>
                         )}
                       </>
                     ) : (
-                      <p className="text-xs text-muted-foreground mt-0.5 italic">Not planned</p>
+                      <p className="text-xs text-[#6B5B4E] mt-0.5 italic">Not planned</p>
                     )}
                   </div>
                 </div>
@@ -365,7 +365,7 @@ function FamilyHomePage() {
             })}
             <Link
               href="/meals"
-              className="flex items-center justify-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 py-1 transition-colors"
+              className="flex items-center justify-center gap-1.5 text-xs text-[#C07A1A] hover:text-[#C07A1A]/80 py-1 transition-colors"
             >
               <UtensilsCrossed className="h-3 w-3" />
               Full meal planner →
@@ -375,13 +375,13 @@ function FamilyHomePage() {
       </Card>
 
       {/* ── Section 4: Upcoming Events ── */}
-      <Card className="border-violet-400/30 bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-transparent p-5">
+      <Card className="rounded-[20px] border-[#6B5A9B]/20 bg-gradient-to-br from-[#6B5A9B]/5 via-[#6B5A9B]/3 to-transparent p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/20">
-            <CalendarDays className="h-4 w-4 text-violet-400" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6B5A9B]/10">
+            <CalendarDays className="h-4 w-4 text-[#6B5A9B]" />
           </div>
-          <h2 className="font-semibold text-violet-300 text-base">Upcoming</h2>
-          <Link href="/family" className="ml-auto text-xs text-violet-400 hover:text-violet-300 transition-colors">
+          <h2 className="font-semibold text-[#6B5A9B] text-base font-[family-name:var(--font-display)]">Upcoming</h2>
+          <Link href="/family" className="ml-auto text-xs text-[#6B5A9B] hover:text-[#6B5A9B]/80 transition-colors">
             See all →
           </Link>
         </div>
@@ -391,13 +391,13 @@ function FamilyHomePage() {
             .filter(e => e.daysUntil >= 0)
             .slice(0, 4)
             .map(e => (
-              <div key={e.name} className="flex items-center gap-3 rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2.5">
+              <div key={e.name} className="flex items-center gap-3 rounded-lg border border-[#6B5A9B]/15 bg-[#6B5A9B]/5 px-3 py-2.5">
                 <span className="text-xl w-7 text-center shrink-0">{e.emoji}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{e.name}</p>
-                  {e.time && <p className="text-xs text-muted-foreground">{e.time}</p>}
+                  <p className="text-sm font-medium truncate text-[#1C1208]">{e.name}</p>
+                  {e.time && <p className="text-xs text-[#6B5B4E]">{e.time}</p>}
                 </div>
-                <span className={`text-xs font-semibold shrink-0 ${e.daysUntil === 0 ? 'text-red-400' : e.daysUntil <= 7 ? 'text-amber-400' : 'text-muted-foreground'}`}>
+                <span className={`text-xs font-semibold shrink-0 ${e.daysUntil === 0 ? 'text-red-600' : e.daysUntil <= 7 ? 'text-[#C07A1A]' : 'text-[#6B5B4E]'}`}>
                   {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil}d`}
                 </span>
               </div>
@@ -406,13 +406,13 @@ function FamilyHomePage() {
       </Card>
 
       {/* ── Section 4b: Grocery List ── */}
-      <Card className="border-amber-400/30 bg-gradient-to-br from-amber-500/10 via-rose-500/5 to-transparent p-5">
+      <Card className="rounded-[20px] border-[#C07A1A]/20 bg-gradient-to-br from-[#C07A1A]/5 via-[#C4533A]/3 to-transparent p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20">
-            <ShoppingCart className="h-4 w-4 text-amber-400" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C07A1A]/10">
+            <ShoppingCart className="h-4 w-4 text-[#C07A1A]" />
           </div>
-          <h2 className="font-semibold text-amber-300 text-base">Grocery List</h2>
-          <Link href="/grocery" className="ml-auto text-xs text-amber-400 hover:text-amber-300 transition-colors">
+          <h2 className="font-semibold text-[#C07A1A] text-base font-[family-name:var(--font-display)]">Grocery List</h2>
+          <Link href="/grocery" className="ml-auto text-xs text-[#C07A1A] hover:text-[#C07A1A]/80 transition-colors">
             See full list →
           </Link>
         </div>
@@ -420,12 +420,12 @@ function FamilyHomePage() {
         {groceryItems === undefined ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-10 animate-pulse rounded-lg bg-white/5" />
+              <div key={i} className="h-10 animate-pulse rounded-lg bg-[#E5DDD4]" />
             ))}
           </div>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground mb-3">
+            <p className="text-sm text-[#6B5B4E] mb-3">
               🛒 {uncheckedGrocery.length} item{uncheckedGrocery.length !== 1 ? "s" : ""} on the list
             </p>
 
@@ -434,17 +434,17 @@ function FamilyHomePage() {
                 {uncheckedGrocery.slice(0, 3).map((item) => (
                   <div
                     key={item._id}
-                    className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2"
+                    className="flex items-center gap-2 rounded-lg border border-[#C07A1A]/15 bg-[#C07A1A]/5 px-3 py-2"
                   >
-                    <span className="text-xs">•</span>
-                    <span className="text-sm flex-1 truncate">{item.text}</span>
+                    <span className="text-xs text-[#C07A1A]">•</span>
+                    <span className="text-sm flex-1 truncate text-[#1C1208]">{item.text}</span>
                     {item.category && (
-                      <span className="text-[10px] text-muted-foreground">{item.category}</span>
+                      <span className="text-[10px] text-[#6B5B4E]">{item.category}</span>
                     )}
                   </div>
                 ))}
                 {uncheckedGrocery.length > 3 && (
-                  <p className="text-xs text-muted-foreground px-1">
+                  <p className="text-xs text-[#6B5B4E] px-1">
                     +{uncheckedGrocery.length - 3} more items
                   </p>
                 )}
@@ -464,7 +464,7 @@ function FamilyHomePage() {
                   }
                 }}
                 placeholder="Quick add..."
-                className="flex-1 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                className="flex-1 rounded-lg border border-[#C07A1A]/20 bg-[#C07A1A]/5 px-3 py-1.5 text-sm text-[#1C1208] placeholder:text-[#6B5B4E] focus:outline-none focus:ring-2 focus:ring-[#C07A1A]/30"
               />
               <button
                 onClick={async () => {
@@ -473,7 +473,7 @@ function FamilyHomePage() {
                     setGroceryInput("");
                   }
                 }}
-                className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-rose-500 to-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
+                className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-[#C4533A] to-[#C07A1A] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add
@@ -485,44 +485,44 @@ function FamilyHomePage() {
 
       {/* ── Section 5: Quick Links ── */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Quick Links</h2>
+        <h2 className="text-sm font-semibold text-[#6B5B4E] uppercase tracking-wide mb-3 font-[family-name:var(--font-display)]">Quick Links</h2>
         <div className="grid grid-cols-2 gap-3">
           <Link href="/emergency">
-            <div className="group relative overflow-hidden rounded-2xl border-2 border-red-500/40 bg-gradient-to-br from-red-500/20 to-red-600/10 p-5 transition-all duration-200 hover:border-red-500/70 hover:from-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:scale-95 min-h-[100px] flex flex-col justify-between">
+            <div className="group relative overflow-hidden rounded-[20px] border-2 border-red-500/30 bg-gradient-to-br from-red-500/8 to-red-600/3 p-5 transition-all duration-200 hover:border-red-500/50 hover:shadow-lg active:scale-95 min-h-[100px] flex flex-col justify-between">
               <span className="text-3xl">🚨</span>
               <div>
-                <p className="font-bold text-red-300 text-sm mt-2">Emergency Info</p>
-                <p className="text-xs text-red-400/70">Contacts &amp; protocols</p>
+                <p className="font-bold text-red-700 text-sm mt-2">Emergency Info</p>
+                <p className="text-xs text-red-600/60">Contacts &amp; protocols</p>
               </div>
             </div>
           </Link>
 
           <Link href="/family">
-            <div className="group relative overflow-hidden rounded-2xl border-2 border-rose-400/30 bg-gradient-to-br from-rose-500/15 to-pink-500/10 p-5 transition-all duration-200 hover:border-rose-400/50 hover:from-rose-500/25 hover:shadow-lg hover:shadow-rose-500/15 active:scale-95 min-h-[100px] flex flex-col justify-between">
+            <div className="group relative overflow-hidden rounded-[20px] border-2 border-[#C4533A]/20 bg-gradient-to-br from-[#C4533A]/6 to-[#A85570]/3 p-5 transition-all duration-200 hover:border-[#C4533A]/40 hover:shadow-lg active:scale-95 min-h-[100px] flex flex-col justify-between">
               <span className="text-3xl">👨‍👩‍👧</span>
               <div>
-                <p className="font-bold text-rose-300 text-sm mt-2">Family Hub</p>
-                <p className="text-xs text-rose-400/70">Soren, contacts &amp; more</p>
+                <p className="font-bold text-[#C4533A] text-sm mt-2">Family Hub</p>
+                <p className="text-xs text-[#C4533A]/60">Soren, contacts &amp; more</p>
               </div>
             </div>
           </Link>
 
           <Link href="/meals">
-            <div className="group relative overflow-hidden rounded-2xl border-2 border-amber-400/30 bg-gradient-to-br from-amber-500/15 to-orange-500/10 p-5 transition-all duration-200 hover:border-amber-400/50 hover:from-amber-500/25 hover:shadow-lg hover:shadow-amber-500/15 active:scale-95 min-h-[100px] flex flex-col justify-between">
+            <div className="group relative overflow-hidden rounded-[20px] border-2 border-[#C07A1A]/20 bg-gradient-to-br from-[#C07A1A]/6 to-[#C07A1A]/3 p-5 transition-all duration-200 hover:border-[#C07A1A]/40 hover:shadow-lg active:scale-95 min-h-[100px] flex flex-col justify-between">
               <span className="text-3xl">🍽️</span>
               <div>
-                <p className="font-bold text-amber-300 text-sm mt-2">Meal Planner</p>
-                <p className="text-xs text-amber-400/70">This week&apos;s meals</p>
+                <p className="font-bold text-[#C07A1A] text-sm mt-2">Meal Planner</p>
+                <p className="text-xs text-[#C07A1A]/60">This week&apos;s meals</p>
               </div>
             </div>
           </Link>
 
           <Link href="/maintenance">
-            <div className="group relative overflow-hidden rounded-2xl border-2 border-emerald-400/30 bg-gradient-to-br from-emerald-500/15 to-teal-500/10 p-5 transition-all duration-200 hover:border-emerald-400/50 hover:from-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/15 active:scale-95 min-h-[100px] flex flex-col justify-between">
+            <div className="group relative overflow-hidden rounded-[20px] border-2 border-[#2E6B50]/20 bg-gradient-to-br from-[#2E6B50]/6 to-[#2E6B50]/3 p-5 transition-all duration-200 hover:border-[#2E6B50]/40 hover:shadow-lg active:scale-95 min-h-[100px] flex flex-col justify-between">
               <span className="text-3xl">🏠</span>
               <div>
-                <p className="font-bold text-emerald-300 text-sm mt-2">Maintenance</p>
-                <p className="text-xs text-emerald-400/70">Home upkeep tracker</p>
+                <p className="font-bold text-[#2E6B50] text-sm mt-2">Maintenance</p>
+                <p className="text-xs text-[#2E6B50]/60">Home upkeep tracker</p>
               </div>
             </div>
           </Link>
@@ -531,10 +531,10 @@ function FamilyHomePage() {
 
       {/* Footer mode indicator */}
       <div className="text-center pb-4">
-        <p className="text-[10px] text-muted-foreground/50 flex items-center justify-center gap-1.5">
-          <Heart className="h-2.5 w-2.5 text-rose-400/50" />
+        <p className="text-[10px] text-[#6B5B4E]/50 flex items-center justify-center gap-1.5">
+          <Heart className="h-2.5 w-2.5 text-[#C4533A]/50" />
           Sweeney Family Hub · Family Mode
-          <Heart className="h-2.5 w-2.5 text-rose-400/50" />
+          <Heart className="h-2.5 w-2.5 text-[#C4533A]/50" />
         </p>
       </div>
     </div>
