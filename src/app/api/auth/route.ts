@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-  const { password, mode, redirect: redirectPath } = await request.json();
+  const { password: rawPassword, mode, redirect: redirectPath } = await request.json();
+  const password = rawPassword?.trim();
 
-  const familyPassword = process.env.FAMILY_PASSWORD;
-  const workPassword = process.env.WORK_PASSWORD;
+  const familyPassword = process.env.FAMILY_PASSWORD?.trim();
+  const workPassword = process.env.WORK_PASSWORD?.trim();
 
   const isFamilyMode = mode === 'family';
   const correctPassword = isFamilyMode ? familyPassword : workPassword;

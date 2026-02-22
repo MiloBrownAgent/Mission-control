@@ -29,7 +29,8 @@ function LoginForm() {
 
     const data = await res.json();
     if (res.ok) {
-      router.push(data.redirect || '/');
+      const defaultPath = isFamilyMode ? '/family-home' : '/';
+      window.location.href = (data.redirect && data.redirect !== '/') ? data.redirect : defaultPath;
     } else {
       setError('Incorrect password. Try again.');
       setLoading(false);
@@ -73,6 +74,10 @@ function LoginForm() {
               onChange={e => setPassword(e.target.value)}
               placeholder="Password"
               autoFocus
+              autoComplete="current-password"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
               className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white placeholder-gray-500 text-lg focus:border-white/30 focus:outline-none focus:ring-0 pr-12"
             />
             <button

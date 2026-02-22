@@ -20,6 +20,10 @@ export function middleware(request: NextRequest) {
   const authCookie = request.cookies.get(cookieName);
 
   if (authCookie?.value === 'authenticated') {
+    // Redirect family users away from work-only root to family home
+    if (isFamilyMode && pathname === '/') {
+      return NextResponse.redirect(new URL('/family-home', request.url));
+    }
     const response = NextResponse.next();
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
     return response;
