@@ -149,7 +149,16 @@ function MealCell({ weekStart, day, mealType, meal }: MealCellProps) {
 
 export default function MealsPage() {
   const [activeTab, setActiveTab] = useState<"plan" | "grocery">("plan");
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => getWeekStart(new Date()));
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const today = new Date();
+    const dow = today.getDay(); // 0=Sun, 6=Sat
+    if (dow === 0 || dow === 6) {
+      // Weekend: default to next Monday so seeded data is visible
+      const daysUntilMonday = dow === 0 ? 1 : 2;
+      return getWeekStart(addDays(today, daysUntilMonday));
+    }
+    return getWeekStart(today);
+  });
 
   const meals = useQuery(api.meals.getWeek, { weekStart: currentWeekStart });
   const groceryList = useQuery(api.meals.getGroceryList, { weekStart: currentWeekStart });
@@ -275,8 +284,8 @@ export default function MealsPage() {
       {activeTab === "plan" && (
         <div className="w-full">
           {/* Desktop grid */}
-          <div className="hidden lg:block">
-            <div className="rounded-xl border border-border overflow-hidden">
+          <div className="hidden lg:block overflow-x-auto">
+            <div className="rounded-xl border border-border overflow-hidden min-w-[700px]">
               {/* Column headers */}
               <div className="grid bg-card border-b border-border" style={{ gridTemplateColumns: "80px repeat(7, 1fr)" }}>
                 <div className="p-3" />

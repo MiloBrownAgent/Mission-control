@@ -15,10 +15,10 @@ import {
   Building2,
   Target,
   Heart,
-  TrendingUp,
   Layers,
   UtensilsCrossed,
   Command,
+  ShieldAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,18 +26,18 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Tasks", href: "/tasks", icon: ListTodo },
-  { name: "Memories", href: "/memories", icon: Brain },
-  { name: "Calendar", href: "/calendar", icon: CalendarDays },
-  { name: "Family", href: "/family", icon: Heart },
-  { name: "Meals", href: "/meals", icon: UtensilsCrossed },
-  { name: "Finance", href: "/finance", icon: TrendingUp },
-  { name: "Projects", href: "/projects", icon: Layers },
-  { name: "Content", href: "/content", icon: FileText },
-  { name: "Team", href: "/team", icon: Users },
-  { name: "CRM", href: "/crm", icon: Target },
-  { name: "Office", href: "/office", icon: Building2 },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, iconClassName: undefined },
+  { name: "Tasks", href: "/tasks", icon: ListTodo, iconClassName: undefined },
+  { name: "Memories", href: "/memories", icon: Brain, iconClassName: undefined },
+  { name: "Calendar", href: "/calendar", icon: CalendarDays, iconClassName: undefined },
+  { name: "Family", href: "/family", icon: Heart, iconClassName: undefined },
+  { name: "Emergency", href: "/emergency", icon: ShieldAlert, iconClassName: "text-red-400" },
+  { name: "Meals", href: "/meals", icon: UtensilsCrossed, iconClassName: undefined },
+  { name: "Projects", href: "/projects", icon: Layers, iconClassName: undefined },
+  { name: "Content", href: "/content", icon: FileText, iconClassName: undefined },
+  { name: "Team", href: "/team", icon: Users, iconClassName: undefined },
+  { name: "CRM", href: "/crm", icon: Target, iconClassName: undefined },
+  { name: "Office", href: "/office", icon: Building2, iconClassName: undefined },
 ];
 
 export function Sidebar() {
@@ -123,7 +123,7 @@ export function Sidebar() {
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                 )}
               >
-                <item.icon className={cn("h-4 w-4 transition-colors", isActive && "text-blue-400")} />
+                <item.icon className={cn("h-4 w-4 transition-colors", isActive ? "text-blue-400" : item.iconClassName)} />
                 {item.name}
                 {isActive && (
                   <div className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-400" />
