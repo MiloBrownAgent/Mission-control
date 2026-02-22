@@ -198,7 +198,7 @@ function FamilyHomePage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2E6B50]/10">
             <Baby className="h-4 w-4 text-[#2E6B50]" />
           </div>
-          <h2 className="font-semibold text-[#2E6B50] text-base font-[family-name:var(--font-display)]">Soren Today 👶</h2>
+          <h2 className="font-bold text-[#2E6B50] text-xl font-[family-name:var(--font-display)]">Soren Today 👶</h2>
           <span className="ml-auto text-xl">🐻</span>
         </div>
 
@@ -218,7 +218,7 @@ function FamilyHomePage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2A4E8A]/10">
               <Baby className="h-4 w-4 text-[#2A4E8A]" />
             </div>
-            <h2 className="font-semibold text-[#2A4E8A] text-base font-[family-name:var(--font-display)]">Soren&apos;s Last Daycare Day</h2>
+            <h2 className="font-bold text-[#2A4E8A] text-xl font-[family-name:var(--font-display)]">Soren&apos;s Last Daycare Day</h2>
             {daycareReport && (
               <span className="ml-auto text-xs text-[#2A4E8A]/70">{daycareReport.date}</span>
             )}
@@ -271,7 +271,7 @@ function FamilyHomePage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#A85570]/10">
             <Dumbbell className="h-4 w-4 text-[#A85570]" />
           </div>
-          <h2 className="font-semibold text-[#A85570] text-base font-[family-name:var(--font-display)]">Amanda&apos;s CTR Classes 🏋️</h2>
+          <h2 className="font-bold text-[#A85570] text-xl font-[family-name:var(--font-display)]">Amanda&apos;s CTR Classes 🏋️</h2>
         </div>
 
         {ctrStatus === null ? (
@@ -314,7 +314,7 @@ function FamilyHomePage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C07A1A]/10">
             <UtensilsCrossed className="h-4 w-4 text-[#C07A1A]" />
           </div>
-          <h2 className="font-semibold text-[#C07A1A] text-base font-[family-name:var(--font-display)]">Today&apos;s Meals</h2>
+          <h2 className="font-bold text-[#C07A1A] text-xl font-[family-name:var(--font-display)]">Today&apos;s Meals</h2>
           <span className="ml-auto text-xs text-[#6B5B4E]">{todayDayName}</span>
         </div>
 
@@ -380,7 +380,7 @@ function FamilyHomePage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6B5A9B]/10">
             <CalendarDays className="h-4 w-4 text-[#6B5A9B]" />
           </div>
-          <h2 className="font-semibold text-[#6B5A9B] text-base font-[family-name:var(--font-display)]">Upcoming</h2>
+          <h2 className="font-bold text-[#6B5A9B] text-xl font-[family-name:var(--font-display)]">Upcoming</h2>
           <Link href="/family" className="ml-auto text-xs text-[#6B5A9B] hover:text-[#6B5A9B]/80 transition-colors">
             See all →
           </Link>
@@ -411,7 +411,7 @@ function FamilyHomePage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C07A1A]/10">
             <ShoppingCart className="h-4 w-4 text-[#C07A1A]" />
           </div>
-          <h2 className="font-semibold text-[#C07A1A] text-base font-[family-name:var(--font-display)]">Grocery List</h2>
+          <h2 className="font-bold text-[#C07A1A] text-xl font-[family-name:var(--font-display)]">Grocery List</h2>
           <Link href="/grocery" className="ml-auto text-xs text-[#C07A1A] hover:text-[#C07A1A]/80 transition-colors">
             See full list →
           </Link>

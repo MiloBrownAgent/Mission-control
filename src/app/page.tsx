@@ -478,7 +478,7 @@ export default function DashboardPage() {
         {/* Upcoming Events */}
         <div className="animate-fade-in-up stagger-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold font-[family-name:var(--font-display)] text-[#1C1208]">Upcoming Events</h2>
+            <h2 className="text-xl font-bold font-[family-name:var(--font-display)] text-[#1C1208]">Upcoming Events</h2>
             <Link
               href="/calendar"
               className="flex items-center gap-1 text-xs text-[#6B5B4E] transition-colors hover:text-[#1C1208]"
@@ -537,7 +537,7 @@ export default function DashboardPage() {
         {/* Recent Tasks */}
         <div className="animate-fade-in-up stagger-6">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold font-[family-name:var(--font-display)] text-[#1C1208]">Recent Tasks</h2>
+            <h2 className="text-xl font-bold font-[family-name:var(--font-display)] text-[#1C1208]">Recent Tasks</h2>
             <Link
               href="/tasks"
               className="flex items-center gap-1 text-xs text-[#6B5B4E] transition-colors hover:text-[#1C1208]"
@@ -602,7 +602,7 @@ export default function DashboardPage() {
       <div className="mt-8 animate-fade-in-up stagger-6">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold font-[family-name:var(--font-display)] text-[#1C1208] flex items-center gap-2">
+            <h2 className="text-xl font-bold font-[family-name:var(--font-display)] text-[#1C1208] flex items-center gap-2">
               <Zap className="h-5 w-5 text-[#C07A1A]" />
               Today&apos;s Top 10
             </h2>
