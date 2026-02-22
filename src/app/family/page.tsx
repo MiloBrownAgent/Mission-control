@@ -113,11 +113,23 @@ const upcomingEvents = [
     emoji: "✈️",
   },
   {
+    name: "Dave's 37th Birthday 🎂",
+    date: "2026-03-30",
+    note: "The big 37. Make it count.",
+    emoji: "🎂",
+  },
+  {
     name: "Beau & Albert's 3rd Birthday Party",
     date: "2026-04-11",
     note: "Edinborough Park, Edina",
     emoji: "🎉",
     location: "Edinborough Park, Edina",
+  },
+  {
+    name: "Kate & Tim's Wedding",
+    date: "2026-05-16",
+    note: "The Hamptons.",
+    emoji: "💍",
   },
 ];
 
