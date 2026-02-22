@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAppMode } from "@/lib/app-mode";
 import {
   CheckCircle2,
   Circle,
@@ -127,6 +129,12 @@ function formatCurrency(v: number) {
 }
 
 export default function DashboardPage() {
+  const mode = useAppMode();
+  const router = useRouter();
+  useEffect(() => {
+    if (mode === 'family') router.replace('/family-home');
+  }, [mode, router]);
+
   const tasks = useQuery(api.tasks.list);
   const memories = useQuery(api.memories.list);
   const upcomingEvents = useQuery(api.events.listUpcoming, { limit: 5 });
