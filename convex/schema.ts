@@ -214,4 +214,18 @@ export default defineSchema({
   })
     .index("by_checked", ["checked"])
     .index("by_added", ["addedAt"]),
+
+  daycareReports: defineTable({
+    date: v.string(),           // "2026-02-18"
+    childName: v.string(),
+    checkIn: v.optional(v.string()),
+    checkOut: v.optional(v.string()),
+    totalTime: v.optional(v.string()),
+    meals: v.optional(v.number()),
+    totalSleep: v.optional(v.string()),
+    totalNaps: v.optional(v.number()),
+    photoUrl: v.optional(v.string()),
+    rawSubject: v.optional(v.string()),
+    parsedAt: v.number(),
+  }).index("by_date", ["date"]),
 });

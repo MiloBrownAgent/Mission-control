@@ -137,6 +137,7 @@ function FamilyHomePage() {
   }, []);
 
   const groceryItems = useQuery(api.groceryItems.getAll);
+  const daycareReport = useQuery(api.daycareReports.getLatest);
   const addGroceryItem = useMutation(api.groceryItems.addItem);
   const uncheckedGrocery = groceryItems?.filter((i) => !i.checked) ?? [];
 
@@ -240,7 +241,61 @@ function FamilyHomePage() {
         </div>
       </Card>
 
-      {/* ── Section 2b: Amanda's CTR Classes ── */}
+      {/* ── Section 2b: Soren's Daycare Report ── */}
+      {daycareReport !== undefined && (
+        <Card className="border-indigo-400/30 bg-gradient-to-br from-indigo-500/10 via-blue-500/5 to-transparent p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/20">
+              <Baby className="h-4 w-4 text-indigo-400" />
+            </div>
+            <h2 className="font-semibold text-indigo-300 text-base">Soren&apos;s Last Daycare Day</h2>
+            {daycareReport && (
+              <span className="ml-auto text-xs text-indigo-400/70">{daycareReport.date}</span>
+            )}
+          </div>
+          {!daycareReport ? (
+            <p className="text-sm text-muted-foreground">No report yet — check back after the first daycare day.</p>
+          ) : (
+            <div className="space-y-3">
+              {daycareReport.photoUrl && (
+                <img
+                  src={daycareReport.photoUrl}
+                  alt="Soren at daycare"
+                  className="w-full rounded-xl object-cover max-h-48"
+                />
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                {daycareReport.totalTime && (
+                  <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 px-3 py-2">
+                    <p className="text-xs text-muted-foreground">Time at Daycare</p>
+                    <p className="text-sm font-semibold">{daycareReport.totalTime}</p>
+                    {daycareReport.checkIn && daycareReport.checkOut && (
+                      <p className="text-xs text-muted-foreground">{daycareReport.checkIn} – {daycareReport.checkOut}</p>
+                    )}
+                  </div>
+                )}
+                {daycareReport.totalSleep !== undefined && (
+                  <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 px-3 py-2">
+                    <p className="text-xs text-muted-foreground">Sleep</p>
+                    <p className="text-sm font-semibold">{daycareReport.totalSleep}</p>
+                    {daycareReport.totalNaps !== undefined && (
+                      <p className="text-xs text-muted-foreground">{daycareReport.totalNaps} nap{daycareReport.totalNaps !== 1 ? 's' : ''}</p>
+                    )}
+                  </div>
+                )}
+                {daycareReport.meals !== undefined && (
+                  <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 px-3 py-2">
+                    <p className="text-xs text-muted-foreground">Meals</p>
+                    <p className="text-sm font-semibold">{daycareReport.meals} feedings</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* ── Section 2c: Amanda's CTR Classes ── */}
       <Card className="border-rose-400/30 bg-gradient-to-br from-rose-500/10 via-pink-500/5 to-transparent p-5">
         <div className="flex items-center gap-2 mb-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/20">
