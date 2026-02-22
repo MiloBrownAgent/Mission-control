@@ -14,6 +14,7 @@ import {
   Heart,
   UtensilsCrossed,
   MapPin,
+  ChevronDown,
   CalendarDays,
   Baby,
   Cloud,
@@ -140,6 +141,7 @@ function FamilyHomePage() {
   const groceryItems = useQuery(api.groceryItems.getAll);
   const daycareReport = useQuery(api.daycareReports.getLatest);
   const weekendData = useQuery(api.weekendActivities.getLatest);
+  const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
   const addGroceryItem = useMutation(api.groceryItems.addItem);
   const uncheckedGrocery = groceryItems?.filter((i) => !i.checked) ?? [];
 
@@ -432,43 +434,58 @@ function FamilyHomePage() {
             <p className="text-xs text-[#6B5B4E] mt-1">Milo searches events every Thursday and populates this list</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {weekendData.activities.map((activity) => (
-              <div
-                key={activity._id}
-                className="rounded-xl border border-[#2E6B50]/15 bg-[#FFFCF7] px-3 py-2.5 transition-all hover:border-[#2E6B50]/30"
-              >
-                <div className="flex items-start gap-2">
-                  <span className="text-sm font-bold text-[#2E6B50]/50 tabular-nums mt-0.5 w-5 shrink-0">{activity.rank}.</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-[#1C1208]">{activity.title}</p>
-                      <span className="rounded-full bg-[#2E6B50]/10 px-2 py-0.5 text-[10px] font-medium text-[#2E6B50]">{activity.category}</span>
+          <div className="space-y-1.5">
+            {weekendData.activities.map((activity) => {
+              const isOpen = expandedActivity === activity._id;
+              return (
+                <div
+                  key={activity._id}
+                  className={`rounded-xl border bg-[#FFFCF7] transition-all ${isOpen ? "border-[#2E6B50]/30 shadow-sm" : "border-[#2E6B50]/15"}`}
+                >
+                  {/* Header row — always visible, clickable */}
+                  <button
+                    onClick={() => setExpandedActivity(isOpen ? null : activity._id)}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-left"
+                  >
+                    <span className="text-xs font-bold text-[#2E6B50]/50 tabular-nums w-5 shrink-0">{activity.rank}.</span>
+                    <p className="text-sm font-semibold text-[#1C1208] flex-1 min-w-0 truncate">{activity.title}</p>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="rounded-full bg-[#2E6B50]/10 px-2 py-0.5 text-[10px] font-medium text-[#2E6B50] hidden sm:inline">{activity.category}</span>
                       {activity.cost && (
                         <span className="rounded-full bg-[#C07A1A]/10 px-2 py-0.5 text-[10px] text-[#C07A1A]">{activity.cost}</span>
                       )}
+                      <ChevronDown className={`h-3.5 w-3.5 text-[#6B5B4E] transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
                     </div>
-                    <p className="text-xs text-[#6B5B4E] mt-0.5 leading-relaxed">{activity.description}</p>
-                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                      {activity.location && (
-                        <span className="text-[10px] text-[#6B5B4E] flex items-center gap-1">
-                          <MapPin className="h-2.5 w-2.5" />{activity.location}
-                        </span>
-                      )}
-                      {activity.driveTime && (
-                        <span className="text-[10px] text-[#6B5B4E]">🚗 {activity.driveTime}</span>
-                      )}
-                      {activity.ageNote && (
-                        <span className="text-[10px] text-[#2A4E8A]">👶 {activity.ageNote}</span>
-                      )}
-                      {activity.url && (
-                        <a href={activity.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#C4533A] underline hover:no-underline">Details →</a>
-                      )}
+                  </button>
+
+                  {/* Expanded detail */}
+                  {isOpen && (
+                    <div className="px-3 pb-3 border-t border-[#2E6B50]/10 pt-2.5 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="rounded-full bg-[#2E6B50]/10 px-2 py-0.5 text-[10px] font-medium text-[#2E6B50]">{activity.category}</span>
+                      </div>
+                      <p className="text-xs text-[#6B5B4E] leading-relaxed">{activity.description}</p>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {activity.location && (
+                          <span className="text-[10px] text-[#6B5B4E] flex items-center gap-1">
+                            <MapPin className="h-2.5 w-2.5" />{activity.location}
+                          </span>
+                        )}
+                        {activity.driveTime && (
+                          <span className="text-[10px] text-[#6B5B4E]">🚗 {activity.driveTime}</span>
+                        )}
+                        {activity.ageNote && (
+                          <span className="text-[10px] text-[#2A4E8A]">👶 {activity.ageNote}</span>
+                        )}
+                        {activity.url && (
+                          <a href={activity.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#C4533A] underline hover:no-underline">Details →</a>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
