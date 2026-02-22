@@ -106,17 +106,17 @@ const upcomingEvents = [
     emoji: "✈️",
   },
   {
+    name: "Dave's 37th Birthday 🎂",
+    date: "2026-03-30",
+    note: "The big 37. Make it count.",
+    emoji: "🎂",
+  },
+  {
     name: "Japan Trip 🇯🇵",
     date: "2026-04-02",
     time: "Apr 2–11",
     note: "Tokyo (Andaz) → Kyoto (Ace Hotel) → Tokyo. 10 days.",
     emoji: "✈️",
-  },
-  {
-    name: "Dave's 37th Birthday 🎂",
-    date: "2026-03-30",
-    note: "The big 37. Make it count.",
-    emoji: "🎂",
   },
   {
     name: "Beau & Albert's 3rd Birthday Party",
