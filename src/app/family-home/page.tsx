@@ -448,14 +448,8 @@ function FamilyHomePage() {
                     className="w-full flex items-center gap-2 px-3 py-2.5 text-left"
                   >
                     <span className="text-xs font-bold text-[#2E6B50]/50 tabular-nums w-5 shrink-0">{activity.rank}.</span>
-                    <p className="text-sm font-semibold text-[#1C1208] flex-1 min-w-0 truncate">{activity.title}</p>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="rounded-full bg-[#2E6B50]/10 px-2 py-0.5 text-[10px] font-medium text-[#2E6B50] hidden sm:inline">{activity.category}</span>
-                      {activity.cost && (
-                        <span className="rounded-full bg-[#C07A1A]/10 px-2 py-0.5 text-[10px] text-[#C07A1A]">{activity.cost}</span>
-                      )}
-                      <ChevronDown className={`h-3.5 w-3.5 text-[#6B5B4E] transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
-                    </div>
+                    <p className="text-sm font-semibold text-[#1C1208] flex-1 min-w-0">{activity.title}</p>
+                    <ChevronDown className={`h-3.5 w-3.5 text-[#6B5B4E] transition-transform duration-200 shrink-0 ${isOpen ? "rotate-180" : ""}`} />
                   </button>
 
                   {/* Expanded detail */}
@@ -463,6 +457,9 @@ function FamilyHomePage() {
                     <div className="px-3 pb-3 border-t border-[#2E6B50]/10 pt-2.5 space-y-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="rounded-full bg-[#2E6B50]/10 px-2 py-0.5 text-[10px] font-medium text-[#2E6B50]">{activity.category}</span>
+                        {activity.cost && (
+                          <span className="rounded-full bg-[#C07A1A]/10 px-2 py-0.5 text-[10px] text-[#C07A1A]">{activity.cost}</span>
+                        )}
                       </div>
                       <p className="text-xs text-[#6B5B4E] leading-relaxed">{activity.description}</p>
                       <div className="flex items-center gap-3 flex-wrap">
