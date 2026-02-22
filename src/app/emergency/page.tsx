@@ -133,7 +133,7 @@ export default function EmergencyPage() {
         <Row label="Leah (neighbor)">
           <div className="space-y-0.5">
             <PhoneLink number="16122031975" display="(612) 203-1975" />
-            <p className="text-gray-400 text-sm">Family friend next door</p>
+            <p className="text-gray-400 text-sm">Family friend &amp; neighbor</p>
           </div>
         </Row>
         <Row label="Poison Control">
@@ -233,7 +233,7 @@ export default function EmergencyPage() {
           <Note>Rigs needs to go out every few hours — leash is by the front door</Note>
           <Note><span className="text-red-300 font-bold">🚫 Do NOT open the door to strangers</span></Note>
           <Note>Text Dave or Amanda if anything comes up — we respond fast 📱</Note>
-          <Note>Leah next door is a trusted neighbor — knock if you need anything</Note>
+          <Note>Leah is a trusted family friend &amp; neighbor — reach out if you need anything</Note>
         </ul>
       </Section>
 
