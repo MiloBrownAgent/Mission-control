@@ -11,11 +11,13 @@
 import type * as actionItems from "../actionItems.js";
 import type * as activityLog from "../activityLog.js";
 import type * as classBookings from "../classBookings.js";
+import type * as clientLinks from "../clientLinks.js";
 import type * as clients from "../clients.js";
 import type * as contacts from "../contacts.js";
 import type * as content from "../content.js";
 import type * as crmContacts from "../crmContacts.js";
 import type * as daycareReports from "../daycareReports.js";
+import type * as dropboxConfig from "../dropboxConfig.js";
 import type * as events from "../events.js";
 import type * as groceryItems from "../groceryItems.js";
 import type * as meals from "../meals.js";
@@ -37,11 +39,13 @@ declare const fullApi: ApiFromModules<{
   actionItems: typeof actionItems;
   activityLog: typeof activityLog;
   classBookings: typeof classBookings;
+  clientLinks: typeof clientLinks;
   clients: typeof clients;
   contacts: typeof contacts;
   content: typeof content;
   crmContacts: typeof crmContacts;
   daycareReports: typeof daycareReports;
+  dropboxConfig: typeof dropboxConfig;
   events: typeof events;
   groceryItems: typeof groceryItems;
   meals: typeof meals;

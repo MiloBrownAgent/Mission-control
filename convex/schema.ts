@@ -266,6 +266,23 @@ export default defineSchema({
     .index("by_date", ["classDate"])
     .index("by_member_date", ["member", "classDate"]),
 
+  clientLinks: defineTable({
+    token: v.string(),
+    clientSlug: v.string(),
+    folderPath: v.string(),
+    label: v.optional(v.string()),
+    active: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_token", ["token"])
+    .index("by_client", ["clientSlug"]),
+
+  dropboxConfig: defineTable({
+    accessToken: v.string(),
+    refreshToken: v.optional(v.string()),
+    connectedAt: v.number(),
+  }),
+
   actionItems: defineTable({
     title: v.string(),
     description: v.string(),

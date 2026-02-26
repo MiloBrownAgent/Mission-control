@@ -23,6 +23,7 @@ import {
   DollarSign,
   ShoppingCart,
   Wrench,
+  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ const workNavigation = [
   { name: "Memories", href: "/memories", icon: Brain, iconClassName: undefined },
   { name: "Team", href: "/team", icon: Users, iconClassName: undefined },
   { name: "Office", href: "/office", icon: Building2, iconClassName: undefined },
+  { name: "Client Links", href: "/office/links", icon: Link2, iconClassName: undefined },
 ];
 
 const familyNavigation = [
