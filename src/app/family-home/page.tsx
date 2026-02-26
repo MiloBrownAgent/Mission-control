@@ -125,7 +125,28 @@ function FamilyHomePage() {
   const weekendData = useQuery(api.weekendActivities.getLatest);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
   const addGroceryItem = useMutation(api.groceryItems.addItem);
+  const toggleGroceryItem = useMutation(api.groceryItems.toggleItem);
+  const clearCheckedItems = useMutation(api.groceryItems.clearChecked);
   const uncheckedGrocery = groceryItems?.filter((i) => !i.checked) ?? [];
+  const checkedGrocery = groceryItems?.filter((i) => i.checked) ?? [];
+
+  const CATEGORY_ORDER = ["Produce", "Proteins", "Dairy", "Pantry", "Bakery", "Baby", "Household", "Other"];
+  const groupByCategory = (items: typeof uncheckedGrocery) => {
+    const groups: Record<string, typeof uncheckedGrocery> = {};
+    for (const item of items) {
+      const cat = item.category ?? "Other";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(item);
+    }
+    return CATEGORY_ORDER
+      .filter(c => groups[c]?.length)
+      .map(c => ({ category: c, items: groups[c] }))
+      .concat(
+        Object.keys(groups)
+          .filter(c => !CATEGORY_ORDER.includes(c))
+          .map(c => ({ category: c, items: groups[c] }))
+      );
+  };
 
   const currentWeekStart = getWeekStart(now);
   const meals = useQuery(api.meals.getWeek, { weekStart: currentWeekStart });
@@ -619,29 +640,63 @@ function FamilyHomePage() {
           </div>
         ) : (
           <>
-            <p className="text-sm text-[#6B5B4E] mb-3">
-              🛒 {uncheckedGrocery.length} item{uncheckedGrocery.length !== 1 ? "s" : ""} on the list
-            </p>
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-[#6B5B4E]">
+                {uncheckedGrocery.length === 0
+                  ? "List is empty"
+                  : `${uncheckedGrocery.length} item${uncheckedGrocery.length !== 1 ? "s" : ""} to get`}
+              </p>
+              {checkedGrocery.length > 0 && (
+                <button
+                  onClick={() => clearCheckedItems({})}
+                  className="text-xs text-[#6B5B4E] hover:text-[#C4533A] transition-colors"
+                >
+                  Clear {checkedGrocery.length} done
+                </button>
+              )}
+            </div>
 
+            {/* Grouped items */}
             {uncheckedGrocery.length > 0 && (
-              <div className="space-y-1.5 mb-3">
-                {uncheckedGrocery.slice(0, 3).map((item) => (
-                  <div
-                    key={item._id}
-                    className="flex items-center gap-2 rounded-lg border border-[#C07A1A]/15 bg-[#C07A1A]/5 px-3 py-2"
-                  >
-                    <span className="text-xs text-[#C07A1A]">•</span>
-                    <span className="text-sm flex-1 truncate text-[#1C1208]">{item.text}</span>
-                    {item.category && (
-                      <span className="text-[10px] text-[#6B5B4E]">{item.category}</span>
-                    )}
+              <div className="space-y-3 mb-4">
+                {groupByCategory(uncheckedGrocery).map(({ category, items }) => (
+                  <div key={category}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#C07A1A]/60 mb-1.5 px-1">
+                      {category}
+                    </p>
+                    <div className="space-y-1">
+                      {items.map((item) => (
+                        <button
+                          key={item._id}
+                          onClick={() => toggleGroceryItem({ id: item._id })}
+                          className="w-full flex items-center gap-3 rounded-lg border border-[#C07A1A]/15 bg-[#C07A1A]/5 hover:bg-[#C07A1A]/10 px-3 py-2.5 text-left transition-colors"
+                        >
+                          <div className="h-4 w-4 shrink-0 rounded-full border-2 border-[#C07A1A]/40 flex items-center justify-center" />
+                          <span className="text-sm text-[#1C1208] leading-snug">{item.text}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 ))}
-                {uncheckedGrocery.length > 3 && (
-                  <p className="text-xs text-[#6B5B4E] px-1">
-                    +{uncheckedGrocery.length - 3} more items
-                  </p>
-                )}
+              </div>
+            )}
+
+            {/* Checked items (collapsed) */}
+            {checkedGrocery.length > 0 && (
+              <div className="space-y-1 mb-4 opacity-50">
+                {checkedGrocery.map((item) => (
+                  <button
+                    key={item._id}
+                    onClick={() => toggleGroceryItem({ id: item._id })}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-left"
+                  >
+                    <div className="h-4 w-4 shrink-0 rounded-full border-2 border-[#C07A1A]/40 bg-[#C07A1A]/20 flex items-center justify-center">
+                      <div className="h-2 w-2 rounded-full bg-[#C07A1A]" />
+                    </div>
+                    <span className="text-sm text-[#6B5B4E] line-through leading-snug">{item.text}</span>
+                  </button>
+                ))}
               </div>
             )}
 
@@ -657,8 +712,8 @@ function FamilyHomePage() {
                     setGroceryInput("");
                   }
                 }}
-                placeholder="Quick add..."
-                className="flex-1 rounded-lg border border-[#C07A1A]/20 bg-[#C07A1A]/5 px-3 py-1.5 text-sm text-[#1C1208] placeholder:text-[#6B5B4E] focus:outline-none focus:ring-2 focus:ring-[#C07A1A]/30"
+                placeholder="Add an item..."
+                className="flex-1 rounded-lg border border-[#C07A1A]/20 bg-[#C07A1A]/5 px-3 py-2 text-sm text-[#1C1208] placeholder:text-[#6B5B4E] focus:outline-none focus:ring-2 focus:ring-[#C07A1A]/30"
               />
               <button
                 onClick={async () => {
@@ -667,7 +722,7 @@ function FamilyHomePage() {
                     setGroceryInput("");
                   }
                 }}
-                className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-[#C4533A] to-[#C07A1A] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
+                className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-[#C4533A] to-[#C07A1A] px-3 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add
