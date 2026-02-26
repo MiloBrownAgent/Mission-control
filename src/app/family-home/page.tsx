@@ -130,6 +130,14 @@ function FamilyHomePage() {
   const currentWeekStart = getWeekStart(now);
   const meals = useQuery(api.meals.getWeek, { weekStart: currentWeekStart });
 
+  // Next week meal plan (approval flow)
+  const nextWeekStart = getWeekStart(addDays(now, 7));
+  const nextWeekMeals = useQuery(api.meals.getWeek, { weekStart: nextWeekStart });
+  const approveMeal = useMutation(api.meals.approveMeal);
+  const denyMeal = useMutation(api.meals.denyMeal);
+  const replaceMeal = useMutation(api.meals.replaceMeal);
+  const [deniedId, setDeniedId] = useState<string | null>(null);
+
   const todayDayName: DayName = DAY_NAMES[now.getDay()];
   const todayMeals = meals?.filter((m) => m.day === todayDayName) ?? [];
   const breakfastToday = todayMeals.find((m) => m.mealType === "breakfast");
@@ -372,6 +380,115 @@ function FamilyHomePage() {
           </div>
         )}
       </Card>
+
+      {/* ── Section 3b: Next Week's Meal Plan (Approval) ── */}
+      {nextWeekMeals !== undefined && nextWeekMeals.some(m => m.status === "pending") && (() => {
+        const DAYS_ORDER = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"] as const;
+        const pendingDinners = nextWeekMeals.filter(m => m.mealType === "dinner");
+        const pendingLunches = nextWeekMeals.filter(m => m.mealType === "lunch" && m.status === "pending");
+        const allPending = [...pendingDinners, ...pendingLunches];
+        const totalPending = allPending.filter(m => m.status === "pending").length;
+        const totalMeals = allPending.length;
+        const allApproved = totalPending === 0;
+
+        return (
+          <Card className="rounded-[20px] border-[#C07A1A]/30 bg-gradient-to-br from-[#C07A1A]/5 via-[#C07A1A]/3 to-transparent p-5">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C07A1A]/10">
+                <UtensilsCrossed className="h-4 w-4 text-[#C07A1A]" />
+              </div>
+              <h2 className="font-bold text-[#C07A1A] text-xl font-[family-name:var(--font-display)]">Next Week&apos;s Meals</h2>
+              {!allApproved && (
+                <span className="ml-auto text-xs font-medium text-[#C07A1A] bg-[#C07A1A]/10 px-2 py-0.5 rounded-full">
+                  {totalPending} to approve
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-[#6B5B4E] mb-4">Week of Mar 2 · Approve or swap each meal</p>
+
+            <div className="space-y-3">
+              {DAYS_ORDER.map(day => {
+                const dinner = nextWeekMeals.find(m => m.day === day && m.mealType === "dinner");
+                const lunch = nextWeekMeals.find(m => m.day === day && m.mealType === "lunch");
+                if (!dinner && !lunch) return null;
+
+                return (
+                  <div key={day} className="rounded-xl border border-[#C07A1A]/15 bg-white/40 overflow-hidden">
+                    <div className="px-3 py-1.5 bg-[#C07A1A]/8 border-b border-[#C07A1A]/10">
+                      <p className="text-xs font-semibold text-[#C07A1A] uppercase tracking-wide">{day}</p>
+                    </div>
+                    <div className="divide-y divide-[#C07A1A]/10">
+                      {[dinner, lunch].filter(Boolean).map(meal => {
+                        if (!meal) return null;
+                        const isApproved = meal.status === "approved";
+                        const isDenied = meal.status === "denied" || deniedId === meal._id;
+                        const isPending = !isApproved && !isDenied;
+                        const label = meal.mealType === "dinner" ? "🌙 Dinner" : "☀️ Lunch";
+
+                        return (
+                          <div key={meal._id} className="px-3 py-2.5">
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-[#6B5B4E] font-medium">{label}</p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  {meal.url ? (
+                                    <a href={meal.url} target="_blank" rel="noopener noreferrer"
+                                      className="text-sm font-medium text-[#1C1208] hover:text-[#C07A1A] hover:underline transition-colors leading-tight">
+                                      {meal.name}
+                                    </a>
+                                  ) : (
+                                    <p className="text-sm font-medium text-[#1C1208] leading-tight">{meal.name}</p>
+                                  )}
+                                </div>
+                                {meal.notes && (
+                                  <p className="text-xs text-[#6B5B4E]/70 mt-0.5">{meal.notes}</p>
+                                )}
+                              </div>
+                              {/* Status badge / buttons */}
+                              {isApproved && (
+                                <span className="shrink-0 text-xs font-semibold text-[#2E6B50] bg-[#2E6B50]/10 px-2 py-0.5 rounded-full mt-0.5">✓</span>
+                              )}
+                              {isPending && (
+                                <div className="flex gap-1.5 shrink-0 mt-0.5">
+                                  <button
+                                    onClick={() => approveMeal({ id: meal._id })}
+                                    className="text-xs font-semibold text-white bg-[#2E6B50] hover:bg-[#2E6B50]/80 px-2.5 py-1 rounded-lg transition-colors"
+                                  >✓</button>
+                                  <button
+                                    onClick={() => { denyMeal({ id: meal._id }); setDeniedId(meal._id); }}
+                                    className="text-xs font-semibold text-white bg-[#C4533A] hover:bg-[#C4533A]/80 px-2.5 py-1 rounded-lg transition-colors"
+                                  >✕</button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Replacement picker */}
+                            {isDenied && meal.replacements && meal.replacements.length > 0 && (
+                              <div className="mt-2 space-y-1.5">
+                                <p className="text-xs text-[#C4533A] font-medium">Pick a replacement:</p>
+                                {meal.replacements.map((r, i) => (
+                                  <button
+                                    key={i}
+                                    onClick={() => { replaceMeal({ id: meal._id, name: r.name, url: r.url, notes: r.notes }); setDeniedId(null); }}
+                                    className="w-full text-left rounded-lg border border-[#C07A1A]/20 bg-[#C07A1A]/5 hover:bg-[#C07A1A]/10 px-3 py-2 transition-colors"
+                                  >
+                                    <p className="text-xs font-medium text-[#1C1208]">{r.name}</p>
+                                    {r.notes && <p className="text-xs text-[#6B5B4E]">{r.notes}</p>}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        );
+      })()}
 
       {/* ── Section 4: Upcoming Events ── */}
       <Card className="rounded-[20px] border-[#6B5A9B]/20 bg-gradient-to-br from-[#6B5A9B]/5 via-[#6B5A9B]/3 to-transparent p-5">

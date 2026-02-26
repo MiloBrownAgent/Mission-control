@@ -71,6 +71,91 @@ export const setMeal = mutation({
   },
 });
 
+export const upsertMeal = mutation({
+  args: {
+    weekStart: v.string(),
+    day: DAY_TYPE,
+    mealType: MEAL_TYPE,
+    name: v.string(),
+    notes: v.optional(v.string()),
+    sorenMeal: v.optional(v.string()),
+    status: v.optional(v.union(v.literal("pending"), v.literal("approved"), v.literal("denied"))),
+    url: v.optional(v.string()),
+    replacements: v.optional(v.array(v.object({
+      name: v.string(),
+      url: v.optional(v.string()),
+      notes: v.optional(v.string()),
+    }))),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("meals")
+      .withIndex("by_week_day_meal", (q) =>
+        q.eq("weekStart", args.weekStart).eq("day", args.day).eq("mealType", args.mealType)
+      )
+      .first();
+    const now = Date.now();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        name: args.name,
+        notes: args.notes,
+        sorenMeal: args.sorenMeal,
+        status: args.status,
+        url: args.url,
+        replacements: args.replacements,
+        updatedAt: now,
+      });
+      return existing._id;
+    } else {
+      return await ctx.db.insert("meals", {
+        weekStart: args.weekStart,
+        day: args.day,
+        mealType: args.mealType,
+        name: args.name,
+        notes: args.notes,
+        sorenMeal: args.sorenMeal,
+        status: args.status,
+        url: args.url,
+        replacements: args.replacements,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  },
+});
+
+export const approveMeal = mutation({
+  args: { id: v.id("meals") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { status: "approved", updatedAt: Date.now() });
+  },
+});
+
+export const denyMeal = mutation({
+  args: { id: v.id("meals") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { status: "denied", updatedAt: Date.now() });
+  },
+});
+
+export const replaceMeal = mutation({
+  args: {
+    id: v.id("meals"),
+    name: v.string(),
+    url: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      name: args.name,
+      url: args.url,
+      notes: args.notes,
+      status: "approved",
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 export const clearMeal = mutation({
   args: {
     weekStart: v.string(),

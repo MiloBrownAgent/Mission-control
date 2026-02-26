@@ -193,6 +193,13 @@ export default defineSchema({
     name: v.string(),
     notes: v.optional(v.string()),
     sorenMeal: v.optional(v.string()),
+    status: v.optional(v.union(v.literal("pending"), v.literal("approved"), v.literal("denied"))),
+    url: v.optional(v.string()),
+    replacements: v.optional(v.array(v.object({
+      name: v.string(),
+      url: v.optional(v.string()),
+      notes: v.optional(v.string()),
+    }))),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
