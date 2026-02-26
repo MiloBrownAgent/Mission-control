@@ -23,6 +23,8 @@ export const upsert = mutation({
     meals: v.optional(v.number()),
     totalSleep: v.optional(v.string()),
     totalNaps: v.optional(v.number()),
+    pees: v.optional(v.number()),
+    poops: v.optional(v.number()),
     photoUrl: v.optional(v.string()),
     rawSubject: v.optional(v.string()),
     parsedAt: v.number(),
