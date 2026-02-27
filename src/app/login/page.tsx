@@ -38,30 +38,18 @@ function LoginForm() {
   }
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-4 ${
-      isFamilyMode
-        ? 'bg-gradient-to-br from-[#C4533A]/8 via-[#F8F4EF] to-[#C07A1A]/5'
-        : 'bg-gradient-to-br from-[#2A4E8A]/8 via-[#F8F4EF] to-[#6B5A9B]/5'
-    }`}>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#060606]">
       <div className="w-full max-w-sm space-y-6">
         {/* Logo */}
         <div className="text-center space-y-3">
-          <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-2xl shadow-xl ${
-            isFamilyMode ? 'bg-[#C4533A] shadow-[#C4533A]/20' : 'bg-[#2A4E8A] shadow-[#2A4E8A]/20'
-          }`}>
-            {isFamilyMode ? (
-              <span className="text-3xl">🏠</span>
-            ) : (
-              <Lock className="h-8 w-8 text-white" />
-            )}
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl shadow-xl bg-[#B8956A]/10 border border-[#B8956A]/20">
+            <Lock className="h-7 w-7 text-[#B8956A]" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#1C1208] font-[family-name:var(--font-display)]">
-              {isFamilyMode ? 'Sweeney Home' : 'Mission Control'}
+            <h1 className="text-2xl font-bold text-[#E8E4DF] font-[family-name:var(--font-display)]">
+              Mission Control
             </h1>
-            <p className="text-sm text-[#6B5B4E] mt-1">
-              {isFamilyMode ? 'Enter your family password' : 'Private access only'}
-            </p>
+            <p className="text-sm text-[#6B6560] mt-1">Private access only</p>
           </div>
         </div>
 
@@ -78,19 +66,19 @@ function LoginForm() {
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
-              className="w-full rounded-xl border border-[#E5DDD4] bg-[#FFFCF7] px-4 py-3.5 text-[#1C1208] placeholder-[#6B5B4E]/60 text-lg focus:border-[#C4533A]/40 focus:outline-none focus:ring-2 focus:ring-[#C4533A]/20 pr-12"
+              className="w-full rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-4 py-3.5 text-[#E8E4DF] placeholder-[#6B6560] text-lg focus:border-[#B8956A]/40 focus:outline-none focus:ring-2 focus:ring-[#B8956A]/20 pr-12"
             />
             <button
               type="button"
               onClick={() => setShowPassword(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B5B4E] hover:text-[#1C1208]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6560] hover:text-[#E8E4DF] transition-colors"
             >
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
 
           {error && (
-            <p className="flex items-center gap-2 text-sm text-red-600">
+            <p className="flex items-center gap-2 text-sm text-red-400">
               <ShieldAlert className="h-4 w-4 shrink-0" />
               {error}
             </p>
@@ -99,17 +87,13 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading || !password}
-            className={`w-full rounded-xl px-4 py-3.5 text-base font-semibold text-white transition-all disabled:opacity-50 ${
-              isFamilyMode
-                ? 'bg-[#C4533A] hover:bg-[#C4533A]/90 active:bg-[#C4533A]/80'
-                : 'bg-[#2A4E8A] hover:bg-[#2A4E8A]/90 active:bg-[#2A4E8A]/80'
-            }`}
+            className="w-full rounded-xl px-4 py-3.5 text-base font-semibold text-[#060606] transition-all disabled:opacity-50 bg-[#B8956A] hover:bg-[#CDAA7E] active:bg-[#B8956A]"
           >
             {loading ? 'Unlocking…' : 'Enter'}
           </button>
         </form>
 
-        <p className="text-center text-xs text-[#6B5B4E]">
+        <p className="text-center text-xs text-[#6B6560]">
           🔒 Private — Authorized access only
         </p>
       </div>
