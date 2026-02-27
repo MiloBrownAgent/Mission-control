@@ -35,17 +35,13 @@ const workNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, iconClassName: undefined },
   { name: "Tasks", href: "/tasks", icon: ListTodo, iconClassName: undefined },
   { name: "Calendar", href: "/calendar", icon: CalendarDays, iconClassName: undefined },
-  { name: "Family", href: "/family", icon: Heart, iconClassName: undefined },
-  { name: "Emergency", href: "/emergency", icon: ShieldAlert, iconClassName: "text-red-600" },
-  { name: "Meals", href: "/meals", icon: UtensilsCrossed, iconClassName: undefined },
-  { name: "Finance", href: "/finance", icon: DollarSign, iconClassName: undefined },
-  { name: "Projects", href: "/projects", icon: Layers, iconClassName: undefined },
   { name: "CRM", href: "/crm", icon: Target, iconClassName: undefined },
+  { name: "Projects", href: "/projects", icon: Layers, iconClassName: undefined },
   { name: "Content", href: "/content", icon: FileText, iconClassName: undefined },
-  { name: "Memories", href: "/memories", icon: Brain, iconClassName: undefined },
   { name: "Team", href: "/team", icon: Users, iconClassName: undefined },
   { name: "Office", href: "/office", icon: Building2, iconClassName: undefined },
   { name: "Client Links", href: "/office/links", icon: Link2, iconClassName: undefined },
+  { name: "Emergency", href: "/emergency", icon: ShieldAlert, iconClassName: "text-red-600" },
 ];
 
 const familyNavigation = [
