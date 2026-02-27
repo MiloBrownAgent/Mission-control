@@ -243,13 +243,11 @@ function FamilyHomePage() {
           ) : (
             <div className="space-y-3">
               {daycareReport.photoUrl && (
-                <div className="w-full overflow-hidden rounded-2xl aspect-[4/3] bg-[#2A4E8A]/5">
-                  <img
-                    src={daycareReport.photoUrl}
-                    alt="Soren at daycare"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <img
+                  src={daycareReport.photoUrl}
+                  alt="Soren at daycare"
+                  className="w-full h-auto block rounded-2xl"
+                />
               )}
               <div className="grid grid-cols-2 gap-2">
                 {daycareReport.totalTime && (

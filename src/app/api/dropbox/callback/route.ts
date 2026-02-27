@@ -27,19 +27,26 @@ export async function GET(request: NextRequest) {
     if (!tokenRes.ok) {
       const err = await tokenRes.text();
       console.error("Dropbox token exchange failed:", err);
-      return NextResponse.redirect(new URL("/office/links?error=token_exchange", request.url));
+      return NextResponse.redirect(new URL(`/office/links?error=token_exchange&detail=${encodeURIComponent(err.slice(0, 200))}`, request.url));
     }
 
     const tokens = await tokenRes.json();
 
-    await convex.mutation(api.dropboxConfig.saveConfig, {
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-    });
+    try {
+      await convex.mutation(api.dropboxConfig.saveConfig, {
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+      });
+    } catch (convexErr) {
+      const msg = convexErr instanceof Error ? convexErr.message : String(convexErr);
+      console.error("Convex save failed:", msg);
+      return NextResponse.redirect(new URL(`/office/links?error=convex_save&detail=${encodeURIComponent(msg.slice(0, 200))}`, request.url));
+    }
 
     return NextResponse.redirect(new URL("/office/links?connected=true", request.url));
   } catch (error) {
-    console.error("Dropbox OAuth error:", error);
-    return NextResponse.redirect(new URL("/office/links?error=oauth_failed", request.url));
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Dropbox OAuth error:", msg);
+    return NextResponse.redirect(new URL(`/office/links?error=oauth_failed&detail=${encodeURIComponent(msg.slice(0, 200))}`, request.url));
   }
 }

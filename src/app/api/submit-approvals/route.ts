@@ -3,7 +3,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
-const TELEGRAM_BOT_TOKEN = "8214613908:AAGhMq6p7ygcybeS6fdWnf-DnpuUEJvDfOY";
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 const DAVE_CHAT_ID = "8510702982";
 
 export async function POST(request: Request) {
