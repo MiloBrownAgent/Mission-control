@@ -16,18 +16,21 @@ export const listUpcoming = query({
       .withIndex("by_date", (q) => q.gte("classDate", todayStr).lte("classDate", endStr))
       .collect();
 
-    function parseDateTime(date: string, time: string): number {
-      // time format: "8:00 AM" or "10:00 AM"
+    // Convert "YYYY-MM-DD" + "8:00 AM" → sortable integer (avoids new Date() in Convex runtime)
+    function toSortKey(date: string, time: string): number {
       const [timePart, meridiem] = time.split(" ");
-      const [h, m] = timePart.split(":").map(Number);
-      let hours = h % 12;
-      if (meridiem === "PM") hours += 12;
-      return new Date(`${date}T${String(hours).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`).getTime();
+      const [hStr, mStr] = timePart.split(":");
+      let h = parseInt(hStr, 10);
+      const m = parseInt(mStr || "0", 10);
+      if (meridiem === "PM" && h !== 12) h += 12;
+      if (meridiem === "AM" && h === 12) h = 0;
+      const dateNum = parseInt(date.replace(/-/g, ""), 10); // e.g. 20260228
+      return dateNum * 10000 + h * 100 + m;
     }
 
     return bookings
       .filter((b) => b.status !== "cancelled")
-      .sort((a, b) => parseDateTime(a.classDate, a.classTime) - parseDateTime(b.classDate, b.classTime));
+      .sort((a, b) => toSortKey(a.classDate, a.classTime) - toSortKey(b.classDate, b.classTime));
   },
 });
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/login', '/api/auth', '/api/favicon', '/api/manifest', '/api/dropbox/callback', '/api/dropbox/folders', '/api/dropbox/download', '/_next', '/favicon.ico', '/manifest.json', '/icons'];
+const PUBLIC_PATHS = ['/login', '/api/auth', '/api/favicon', '/api/manifest', '/api/dropbox/callback', '/api/dropbox/folders', '/api/dropbox/download', '/api/whoop', '/_next', '/favicon.ico', '/manifest.json', '/icons'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

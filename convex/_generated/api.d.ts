@@ -30,6 +30,7 @@ import type * as seed from "../seed.js";
 import type * as seedCrm from "../seedCrm.js";
 import type * as tasks from "../tasks.js";
 import type * as weekendActivities from "../weekendActivities.js";
+import type * as whoop from "../whoop.js";
 
 import type {
   ApiFromModules,
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   seedCrm: typeof seedCrm;
   tasks: typeof tasks;
   weekendActivities: typeof weekendActivities;
+  whoop: typeof whoop;
 }>;
 
 /**

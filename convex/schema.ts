@@ -336,6 +336,24 @@ export default defineSchema({
     lastVisitDate: v.optional(v.number()),
   }).index("by_key", ["key"]),
 
+  whoop_tokens: defineTable({
+    userId: v.string(),
+    accessToken: v.string(),
+    refreshToken: v.string(),
+    expiresAt: v.number(),
+    scope: v.string(),
+    lastSyncedAt: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
+
+  whoop_data: defineTable({
+    type: v.string(),   // "recovery" | "sleep"
+    date: v.string(),   // "2026-02-28"
+    data: v.any(),
+    storedAt: v.number(),
+  })
+    .index("by_type_date", ["type", "date"])
+    .index("by_type", ["type"]),
+
   flightDeals: defineTable({
     origin: v.string(),
     destination: v.string(),

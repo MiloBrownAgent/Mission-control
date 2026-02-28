@@ -21,6 +21,8 @@ import {
   TrendingUp,
   DollarSign,
   Users,
+  Heart,
+  Link2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -63,6 +65,128 @@ function useClock() {
   return time;
 }
 
+// ── WHOOP Recovery Widget ──────────────────────────────────────────────────
+
+interface WhoopWidgetProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any | null | undefined;
+}
+
+function WhoopWidget({ data }: WhoopWidgetProps) {
+  // data === undefined → still loading
+  // data === null      → no token connected
+  // data             → recovery record
+
+  if (data === undefined) {
+    // Loading skeleton
+    return (
+      <div className="h-28 animate-pulse rounded-xl border border-[#1A1816] bg-[#0D0C0A]" />
+    );
+  }
+
+  if (data === null) {
+    // No token → prompt connection
+    return (
+      <Card className="animate-fade-in-up rounded-xl border-[#1A1816] bg-[#0D0C0A] p-5">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#B8956A]/10">
+              <Heart className="h-4 w-4 text-[#B8956A]" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-[#E8E4DF]">WHOOP Recovery</p>
+              <p className="text-xs text-[#6B6560]">Connect your WHOOP to see recovery data</p>
+            </div>
+          </div>
+          <a
+            href="/api/whoop/auth"
+            className="flex items-center gap-1.5 rounded-lg bg-[#B8956A]/10 px-3 py-1.5 text-sm font-medium text-[#B8956A] transition-colors hover:bg-[#B8956A]/20"
+          >
+            <Link2 className="h-3.5 w-3.5" />
+            Connect WHOOP
+          </a>
+        </div>
+      </Card>
+    );
+  }
+
+  // Parse recovery fields from WHOOP record
+  // WHOOP recovery structure: { score: { recovery_score, hrv_rmssd_milli, resting_heart_rate, ... } }
+  const score: number | null  = data.score?.recovery_score  ?? data.recovery_score  ?? null;
+  const hrv: number | null    = data.score?.hrv_rmssd_milli ?? data.hrv_rmssd_milli ?? null;
+  const rhr: number | null    = data.score?.resting_heart_rate ?? data.resting_heart_rate ?? null;
+
+  const scoreColor =
+    score === null  ? "text-[#6B6560]"
+    : score >= 67   ? "text-[#2E6B50]"
+    : score >= 34   ? "text-[#C07A1A]"
+    :                 "text-[#C4533A]";
+
+  const scoreBg =
+    score === null  ? "bg-[#6B6560]/10"
+    : score >= 67   ? "bg-[#2E6B50]/10"
+    : score >= 34   ? "bg-[#C07A1A]/10"
+    :                 "bg-[#C4533A]/10";
+
+  const scoreLabel =
+    score === null  ? "—"
+    : score >= 67   ? "Recovered"
+    : score >= 34   ? "Moderate"
+    :                 "Low";
+
+  return (
+    <Card className={`animate-fade-in-up rounded-xl border-[#1A1816] ${scoreBg} p-5 transition-all`}>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        {/* Left — label */}
+        <div className="flex items-center gap-3">
+          <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${scoreBg}`}>
+            <Heart className={`h-4 w-4 ${scoreColor}`} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-[#E8E4DF]">WHOOP Recovery</p>
+            <p className="text-xs text-[#6B6560]">{data.date ?? "Today"} · {scoreLabel}</p>
+          </div>
+        </div>
+
+        {/* Right — metrics */}
+        <div className="flex items-center gap-6">
+          {/* Recovery score */}
+          <div className="text-right">
+            <p className={`text-4xl font-bold tabular-nums ${scoreColor}`}>
+              {score !== null ? `${Math.round(score)}%` : "—"}
+            </p>
+            <p className="text-[10px] text-[#6B6560] uppercase tracking-wide">Recovery</p>
+          </div>
+
+          {/* HRV */}
+          {hrv !== null && (
+            <div className="text-right">
+              <p className="text-2xl font-bold tabular-nums text-[#E8E4DF]">
+                {Math.round(hrv)}
+                <span className="text-sm text-[#6B6560] ml-0.5">ms</span>
+              </p>
+              <p className="text-[10px] text-[#6B6560] uppercase tracking-wide">HRV</p>
+            </div>
+          )}
+
+          {/* Resting HR */}
+          {rhr !== null && (
+            <div className="text-right">
+              <p className="text-2xl font-bold tabular-nums text-[#E8E4DF]">
+                {Math.round(rhr)}
+                <span className="text-sm text-[#6B6560] ml-0.5">bpm</span>
+              </p>
+              <p className="text-[10px] text-[#6B6560] uppercase tracking-wide">Resting HR</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ── Dashboard page ─────────────────────────────────────────────────────────
+
 export default function DashboardPage() {
   const mode = useAppMode();
   const router = useRouter();
@@ -70,11 +194,12 @@ export default function DashboardPage() {
     if (mode === "family") router.replace("/family-home");
   }, [mode, router]);
 
-  const tasks         = useQuery(api.tasks.list);
-  const upcomingEvents = useQuery(api.events.listUpcoming, { limit: 5 });
-  const actionBatch   = useQuery(api.actionItems.getLatestBatch);
-  const crmStats      = useQuery(api.clients.dashboardStats);
+  const tasks           = useQuery(api.tasks.list);
+  const upcomingEvents  = useQuery(api.events.listUpcoming, { limit: 5 });
+  const actionBatch     = useQuery(api.actionItems.getLatestBatch);
+  const crmStats        = useQuery(api.clients.dashboardStats);
   const pipelineSummary = useQuery(api.pipeline.summary);
+  const whoopRecovery   = useQuery(api.whoop.getLatestByType, { type: "recovery" });
 
   const [checkedIds, setCheckedIds]   = useState<Set<string>>(new Set());
   const [submitting, setSubmitting]   = useState(false);
@@ -222,6 +347,9 @@ export default function DashboardPage() {
           </Card>
         </Link>
       </div>
+
+      {/* ── WHOOP Recovery ──────────────────────────────────────────────────── */}
+      <WhoopWidget data={whoopRecovery} />
 
       {/* ── CRM Snapshot ────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
