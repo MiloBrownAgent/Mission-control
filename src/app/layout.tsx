@@ -51,6 +51,10 @@ export async function generateMetadata(): Promise<Metadata> {
     robots: {
       index: false,
       follow: false,
+      googleBot: {
+        index: false,
+        follow: false,
+      },
     },
     icons: {
       icon: `/api/favicon?mode=${mode}`,
