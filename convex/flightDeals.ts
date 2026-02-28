@@ -3,10 +3,10 @@ import { query, mutation } from "./_generated/server";
 
 function getThisWeekOf(): string {
   const now = new Date();
-  const day = now.getDay(); // 0=Sun
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
-  const mon = new Date(now.setDate(diff));
-  return mon.toISOString().split("T")[0];
+  const day = now.getUTCDay(); // 0=Sun (UTC)
+  const diff = now.getUTCDate() - day + (day === 0 ? -6 : 1); // Monday (UTC)
+  const mon = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), diff));
+  return mon.toISOString().split("T")[0]; // always "YYYY-MM-DD" in UTC
 }
 
 export const getThisWeek = query({
