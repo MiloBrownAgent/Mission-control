@@ -92,9 +92,49 @@
   }
 }
 
+/* ── Family / Home Dashboard light theme ── */
+body.family-mode {
+  --background: #FAF9F6;
+  --foreground: #1C1208;
+  --card: #FFFFFF;
+  --card-foreground: #1C1208;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1208;
+  --primary: #2E6B50;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F0EDE8;
+  --secondary-foreground: #1C1208;
+  --muted: #F0EDE8;
+  --muted-foreground: #6B5B4E;
+  --accent: #F0EDE8;
+  --accent-foreground: #1C1208;
+  --border: #E5DDD4;
+  --input: #E5DDD4;
+  --ring: #2E6B50;
+  --sidebar: #F5F2ED;
+  --sidebar-foreground: #1C1208;
+  --sidebar-primary: #2E6B50;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EDE9E3;
+  --sidebar-accent-foreground: #1C1208;
+  --sidebar-border: #E5DDD4;
+  --sidebar-ring: #2E6B50;
+}
+
 ::selection {
   background: #B8956A;
   color: #060606;
+}
+
+/* Custom scrollbar (family mode) */
+body.family-mode ::-webkit-scrollbar-track {
+  background: #FAF9F6;
+}
+body.family-mode ::-webkit-scrollbar-thumb {
+  background: #D5CFC7;
+}
+body.family-mode ::-webkit-scrollbar-thumb:hover {
+  background: #B8A99A;
 }
 
 /* Custom scrollbar */

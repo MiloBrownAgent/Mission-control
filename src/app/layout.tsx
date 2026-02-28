@@ -66,15 +66,23 @@ export const viewport: Viewport = {
   themeColor: "#060606",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const host =
+    headersList.get("host") ||
+    headersList.get("x-forwarded-host") ||
+    "";
+  const isFamily =
+    host.includes("home.lookandseen") || host.includes("family");
+
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} ${syne.variable} font-sans antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} ${syne.variable} font-sans antialiased${isFamily ? " family-mode" : ""}`}
       >
         <ConvexClientProvider>
           <CommandPalette />
