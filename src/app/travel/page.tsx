@@ -31,23 +31,36 @@ function formatMiles(miles: number) {
   return miles.toLocaleString();
 }
 
-function buildDeltaUrl(
+function buildGoogleFlightsUrl(
   origin: string,
   destination: string,
   departureDate: string,
   returnDate?: string | null,
-  paxCount = 2
-) {
+): string {
+  const orig = origin.toUpperCase();
+  const dest = destination.toUpperCase();
+  if (returnDate) {
+    return `https://www.google.com/flights?hl=en#flt=${orig}.${dest}.${departureDate}*${dest}.${orig}.${returnDate};c:USD;e:1;sd:1`;
+  }
+  return `https://www.google.com/flights?hl=en#flt=${orig}.${dest}.${departureDate};c:USD;e:1;sd:1`;
+}
+
+function buildDeltaAwardUrl(
+  origin: string,
+  destination: string,
+  departureDate: string,
+  returnDate?: string | null,
+): string {
   const params = new URLSearchParams({
-    tripType: returnDate ? "RT" : "OW",
+    tripType: returnDate ? "ROUND_TRIP" : "ONE_WAY",
+    departureAirportCode: origin.toUpperCase(),
+    arrivalAirportCode: destination.toUpperCase(),
     departureDate,
     ...(returnDate ? { returnDate } : {}),
-    origin: origin.toUpperCase(),
-    destination: destination.toUpperCase(),
-    paxCount: String(paxCount),
-    cabinType: "coach",
+    adults: "2",
+    awardTravel: "true",
   });
-  return `https://www.delta.com/us/en/flight-search/book-a-flight?${params.toString()}`;
+  return `https://www.delta.com/us/en/book-a-flight/results?${params.toString()}`;
 }
 
 function buildAirlineUrl(
@@ -56,9 +69,8 @@ function buildAirlineUrl(
   destination: string,
   departureDate: string,
   returnDate?: string | null,
-  paxCount = 2
 ): string {
-  return buildDeltaUrl(origin, destination, departureDate, returnDate, paxCount);
+  return buildGoogleFlightsUrl(origin, destination, departureDate, returnDate);
 }
 
 type SortMode = "score" | "price" | "nonstop";
@@ -93,7 +105,7 @@ export default function TravelPage() {
   function buildSearchUrl() {
     if (!searchTo || !searchDate) return "#";
     const dest = searchTo.toUpperCase().trim();
-    return buildDeltaUrl("MSP", dest, searchDate, searchReturn || null, 2);
+    return buildGoogleFlightsUrl("MSP", dest, searchDate, searchReturn || null);
   }
 
   return (
@@ -270,14 +282,25 @@ export default function TravelPage() {
               </div>
 
               {/* CTA */}
-              <a
-                href={buildAirlineUrl(deal.airline, deal.origin, deal.destination, deal.departureDate, deal.returnDate)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#B8956A] to-[#CDAA7E] px-3 py-2 text-xs font-bold text-[#060606] hover:opacity-90 transition-opacity"
-              >
-                🔍 Search this deal →
-              </a>
+              <div className="flex gap-2">
+                <a
+                  href={buildGoogleFlightsUrl(deal.origin, deal.destination, deal.departureDate, deal.returnDate)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#B8956A] to-[#CDAA7E] px-3 py-2 text-xs font-bold text-[#060606] hover:opacity-90 transition-opacity"
+                >
+                  🔍 Search flights
+                </a>
+                <a
+                  href={buildDeltaAwardUrl(deal.origin, deal.destination, deal.departureDate, deal.returnDate)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 rounded-lg border border-[#B8956A]/40 px-3 py-2 text-xs font-semibold text-[#B8956A] hover:bg-[#B8956A]/10 transition-colors"
+                  title="Book with SkyMiles on Delta"
+                >
+                  ✈️ SkyMiles
+                </a>
+              </div>
             </div>
           ))}
         </div>
