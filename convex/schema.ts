@@ -374,4 +374,20 @@ export default defineSchema({
     pulledAt: v.number(),
     weekOf: v.string(),
   }).index("by_week", ["weekOf"]).index("by_score", ["dealScore"]),
+
+  polymarket_trades: defineTable({
+    question: v.string(),                          // "US recession by end of 2026?"
+    position: v.union(v.literal("Yes"), v.literal("No")),
+    entry_price: v.number(),                       // 0–100 (e.g. 31 = 31¢)
+    my_probability: v.number(),                    // 0–100 (my estimate)
+    kelly_stake: v.number(),                       // paper $ amount staked
+    market_url: v.string(),                        // polymarket.com/event/...
+    category: v.string(),                          // "Macro" | "Fed" | "Recession" | "Trade" | "Other"
+    resolve_date: v.string(),                      // "2026-03-18"
+    resolved: v.boolean(),
+    outcome: v.optional(v.boolean()),              // true = Yes resolved, false = No resolved
+    pnl: v.optional(v.number()),                   // realized P&L on resolution
+    notes: v.string(),
+    created_at: v.number(),
+  }).index("by_resolved", ["resolved"]).index("by_created", ["created_at"]),
 });

@@ -438,7 +438,7 @@ function FamilyHomePage() {
                 </span>
               )}
             </div>
-            <p className="text-xs text-[#6B5B4E] mb-4">Week of Mar 2 · Approve or swap each meal</p>
+            <p className="text-xs text-[#6B5B4E] mb-4">Week of {format(addDays(now, 7), "MMM d")} · Approve or swap each meal</p>
 
             <div className="space-y-3">
               {DAYS_ORDER.map(day => {

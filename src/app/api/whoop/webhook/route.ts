@@ -9,6 +9,9 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { fetchWhoopData, WhoopTokens } from "@/lib/whoop";
 
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
+const DAVE_CHAT_ID = "8510702982";
+
 function getConvex() {
   return new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 }
@@ -68,4 +71,23 @@ async function syncWhoopData(type: string) {
     date,
     data: record,
   });
+
+  // Red-zone recovery alert: notify Dave via Telegram when score < 33
+  if (mapping.type === "recovery") {
+    const scoreData = (record as unknown as Record<string, Record<string, number>>).score;
+    const recoveryScore = scoreData?.recovery_score;
+    if (typeof recoveryScore === "number" && recoveryScore < 33) {
+      const hrv  = scoreData?.hrv_rmssd_milli    ?? scoreData?.hrv_rmssd_on_wrist ?? null;
+      const rhr  = scoreData?.resting_heart_rate ?? null;
+      const text =
+        `🔴 Recovery alert: Dave's WHOOP score is ${Math.round(recoveryScore)}% today.\n` +
+        `HRV: ${hrv !== null ? Math.round(hrv) : "—"}ms · RHR: ${rhr !== null ? Math.round(rhr) : "—"}bpm\n` +
+        `Take it easy today.`;
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: DAVE_CHAT_ID, text }),
+      }).catch((err) => console.error("[WHOOP webhook] Telegram alert error:", err));
+    }
+  }
 }

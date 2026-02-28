@@ -93,8 +93,8 @@ const projects: ProjectData[] = [
     status: "Production",
     statusColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
     progress: 100,
-    url: "http://localhost:3000",
-    urlLabel: "localhost:3000",
+    url: "https://mc.lookandseen.com",
+    urlLabel: "mc.lookandseen.com",
     color: "from-emerald-500/10",
     border: "border-emerald-500/20",
     actionItems: [

@@ -113,7 +113,7 @@ export default function FinancePage() {
             <p className="text-5xl font-bold tracking-tight text-emerald-300 sm:text-6xl">
               {formatCurrency(TOTAL)}
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">As of Feb 22, 2026</p>
+            <p className="mt-1 text-sm text-muted-foreground">Snapshot · Feb 28, 2026</p>
           </div>
         </div>
       </div>

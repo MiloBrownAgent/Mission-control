@@ -26,6 +26,7 @@ import {
   Link2,
   Sparkles,
   Plane,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ const workNavigation = [
   { name: "Team", href: "/team", icon: Users, iconClassName: undefined },
   { name: "Office", href: "/office", icon: Building2, iconClassName: undefined },
   { name: "Client Links", href: "/office/links", icon: Link2, iconClassName: undefined },
+  { name: "Quant", href: "/quant", icon: TrendingUp, iconClassName: undefined },
   { name: "Emergency", href: "/emergency", icon: ShieldAlert, iconClassName: "text-red-600" },
 ];
 

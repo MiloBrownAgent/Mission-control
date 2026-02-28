@@ -26,6 +26,7 @@ import type * as meals from "../meals.js";
 import type * as memories from "../memories.js";
 import type * as outreach from "../outreach.js";
 import type * as pipeline from "../pipeline.js";
+import type * as polymarket from "../polymarket.js";
 import type * as seed from "../seed.js";
 import type * as seedCrm from "../seedCrm.js";
 import type * as tasks from "../tasks.js";
@@ -57,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   memories: typeof memories;
   outreach: typeof outreach;
   pipeline: typeof pipeline;
+  polymarket: typeof polymarket;
   seed: typeof seed;
   seedCrm: typeof seedCrm;
   tasks: typeof tasks;

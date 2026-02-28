@@ -43,11 +43,10 @@ const familyMembers = [
   {
     name: "Cammie Sweeney",
     role: "Dave's Mom",
-    emoji: "🎂",
-    note: "Turning 70 on Feb 25! Lives in Greensboro.",
+    emoji: "👵",
+    note: "Turned 70 on Feb 25! Lives in Greensboro.",
     color: "from-[#C07A1A]/8 to-[#C07A1A]/3",
     border: "border-[#C07A1A]/15",
-    badge: "🎉 70th Birthday!",
   },
   {
     name: "Mike Sweeney",
@@ -136,7 +135,6 @@ const upcomingEvents = [
 export default function FamilyPage() {
   const sorenAge = useMemo(() => getSorenAge(), []);
   const daysTo9Months = getDaysUntil("2026-03-21");
-  const cammieCountdown = getDaysUntil("2026-02-25");
 
   return (
     <div className="space-y-8">
@@ -228,11 +226,6 @@ export default function FamilyPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-[#1C1208]">{member.name}</h3>
-                    {member.badge && (
-                      <Badge className="bg-[#C07A1A]/10 text-[#C07A1A] border-[#C07A1A]/20 text-[10px]">
-                        {member.badge}
-                      </Badge>
-                    )}
                   </div>
                   <p className="text-xs text-[#6B5B4E] mt-0.5">{member.role}</p>
                   <p className="text-xs text-[#6B5B4E] mt-2 leading-relaxed">{member.note}</p>

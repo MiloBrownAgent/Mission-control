@@ -39,14 +39,17 @@ function buildGoogleFlightsUrl(
 ): string {
   const orig = origin.toUpperCase();
   const dest = destination.toUpperCase();
+  // Dates must be YYYY-MM-DD (already stored that way in Convex)
   if (returnDate) {
-    return `https://www.google.com/flights?hl=en#flt=${orig}.${dest}.${departureDate}*${dest}.${orig}.${returnDate};c:USD;e:1;sd:1`;
+    return `https://www.google.com/flights#flt=${orig}.${dest}.${departureDate}*${dest}.${orig}.${returnDate};c:USD;px:2`;
   }
-  return `https://www.google.com/flights?hl=en#flt=${orig}.${dest}.${departureDate};c:USD;e:1;sd:1`;
+  return `https://www.google.com/flights#flt=${orig}.${dest}.${departureDate};c:USD;px:2`;
 }
 
-function buildDeltaAwardUrl(): string {
-  return "https://www.delta.com";
+function buildDeltaAwardUrl(origin: string, destination: string, departureDate: string, returnDate?: string | null, cabinClass?: string): string {
+  const cabin = (cabinClass ?? "ECONOMY").toUpperCase();
+  const tripType = returnDate ? "ROUND_TRIP" : "ONE_WAY";
+  return `https://www.delta.com/flight-search/book-a-flight#/results/outbound/1/${cabin}/${origin}/${destination}/${departureDate}/MILES/${tripType}/2/0/0/0`;
 }
 
 function buildAirlineUrl(
@@ -97,11 +100,10 @@ export default function TravelPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-[#B8956A]/30 bg-gradient-to-br from-[#B8956A]/10 via-[#B8956A]/5 to-transparent p-6">
-        <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-[#B8956A]/10 blur-3xl" />
-        <div className="relative flex items-start justify-between gap-4 flex-wrap">
+      <div className="rounded-2xl border border-[#1A1816] bg-[#0D0C0A] p-6">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#B8956A] to-[#CDAA7E] shadow-lg text-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#1A1816] text-2xl">
               ✈️
             </div>
             <div>
@@ -273,12 +275,12 @@ export default function TravelPage() {
                   href={buildGoogleFlightsUrl(deal.origin, deal.destination, deal.departureDate, deal.returnDate)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#B8956A] to-[#CDAA7E] px-3 py-2 text-xs font-bold text-[#060606] hover:opacity-90 transition-opacity"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#B8956A] hover:bg-[#CDAA7E] px-3 py-2 text-xs font-bold text-[#060606] transition-colors"
                 >
                   🔍 Search flights
                 </a>
                 <a
-                  href={buildDeltaAwardUrl()}
+                  href={buildDeltaAwardUrl(deal.origin, deal.destination, deal.departureDate, deal.returnDate, deal.cabinClass)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-1.5 rounded-lg border border-[#B8956A]/40 px-3 py-2 text-xs font-semibold text-[#B8956A] hover:bg-[#B8956A]/10 transition-colors"
@@ -337,11 +339,11 @@ export default function TravelPage() {
           rel="noopener noreferrer"
           className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold transition-opacity ${
             searchTo && searchDate
-              ? "bg-gradient-to-r from-[#B8956A] to-[#CDAA7E] text-[#060606] hover:opacity-90"
+              ? "bg-[#B8956A] hover:bg-[#CDAA7E] text-[#060606]"
               : "bg-[#1A1816] text-[#6B6560] pointer-events-none"
           }`}
         >
-          ✈️ Search on Delta.com
+          ✈️ Search on Google Flights
         </a>
       </div>
     </div>
