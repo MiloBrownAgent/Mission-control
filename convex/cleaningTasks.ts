@@ -81,6 +81,86 @@ export const resetForNextVisit = mutation({
   },
 });
 
+export const updateTask = mutation({
+  args: {
+    id: v.id("cleaningTasks"),
+    task: v.string(),
+    priority: v.union(v.literal("must"), v.literal("if_time"), v.literal("skip")),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { task: args.task, priority: args.priority });
+  },
+});
+
+// --- Cleaning Config (next visit date) ---
+
+export const getConfig = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("cleaningConfig")
+      .withIndex("by_key", (q) => q.eq("key", "config"))
+      .first();
+  },
+});
+
+export const setNextVisitDate = mutation({
+  args: { nextVisitDate: v.number(), lastVisitDate: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("cleaningConfig")
+      .withIndex("by_key", (q) => q.eq("key", "config"))
+      .first();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        nextVisitDate: args.nextVisitDate,
+        ...(args.lastVisitDate !== undefined ? { lastVisitDate: args.lastVisitDate } : {}),
+      });
+    } else {
+      await ctx.db.insert("cleaningConfig", {
+        key: "config",
+        nextVisitDate: args.nextVisitDate,
+        lastVisitDate: args.lastVisitDate,
+      });
+    }
+  },
+});
+
+export const markVisitComplete = mutation({
+  args: { nextVisitDate: v.number() },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    // Update config
+    const existing = await ctx.db
+      .query("cleaningConfig")
+      .withIndex("by_key", (q) => q.eq("key", "config"))
+      .first();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        nextVisitDate: args.nextVisitDate,
+        lastVisitDate: now,
+      });
+    } else {
+      await ctx.db.insert("cleaningConfig", {
+        key: "config",
+        nextVisitDate: args.nextVisitDate,
+        lastVisitDate: now,
+      });
+    }
+    // Reset recurring tasks, delete one-time completed tasks
+    const tasks = await ctx.db.query("cleaningTasks").collect();
+    for (const task of tasks) {
+      if (task.completedAt !== undefined) {
+        if (task.recurring) {
+          await ctx.db.patch(task._id, { completedAt: undefined });
+        } else {
+          await ctx.db.delete(task._id);
+        }
+      }
+    }
+  },
+});
+
 export const seed = mutation({
   args: {},
   handler: async (ctx) => {

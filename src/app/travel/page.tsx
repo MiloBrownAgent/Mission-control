@@ -31,12 +31,48 @@ function formatMiles(miles: number) {
   return miles.toLocaleString();
 }
 
-function buildDeltaUrl(origin: string, destination: string, date: string) {
-  const d = new Date(date + "T12:00:00");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const yy = String(d.getFullYear());
-  return `https://www.delta.com/us/en/flight-search/book-a-flight#/search/roundTrip/${origin}/${destination}/${yy}-${mm}-${dd}/flexible/2/coach/lowest`;
+function buildDeltaUrl(
+  origin: string,
+  destination: string,
+  departureDate: string,
+  returnDate?: string | null,
+  paxCount = 2
+) {
+  const params = new URLSearchParams({
+    tripType: returnDate ? "RT" : "OW",
+    departureDate,
+    ...(returnDate ? { returnDate } : {}),
+    origin: origin.toUpperCase(),
+    destination: destination.toUpperCase(),
+    paxCount: String(paxCount),
+    cabinType: "coach",
+  });
+  return `https://www.delta.com/us/en/flight-search/book-a-flight?${params.toString()}`;
+}
+
+function buildAirlineUrl(
+  airline: string,
+  origin: string,
+  destination: string,
+  departureDate: string,
+  returnDate?: string | null,
+  paxCount = 2
+): string {
+  const dep = departureDate;
+  const ret = returnDate ?? "";
+  const orig = origin.toUpperCase();
+  const dest = destination.toUpperCase();
+
+  if (airline.toLowerCase().includes("united")) {
+    // United Airlines deep-link
+    return `https://www.united.com/en/us/flights/book/flight-search?f=${orig}&t=${dest}&d=${dep}${ret ? `&r=${ret}` : ""}&tt=2&sc=7&px=${paxCount}&taxng=1&newHP=True&idx=1`;
+  }
+  if (airline.toLowerCase().includes("american")) {
+    // American Airlines deep-link
+    return `https://www.aa.com/booking/find-flights?locale=en_US&pax.adults=${paxCount}&cabin=COACH&tripType=roundTrip&slices[0].origin=${orig}&slices[0].destination=${dest}&slices[0].departureDate=${dep}${ret ? `&slices[1].origin=${dest}&slices[1].destination=${orig}&slices[1].departureDate=${ret}` : ""}`;
+  }
+  // Default: Delta
+  return buildDeltaUrl(origin, destination, departureDate, returnDate, paxCount);
 }
 
 type SortMode = "score" | "price" | "nonstop";
@@ -70,12 +106,8 @@ export default function TravelPage() {
 
   function buildSearchUrl() {
     if (!searchTo || !searchDate) return "#";
-    const d = new Date(searchDate + "T12:00:00");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    const yy = String(d.getFullYear());
     const dest = searchTo.toUpperCase().trim();
-    return `https://www.delta.com/us/en/flight-search/book-a-flight#/search/roundTrip/MSP/${dest}/${yy}-${mm}-${dd}/flexible/2/coach/lowest`;
+    return buildDeltaUrl("MSP", dest, searchDate, searchReturn || null, 2);
   }
 
   return (
@@ -253,12 +285,12 @@ export default function TravelPage() {
 
               {/* CTA */}
               <a
-                href={buildDeltaUrl(deal.origin, deal.destination, deal.departureDate)}
+                href={buildAirlineUrl(deal.airline, deal.origin, deal.destination, deal.departureDate, deal.returnDate)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#B8956A] to-[#CDAA7E] px-3 py-2 text-xs font-bold text-[#060606] hover:opacity-90 transition-opacity"
               >
-                🔍 Search Delta
+                🔍 Search this deal →
               </a>
             </div>
           ))}

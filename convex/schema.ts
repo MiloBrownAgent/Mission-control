@@ -330,6 +330,12 @@ export default defineSchema({
     addedAt: v.number(),
   }).index("by_room", ["room"]).index("by_priority", ["priority"]),
 
+  cleaningConfig: defineTable({
+    key: v.string(), // singleton: always "config"
+    nextVisitDate: v.number(), // timestamp ms
+    lastVisitDate: v.optional(v.number()),
+  }).index("by_key", ["key"]),
+
   flightDeals: defineTable({
     origin: v.string(),
     destination: v.string(),

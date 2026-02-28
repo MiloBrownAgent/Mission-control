@@ -5,7 +5,6 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 const ROOMS = ["Kitchen", "Bathrooms", "Living Room", "Bedrooms", "Other"] as const;
@@ -27,13 +26,50 @@ const roomEmojis: Record<string, string> = {
   Other: "🏠",
 };
 
+function formatNextVisit(ts: number): { label: string; sub: string } {
+  const now = new Date();
+  const visit = new Date(ts);
+  // Normalize to midnight for day diff
+  const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const visitMidnight = new Date(visit.getFullYear(), visit.getMonth(), visit.getDate());
+  const diffDays = Math.round((visitMidnight.getTime() - nowMidnight.getTime()) / 86400000);
+
+  const weekday = visit.toLocaleDateString("en-US", { weekday: "short" });
+  const month = visit.toLocaleDateString("en-US", { month: "short" });
+  const day = visit.getDate();
+  const dateStr = `${weekday} ${month} ${day}`;
+
+  if (diffDays < 0) {
+    return { label: `Next visit: ${dateStr}`, sub: "Date is in the past — update it!" };
+  } else if (diffDays === 0) {
+    return { label: `Next visit: Today — ${dateStr}`, sub: "She's coming today!" };
+  } else if (diffDays === 1) {
+    return { label: `Next visit: Tomorrow — ${dateStr}`, sub: "Get the house ready!" };
+  } else if (diffDays <= 7) {
+    return { label: `Next visit: In ${diffDays} days — ${dateStr}`, sub: "Coming up soon" };
+  } else {
+    return { label: `Next visit: ${dateStr}`, sub: `In ${diffDays} days` };
+  }
+}
+
+// Pencil icon
+function PencilIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+    </svg>
+  );
+}
+
 export default function CleaningPage() {
   const tasks = useQuery(api.cleaningTasks.list);
+  const config = useQuery(api.cleaningTasks.getConfig);
   const addTask = useMutation(api.cleaningTasks.add);
   const toggleComplete = useMutation(api.cleaningTasks.toggleComplete);
   const removeTask = useMutation(api.cleaningTasks.remove);
   const clearCompleted = useMutation(api.cleaningTasks.clearCompleted);
   const resetForNextVisit = useMutation(api.cleaningTasks.resetForNextVisit);
+  const updateTask = useMutation(api.cleaningTasks.updateTask);
 
   // Add form state
   const [showForm, setShowForm] = useState(false);
@@ -43,6 +79,32 @@ export default function CleaningPage() {
   const [newPriority, setNewPriority] = useState<Priority>("must");
   const [newRecurring, setNewRecurring] = useState(true);
   const [adding, setAdding] = useState(false);
+
+  // Inline edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTask, setEditTask] = useState("");
+  const [editPriority, setEditPriority] = useState<Priority>("must");
+  const [saving, setSaving] = useState(false);
+
+  const startEdit = (id: string, currentTask: string, currentPriority: Priority) => {
+    setEditingId(id);
+    setEditTask(currentTask);
+    setEditPriority(currentPriority);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditTask("");
+    setEditPriority("must");
+  };
+
+  const saveEdit = async (id: Id<"cleaningTasks">) => {
+    if (!editTask.trim()) return;
+    setSaving(true);
+    await updateTask({ id, task: editTask.trim(), priority: editPriority });
+    setSaving(false);
+    cancelEdit();
+  };
 
   const handleAdd = async () => {
     if (!newTask.trim()) return;
@@ -68,6 +130,11 @@ export default function CleaningPage() {
   const byRoom = (room: string) =>
     tasks?.filter((t) => t.room === room) ?? [];
 
+  // Next visit display
+  const visitInfo = config?.nextVisitDate
+    ? formatNextVisit(config.nextVisitDate)
+    : null;
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* Header */}
@@ -90,8 +157,14 @@ export default function CleaningPage() {
           <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#B8956A]/30 bg-[#B8956A]/10 px-4 py-3">
             <span className="text-lg">📅</span>
             <div>
-              <p className="text-sm font-semibold text-[#E8E4DF]">Next visit: Tomorrow — Sat Feb 28</p>
-              <p className="text-xs text-[#6B6560]">Get the house ready!</p>
+              {visitInfo ? (
+                <>
+                  <p className="text-sm font-semibold text-[#E8E4DF]">{visitInfo.label}</p>
+                  <p className="text-xs text-[#6B6560]">{visitInfo.sub}</p>
+                </>
+              ) : (
+                <p className="text-sm font-semibold text-[#E8E4DF]">Loading visit date…</p>
+              )}
             </div>
           </div>
 
@@ -137,8 +210,75 @@ export default function CleaningPage() {
                   {roomTasks.map((t) => {
                     const pc = priorityConfig[t.priority];
                     const done = t.completedAt !== undefined;
+                    const isEditing = editingId === t._id;
+
+                    if (isEditing) {
+                      // Inline edit mode
+                      return (
+                        <div key={t._id} className="px-4 py-3 bg-[#0D0C0A] space-y-2">
+                          <input
+                            type="text"
+                            value={editTask}
+                            onChange={(e) => setEditTask(e.target.value)}
+                            className="w-full rounded-lg border border-[#B8956A]/40 bg-[#060606] text-[#E8E4DF] text-sm px-3 py-2 placeholder:text-[#6B6560] focus:outline-none focus:ring-1 focus:ring-[#B8956A]"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveEdit(t._id as Id<"cleaningTasks">);
+                              if (e.key === "Escape") cancelEdit();
+                            }}
+                            autoFocus
+                          />
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Priority pills */}
+                            {PRIORITIES.map((p) => {
+                              const pCfg = priorityConfig[p];
+                              const active = editPriority === p;
+                              return (
+                                <button
+                                  key={p}
+                                  onClick={() => setEditPriority(p)}
+                                  className={`text-[10px] font-bold px-2 py-1 rounded border transition-all ${
+                                    active
+                                      ? `${pCfg.bg} ${pCfg.text} ${pCfg.border} ring-1 ring-offset-0 ${p === "must" ? "ring-red-500/40" : p === "if_time" ? "ring-amber-500/40" : "ring-[#6B6560]/40"}`
+                                      : "bg-[#0D0C0A] text-[#6B6560] border-[#1A1816] hover:border-[#6B6560]"
+                                  }`}
+                                >
+                                  {pCfg.label}
+                                </button>
+                              );
+                            })}
+                            {/* Save / Cancel */}
+                            <div className="ml-auto flex gap-1.5">
+                              <button
+                                onClick={() => saveEdit(t._id as Id<"cleaningTasks">)}
+                                disabled={saving || !editTask.trim()}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#B8956A]/20 text-[#B8956A] hover:bg-[#B8956A]/30 disabled:opacity-40 transition-colors"
+                                title="Save"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1A1816] text-[#6B6560] hover:text-[#E8E4DF] transition-colors"
+                                title="Cancel"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Normal view mode
                     return (
-                      <div key={t._id} className={`flex items-start gap-3 px-4 py-3 transition-colors ${done ? "opacity-50" : ""}`}>
+                      <div
+                        key={t._id}
+                        className={`group flex items-start gap-3 px-4 py-3 transition-colors ${done ? "opacity-50" : ""}`}
+                      >
                         {/* Checkbox */}
                         <button
                           onClick={() => toggleComplete({ id: t._id as Id<"cleaningTasks"> })}
@@ -170,6 +310,14 @@ export default function CleaningPage() {
                             <p className="text-xs text-[#6B6560] mt-0.5">{t.notes}</p>
                           )}
                         </div>
+                        {/* Edit button (visible on hover) */}
+                        <button
+                          onClick={() => startEdit(t._id, t.task, t.priority as Priority)}
+                          className="text-[#6B6560] hover:text-[#B8956A] transition-colors shrink-0 opacity-0 group-hover:opacity-100 mt-0.5 mr-1"
+                          title="Edit task"
+                        >
+                          <PencilIcon className="h-3.5 w-3.5" />
+                        </button>
                         {/* Delete */}
                         <button
                           onClick={() => removeTask({ id: t._id as Id<"cleaningTasks"> })}
