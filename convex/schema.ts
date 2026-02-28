@@ -375,6 +375,22 @@ export default defineSchema({
     weekOf: v.string(),
   }).index("by_week", ["weekOf"]).index("by_score", ["dealScore"]),
 
+  btc_candle_signals: defineTable({
+    candle_open_time: v.string(),    // ISO: "2026-02-28T23:00:00Z"
+    interval: v.string(),             // "1H" | "15M"
+    open_price: v.number(),
+    signal_price: v.number(),         // BTC price when signal was generated (15-20 min in)
+    signal_direction: v.union(v.literal("UP"), v.literal("DOWN")),
+    signal_confidence: v.number(),    // 0-100: abs % move at signal time (e.g. 0.29)
+    polymarket_url: v.string(),
+    my_probability: v.number(),       // my estimated probability at signal time (e.g. 65)
+    close_price: v.optional(v.number()),
+    outcome: v.optional(v.union(v.literal("UP"), v.literal("DOWN"))),  // actual candle close
+    correct: v.optional(v.boolean()),
+    created_at: v.number(),
+    resolved_at: v.optional(v.number()),
+  }).index("by_created", ["created_at"]).index("by_resolved", ["outcome"]),
+
   polymarket_trades: defineTable({
     question: v.string(),                          // "US recession by end of 2026?"
     position: v.union(v.literal("Yes"), v.literal("No")),

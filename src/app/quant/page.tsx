@@ -484,6 +484,145 @@ function ArbScannerSection() {
   );
 }
 
+// ─── BTC Signal Log ───────────────────────────────────────────────────────────
+function BtcSignalLog() {
+  const signals = useQuery(api.btcSignals.listSignals);
+
+  if (signals === undefined) {
+    return (
+      <div className="flex items-center justify-center py-8 text-[#6B6560] text-sm">
+        Loading signals…
+      </div>
+    );
+  }
+
+  const resolved   = signals.filter((s) => s.outcome !== undefined);
+  const correct    = resolved.filter((s) => s.correct === true).length;
+  const accuracy   = resolved.length > 0 ? (correct / resolved.length) * 100 : null;
+  const recent     = signals.slice(0, 20);
+
+  return (
+    <div className="space-y-4">
+      {/* Section header + accuracy stat */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#6B6560]">
+            BTC 5M Candle Signal Log
+          </h2>
+          <p className="text-[10px] text-[#6B6560] mt-0.5">
+            Auto-signals fired when candle move ≥ 0.10% · resolved next run
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          {accuracy !== null && (
+            <div className="text-right">
+              <p className={`text-lg font-bold font-mono ${accuracy >= 60 ? "text-green-400" : accuracy >= 50 ? "text-yellow-400" : "text-red-400"}`}>
+                {accuracy.toFixed(1)}%
+              </p>
+              <p className="text-[9px] text-[#6B6560]">{correct}/{resolved.length} correct</p>
+            </div>
+          )}
+          <div className="text-right">
+            <p className="text-lg font-bold font-mono text-[#E8E4DF]">{signals.length}</p>
+            <p className="text-[9px] text-[#6B6560]">total signals</p>
+          </div>
+        </div>
+      </div>
+
+      {signals.length === 0 ? (
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-6 text-center text-[#6B6560] text-sm">
+          No signals yet — cron fires every 5 min at <code className="text-[#B8956A]">*/5 * * * *</code>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-x-auto">
+          <table className="w-full text-xs min-w-[640px]">
+            <thead>
+              <tr className="border-b border-[#1A1816]">
+                <th className="text-left text-[#6B6560] font-medium px-4 py-2.5 uppercase tracking-wider text-[9px]">Candle Open (UTC)</th>
+                <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider text-[9px]">Open</th>
+                <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider text-[9px]">Signal @</th>
+                <th className="text-center text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider text-[9px]">Dir</th>
+                <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider text-[9px]">Move%</th>
+                <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider text-[9px]">My Prob</th>
+                <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider text-[9px]">Close</th>
+                <th className="text-center text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider text-[9px]">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recent.map((s) => {
+                const isResolved = s.outcome !== undefined;
+                const dirUp = s.signal_direction === "UP";
+                return (
+                  <tr
+                    key={s._id}
+                    className="border-b border-[#1A1816] last:border-0 hover:bg-[#B8956A]/5 transition-colors"
+                  >
+                    {/* Candle open time */}
+                    <td className="px-4 py-2.5 font-mono text-[#6B6560] text-[10px] whitespace-nowrap">
+                      {new Date(s.candle_open_time).toLocaleString("en-US", {
+                        month: "2-digit", day: "2-digit",
+                        hour: "2-digit", minute: "2-digit",
+                        hour12: false, timeZone: "UTC",
+                      }).replace(",", "")}
+                    </td>
+                    {/* Open price */}
+                    <td className="px-3 py-2.5 text-right font-mono text-[#E8E4DF]">
+                      ${s.open_price.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </td>
+                    {/* Signal price */}
+                    <td className="px-3 py-2.5 text-right font-mono text-[#E8E4DF]">
+                      ${s.signal_price.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </td>
+                    {/* Direction badge */}
+                    <td className="px-3 py-2.5 text-center">
+                      <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded ${
+                        dirUp
+                          ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                          : "bg-red-500/10 text-red-400 border border-red-500/20"
+                      }`}>
+                        {dirUp ? "▲ UP" : "▼ DN"}
+                      </span>
+                    </td>
+                    {/* Move % */}
+                    <td className={`px-3 py-2.5 text-right font-mono ${dirUp ? "text-green-400" : "text-red-400"}`}>
+                      {dirUp ? "+" : ""}{s.signal_confidence.toFixed(3)}%
+                    </td>
+                    {/* My probability */}
+                    <td className="px-3 py-2.5 text-right font-mono text-[#B8956A]">
+                      {s.my_probability}%
+                    </td>
+                    {/* Close price */}
+                    <td className="px-3 py-2.5 text-right font-mono text-[#6B6560]">
+                      {s.close_price !== undefined
+                        ? `$${s.close_price.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                        : <span className="text-[#3A3830] italic">pending</span>}
+                    </td>
+                    {/* Result */}
+                    <td className="px-3 py-2.5 text-center">
+                      {!isResolved ? (
+                        <span className="text-[9px] text-[#3A3830] italic">—</span>
+                      ) : s.correct ? (
+                        <span className="text-green-400 font-bold">✓</span>
+                      ) : (
+                        <span className="text-red-400 font-bold">✗</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p className="text-[10px] text-[#6B6560]">
+        Interval: <span className="text-[#B8956A] font-mono">5M</span> · Threshold: <span className="text-[#B8956A] font-mono">0.10%</span> · ~80–100 signals/day after filter ·{" "}
+        Run <code className="text-[#B8956A]">INTERVAL=1H node scripts/btc-signal.js</code> for 1-hour mode
+      </p>
+    </div>
+  );
+}
+
 // ─── Paper Trades Tab ─────────────────────────────────────────────────────────
 function PaperTradesTab() {
   const trades = useQuery(api.polymarket.listTrades);
@@ -698,6 +837,9 @@ function PaperTradesTab() {
 
       {/* Arb Scanner */}
       <ArbScannerSection />
+
+      {/* BTC Signal Log */}
+      <BtcSignalLog />
 
       {/* Footer note */}
       <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-4">
