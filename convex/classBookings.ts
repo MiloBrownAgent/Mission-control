@@ -16,9 +16,18 @@ export const listUpcoming = query({
       .withIndex("by_date", (q) => q.gte("classDate", todayStr).lte("classDate", endStr))
       .collect();
 
+    function parseDateTime(date: string, time: string): number {
+      // time format: "8:00 AM" or "10:00 AM"
+      const [timePart, meridiem] = time.split(" ");
+      const [h, m] = timePart.split(":").map(Number);
+      let hours = h % 12;
+      if (meridiem === "PM") hours += 12;
+      return new Date(`${date}T${String(hours).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`).getTime();
+    }
+
     return bookings
       .filter((b) => b.status !== "cancelled")
-      .sort((a, b) => a.classDate.localeCompare(b.classDate) || a.classTime.localeCompare(b.classTime));
+      .sort((a, b) => parseDateTime(a.classDate, a.classTime) - parseDateTime(b.classDate, b.classTime));
   },
 });
 
