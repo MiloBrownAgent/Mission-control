@@ -112,9 +112,10 @@ function WhoopWidget({ data }: WhoopWidgetProps) {
 
   // Parse recovery fields from WHOOP record
   // WHOOP recovery structure: { score: { recovery_score, hrv_rmssd_milli, resting_heart_rate, ... } }
-  const score: number | null  = data.score?.recovery_score  ?? data.recovery_score  ?? null;
-  const hrv: number | null    = data.score?.hrv_rmssd_milli ?? data.hrv_rmssd_milli ?? null;
-  const rhr: number | null    = data.score?.resting_heart_rate ?? data.resting_heart_rate ?? null;
+  const inner = (data?.data ?? data) as Record<string, Record<string, number>>;
+  const score: number | null  = inner?.score?.recovery_score  ?? null;
+  const hrv: number | null    = inner?.score?.hrv_rmssd_milli ?? null;
+  const rhr: number | null    = inner?.score?.resting_heart_rate ?? null;
 
   const scoreColor =
     score === null  ? "text-[#6B6560]"
