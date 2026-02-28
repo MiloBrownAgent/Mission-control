@@ -28,7 +28,7 @@ function getFlag(country: string) {
 }
 
 function formatMiles(miles: number) {
-  return `${Math.round(miles / 1000).toLocaleString()}K`;
+  return miles.toLocaleString();
 }
 
 function buildDeltaUrl(origin: string, destination: string, date: string) {
@@ -207,21 +207,36 @@ export default function TravelPage() {
               </div>
 
               {/* Price */}
-              <div className="rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2">
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-xl font-bold text-[#E8E4DF]">
-                    ${deal.cashPricePerPerson.toLocaleString()}
-                  </span>
-                  <span className="text-xs text-[#6B6560]">per person</span>
-                  <span className="text-[#1A1816]">·</span>
-                  <span className="text-sm font-semibold text-[#B8956A]">
-                    ${deal.cashPriceTotal.toLocaleString()}
-                  </span>
-                  <span className="text-xs text-[#6B6560]">total for 2</span>
+              <div className="rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2 space-y-1.5">
+                <div>
+                  <p className="text-[10px] text-[#6B6560] uppercase tracking-wide font-semibold mb-0.5">Miles</p>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-xl font-bold text-[#B8956A]">
+                      {formatMiles(deal.skyMilesPerPerson)}
+                    </span>
+                    <span className="text-xs text-[#6B6560]">SkyMiles/person</span>
+                    <span className="text-[#1A1816]">·</span>
+                    <span className="text-sm font-semibold text-[#B8956A]">
+                      {formatMiles(deal.skyMilesTotal)}
+                    </span>
+                    <span className="text-xs text-[#6B6560]">total for 2</span>
+                  </div>
                 </div>
-                <p className="text-[10px] text-[#6B6560] mt-1">
-                  ~{formatMiles(deal.estimatedMiles)} miles/person (estimated)
-                </p>
+                <div>
+                  <p className="text-[10px] text-[#6B6560] uppercase tracking-wide font-semibold mb-0.5">Cash (taxes + fees)</p>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-lg font-bold text-[#E8E4DF]">
+                      ${deal.cashPricePerPerson.toLocaleString()}
+                    </span>
+                    <span className="text-xs text-[#6B6560]">per person</span>
+                    <span className="text-[#1A1816]">·</span>
+                    <span className="text-sm font-semibold text-[#E8E4DF]">
+                      ${deal.cashPriceTotal.toLocaleString()}
+                    </span>
+                    <span className="text-xs text-[#6B6560]">total for 2</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-[#6B6560]/60">Award pricing from Delta.com</p>
               </div>
 
               {/* Dates */}

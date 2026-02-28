@@ -36,7 +36,8 @@ export const bulkInsert = mutation({
       returnDate: v.optional(v.string()),
       cashPricePerPerson: v.number(),
       cashPriceTotal: v.number(),
-      estimatedMiles: v.number(),
+      skyMilesPerPerson: v.number(),
+      skyMilesTotal: v.number(),
       cabinClass: v.string(),
       dealScore: v.number(),
       sourceUrl: v.optional(v.string()),
@@ -61,6 +62,17 @@ export const bulkInsert = mutation({
       });
     }
     return args.deals.length;
+  },
+});
+
+export const clearAll = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("flightDeals").collect();
+    for (const deal of all) {
+      await ctx.db.delete(deal._id);
+    }
+    return all.length;
   },
 });
 

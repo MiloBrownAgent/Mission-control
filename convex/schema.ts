@@ -342,7 +342,8 @@ export default defineSchema({
     returnDate: v.optional(v.string()),
     cashPricePerPerson: v.number(),
     cashPriceTotal: v.number(),
-    estimatedMiles: v.number(),
+    skyMilesPerPerson: v.number(),  // actual SkyMiles required per person for award travel
+    skyMilesTotal: v.number(),      // x2 for two people
     cabinClass: v.string(),
     dealScore: v.number(),
     sourceUrl: v.optional(v.string()),
