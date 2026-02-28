@@ -5,14 +5,14 @@ export const runtime = 'edge'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const mode = searchParams.get('mode') ?? 'mc'
-  const size = parseInt(searchParams.get('size') ?? '32', 10)
+  const mode  = searchParams.get('mode') ?? 'mc'
+  const size  = parseInt(searchParams.get('size') ?? '32', 10)
   const label = mode === 'hd' ? 'HD' : 'MC'
   const fontSize = size <= 32 ? 14 : Math.round(size * 0.38)
 
-  // Fetch Inter Bold from Google Fonts (works in edge runtime)
+  // Inter Bold in woff format — supported by Satori
   const fontRes = await fetch(
-    'https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYAZ9hiA.woff2'
+    'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff'
   )
   const fontData = await fontRes.arrayBuffer()
 
