@@ -24,6 +24,8 @@ import {
   ShoppingCart,
   Wrench,
   Link2,
+  Sparkles,
+  Plane,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,8 @@ const familyNavigation = [
   { name: "Meals", href: "/meals", icon: UtensilsCrossed, iconClassName: undefined },
   { name: "Grocery List", href: "/grocery", icon: ShoppingCart, iconClassName: undefined },
   { name: "Maintenance", href: "/maintenance", icon: Wrench, iconClassName: undefined },
+  { name: "Lindsey's List", href: "/cleaning", icon: Sparkles, iconClassName: "text-amber-400" },
+  { name: "Travel ✈️", href: "/travel", icon: Plane, iconClassName: undefined },
   { name: "Calendar", href: "/calendar", icon: CalendarDays, iconClassName: undefined },
   { name: "Home", href: "/family-home", icon: House, iconClassName: undefined },
 ];

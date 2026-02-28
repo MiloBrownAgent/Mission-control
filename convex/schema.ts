@@ -200,6 +200,9 @@ export default defineSchema({
       url: v.optional(v.string()),
       notes: v.optional(v.string()),
     }))),
+    imageUrl: v.optional(v.string()),
+    ingredients: v.optional(v.array(v.string())),
+    servings: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -316,4 +319,34 @@ export default defineSchema({
   })
     .index("by_date", ["generatedDate"])
     .index("by_status", ["status"]),
+
+  cleaningTasks: defineTable({
+    room: v.string(),
+    task: v.string(),
+    notes: v.optional(v.string()),
+    priority: v.union(v.literal("must"), v.literal("if_time"), v.literal("skip")),
+    recurring: v.boolean(),
+    completedAt: v.optional(v.number()),
+    addedAt: v.number(),
+  }).index("by_room", ["room"]).index("by_priority", ["priority"]),
+
+  flightDeals: defineTable({
+    origin: v.string(),
+    destination: v.string(),
+    destinationCity: v.string(),
+    destinationCountry: v.string(),
+    isInternational: v.boolean(),
+    airline: v.string(),
+    isNonstop: v.boolean(),
+    departureDate: v.string(),
+    returnDate: v.optional(v.string()),
+    cashPricePerPerson: v.number(),
+    cashPriceTotal: v.number(),
+    estimatedMiles: v.number(),
+    cabinClass: v.string(),
+    dealScore: v.number(),
+    sourceUrl: v.optional(v.string()),
+    pulledAt: v.number(),
+    weekOf: v.string(),
+  }).index("by_week", ["weekOf"]).index("by_score", ["dealScore"]),
 });

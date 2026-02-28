@@ -11,6 +11,7 @@
 import type * as actionItems from "../actionItems.js";
 import type * as activityLog from "../activityLog.js";
 import type * as classBookings from "../classBookings.js";
+import type * as cleaningTasks from "../cleaningTasks.js";
 import type * as clientLinks from "../clientLinks.js";
 import type * as clients from "../clients.js";
 import type * as contacts from "../contacts.js";
@@ -19,6 +20,7 @@ import type * as crmContacts from "../crmContacts.js";
 import type * as daycareReports from "../daycareReports.js";
 import type * as dropboxConfig from "../dropboxConfig.js";
 import type * as events from "../events.js";
+import type * as flightDeals from "../flightDeals.js";
 import type * as groceryItems from "../groceryItems.js";
 import type * as meals from "../meals.js";
 import type * as memories from "../memories.js";
@@ -39,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   actionItems: typeof actionItems;
   activityLog: typeof activityLog;
   classBookings: typeof classBookings;
+  cleaningTasks: typeof cleaningTasks;
   clientLinks: typeof clientLinks;
   clients: typeof clients;
   contacts: typeof contacts;
@@ -47,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   daycareReports: typeof daycareReports;
   dropboxConfig: typeof dropboxConfig;
   events: typeof events;
+  flightDeals: typeof flightDeals;
   groceryItems: typeof groceryItems;
   meals: typeof meals;
   memories: typeof memories;

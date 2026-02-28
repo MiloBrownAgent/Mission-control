@@ -243,11 +243,13 @@ function FamilyHomePage() {
           ) : (
             <div className="space-y-3">
               {daycareReport.photoUrl && (
-                <img
-                  src={daycareReport.photoUrl}
-                  alt="Soren at daycare"
-                  className="w-full h-auto block rounded-2xl"
-                />
+                <div className="w-full overflow-hidden rounded-2xl" style={{ maxHeight: "400px" }}>
+                  <img
+                    src={daycareReport.photoUrl}
+                    alt="Soren at daycare"
+                    className="w-full h-auto block object-cover"
+                  />
+                </div>
               )}
               <div className="grid grid-cols-2 gap-2">
                 {daycareReport.totalTime && (
@@ -274,13 +276,13 @@ function FamilyHomePage() {
                     <p className="text-sm font-semibold text-[#1C1208]">{daycareReport.meals} feedings</p>
                   </div>
                 )}
-                {daycareReport.pees !== undefined && (
+                {daycareReport.pees != null && (
                   <div className="rounded-lg border border-[#2A4E8A]/15 bg-[#2A4E8A]/5 px-3 py-2">
                     <p className="text-xs text-[#6B5B4E]">Pees 💧</p>
                     <p className="text-sm font-semibold text-[#1C1208]">{daycareReport.pees}x</p>
                   </div>
                 )}
-                {daycareReport.poops !== undefined && (
+                {daycareReport.poops != null && (
                   <div className="rounded-lg border border-[#2A4E8A]/15 bg-[#2A4E8A]/5 px-3 py-2">
                     <p className="text-xs text-[#6B5B4E]">Poops 💩</p>
                     <p className="text-sm font-semibold text-[#1C1208]">{daycareReport.poops}x</p>

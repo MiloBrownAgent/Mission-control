@@ -156,6 +156,33 @@ export const replaceMeal = mutation({
   },
 });
 
+// NOTE: When generating meals via cron, ideally include imageUrl and ingredients for richer modal display.
+export const updateMealDetails = mutation({
+  args: {
+    weekStart: v.string(),
+    day: DAY_TYPE,
+    mealType: MEAL_TYPE,
+    imageUrl: v.optional(v.string()),
+    ingredients: v.optional(v.array(v.string())),
+    servings: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("meals")
+      .withIndex("by_week_day_meal", (q) =>
+        q.eq("weekStart", args.weekStart).eq("day", args.day).eq("mealType", args.mealType)
+      )
+      .first();
+    if (!existing) throw new Error("Meal not found");
+    await ctx.db.patch(existing._id, {
+      imageUrl: args.imageUrl,
+      ingredients: args.ingredients,
+      servings: args.servings,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 export const clearMeal = mutation({
   args: {
     weekStart: v.string(),
