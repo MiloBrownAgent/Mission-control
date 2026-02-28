@@ -8,15 +8,6 @@ export async function GET(req: NextRequest) {
   const mode = searchParams.get('mode') ?? 'mc' // 'mc' | 'hd'
   const label = mode === 'hd' ? 'HD' : 'MC'
 
-  let fontData: ArrayBuffer | undefined
-  try {
-    fontData = await fetch(
-      'https://fonts.gstatic.com/s/syne/v22/8vIS7w4qzmVxsWxjEKc.woff2'
-    ).then((res) => res.arrayBuffer())
-  } catch {
-    // fallback: system-ui renders fine
-  }
-
   return new ImageResponse(
     (
       <div
@@ -33,7 +24,7 @@ export async function GET(req: NextRequest) {
           style={{
             color: '#B8956A',
             fontSize: 13,
-            fontFamily: fontData ? 'Syne' : 'system-ui, sans-serif',
+            fontFamily: 'system-ui, sans-serif',
             fontWeight: 800,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
@@ -44,12 +35,6 @@ export async function GET(req: NextRequest) {
         </span>
       </div>
     ),
-    {
-      width: 32,
-      height: 32,
-      ...(fontData
-        ? { fonts: [{ name: 'Syne', data: fontData, weight: 700 }] }
-        : {}),
-    }
+    { width: 32, height: 32 }
   )
 }
