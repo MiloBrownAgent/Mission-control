@@ -51,27 +51,13 @@ function buildDeltaUrl(
 }
 
 function buildAirlineUrl(
-  airline: string,
+  _airline: string,
   origin: string,
   destination: string,
   departureDate: string,
   returnDate?: string | null,
   paxCount = 2
 ): string {
-  const dep = departureDate;
-  const ret = returnDate ?? "";
-  const orig = origin.toUpperCase();
-  const dest = destination.toUpperCase();
-
-  if (airline.toLowerCase().includes("united")) {
-    // United Airlines deep-link
-    return `https://www.united.com/en/us/flights/book/flight-search?f=${orig}&t=${dest}&d=${dep}${ret ? `&r=${ret}` : ""}&tt=2&sc=7&px=${paxCount}&taxng=1&newHP=True&idx=1`;
-  }
-  if (airline.toLowerCase().includes("american")) {
-    // American Airlines deep-link
-    return `https://www.aa.com/booking/find-flights?locale=en_US&pax.adults=${paxCount}&cabin=COACH&tripType=roundTrip&slices[0].origin=${orig}&slices[0].destination=${dest}&slices[0].departureDate=${dep}${ret ? `&slices[1].origin=${dest}&slices[1].destination=${orig}&slices[1].departureDate=${ret}` : ""}`;
-  }
-  // Default: Delta
   return buildDeltaUrl(origin, destination, departureDate, returnDate, paxCount);
 }
 
