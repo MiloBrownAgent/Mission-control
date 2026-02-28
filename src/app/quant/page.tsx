@@ -297,6 +297,193 @@ function StatCard({ label, value, sub, highlight }: { label: string; value: stri
   );
 }
 
+// ─── Arb Scanner ─────────────────────────────────────────────────────────────
+interface FundingRateData {
+  fundingRate: number;       // raw float (e.g. 0.000021)
+  nextFundingTime: number;   // ms timestamp
+  fetchedAt: number;
+}
+
+function getFundingStatus(rate8h: number): { emoji: string; label: string; color: string } {
+  const pct = rate8h * 100; // convert to percent (0.000021 → 0.0021%)
+  if (pct < 0)     return { emoji: "🔵", label: "Negative — shorts paying",  color: "text-blue-400"  };
+  if (pct < 0.01)  return { emoji: "⚪", label: "Neutral — no arb",          color: "text-[#6B6560]" };
+  if (pct < 0.04)  return { emoji: "🟡", label: "Mild — watch",              color: "text-yellow-400"};
+  return               { emoji: "🔴", label: "Elevated — arb opportunity",  color: "text-red-400"   };
+}
+
+function formatNextFunding(tsMs: number): string {
+  if (!tsMs) return "—";
+  const d = new Date(tsMs);
+  return d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Chicago",
+    timeZoneName: "short",
+  });
+}
+
+const PRED_SPREADS = [
+  { event: "March FOMC: No cut", kalshi: "95.5¢", poly: "94.6¢", spread: "0.9%", signal: "Too thin" },
+  { event: "April FOMC: No cut", kalshi: "87¢",   poly: "87¢",   spread: "0.0%", signal: "—"        },
+];
+
+function ArbScannerSection() {
+  const [funding, setFunding] = useState<FundingRateData | null>(null);
+  const [error, setError]     = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchFunding = useCallback(async () => {
+    try {
+      const res = await fetch(
+        "https://www.okx.com/api/v5/public/funding-rate?instId=BTC-USDT-SWAP"
+      );
+      const json = await res.json();
+      const d = json?.data?.[0];
+      if (!d) throw new Error("No data");
+      setFunding({
+        fundingRate:     parseFloat(d.fundingRate),
+        nextFundingTime: parseInt(d.nextFundingTime, 10),
+        fetchedAt:       Date.now(),
+      });
+      setError(null);
+    } catch {
+      setError("Failed to fetch OKX funding rate");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFunding();
+    const id = setInterval(fetchFunding, 60_000);
+    return () => clearInterval(id);
+  }, [fetchFunding]);
+
+  const rate8h     = funding?.fundingRate ?? 0;
+  const pct8h      = rate8h * 100;
+  const annualized = rate8h * 3 * 365 * 100;
+  const status     = getFundingStatus(rate8h);
+
+  return (
+    <div className="space-y-4">
+      {/* Section header */}
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[#6B6560]">
+          Arb Scanner (Live)
+        </h2>
+        <p className="text-[10px] text-[#6B6560] mt-0.5">
+          Monitoring funding rate arb + cross-venue prediction market spreads
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+        {/* ── BTC Funding Rate Card ── */}
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[#E8E4DF]">BTC Funding Rate</p>
+              <p className="text-[10px] text-[#6B6560]">OKX · BTC-USDT-SWAP · live</p>
+            </div>
+            <span className="text-[10px] text-[#6B6560] bg-[#1A1816] rounded px-2 py-1">
+              {funding ? `Updated ${new Date(funding.fetchedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" })}` : "—"}
+            </span>
+          </div>
+
+          {loading && (
+            <p className="text-[10px] text-[#6B6560]">Fetching…</p>
+          )}
+          {error && (
+            <p className="text-[10px] text-red-400">{error}</p>
+          )}
+          {!loading && !error && funding && (
+            <>
+              {/* Rate rows */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center border-b border-[#1A1816] pb-2">
+                  <span className="text-[10px] text-[#6B6560] uppercase tracking-wider">8h rate</span>
+                  <span className="text-sm font-mono font-bold text-[#E8E4DF]">
+                    {pct8h >= 0 ? "+" : ""}{pct8h.toFixed(4)}%
+                  </span>
+                </div>
+                <div className="flex justify-between items-center border-b border-[#1A1816] pb-2">
+                  <span className="text-[10px] text-[#6B6560] uppercase tracking-wider">Annualized est.</span>
+                  <span className="text-sm font-mono font-bold text-[#B8956A]">
+                    {annualized >= 0 ? "+" : ""}{annualized.toFixed(2)}%/yr
+                  </span>
+                </div>
+                <div className="flex justify-between items-center border-b border-[#1A1816] pb-2">
+                  <span className="text-[10px] text-[#6B6560] uppercase tracking-wider">Next funding</span>
+                  <span className="text-[10px] font-mono text-[#E8E4DF]">
+                    {formatNextFunding(funding.nextFundingTime)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Status badge */}
+              <div className={`flex items-center gap-2 rounded-lg border border-[#1A1816] bg-[#0A0908] px-3 py-2`}>
+                <span className="text-base">{status.emoji}</span>
+                <span className={`text-xs font-medium ${status.color}`}>{status.label}</span>
+              </div>
+
+              {/* Tooltip note */}
+              <p className="text-[10px] text-[#6B6560] leading-relaxed border-t border-[#1A1816] pt-3">
+                <span className="text-[#B8956A] font-medium">Strategy note:</span>{" "}
+                When funding is elevated (&gt;0.04%/8h), go long spot + short perp to collect the spread with zero directional exposure.
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* ── Prediction Market Spreads Card ── */}
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5 space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-[#E8E4DF]">Prediction Market Spreads</p>
+            <p className="text-[10px] text-[#6B6560]">Kalshi vs Polymarket · manually tracked</p>
+          </div>
+
+          <div className="overflow-hidden rounded-lg border border-[#1A1816]">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-[#1A1816]">
+                  <th className="text-left text-[#6B6560] font-medium px-3 py-2 uppercase tracking-wider text-[9px]">Event</th>
+                  <th className="text-right text-[#6B6560] font-medium px-2 py-2 uppercase tracking-wider text-[9px]">Kalshi</th>
+                  <th className="text-right text-[#6B6560] font-medium px-2 py-2 uppercase tracking-wider text-[9px]">Poly</th>
+                  <th className="text-right text-[#6B6560] font-medium px-2 py-2 uppercase tracking-wider text-[9px]">Spread</th>
+                  <th className="text-right text-[#6B6560] font-medium px-3 py-2 uppercase tracking-wider text-[9px]">Signal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {PRED_SPREADS.map((row, i) => (
+                  <tr key={i} className="border-b border-[#1A1816] last:border-0 hover:bg-[#B8956A]/5 transition-colors">
+                    <td className="px-3 py-2.5 text-[#E8E4DF] text-[10px] leading-snug">{row.event}</td>
+                    <td className="px-2 py-2.5 text-right font-mono text-[#E8E4DF]">{row.kalshi}</td>
+                    <td className="px-2 py-2.5 text-right font-mono text-[#E8E4DF]">{row.poly}</td>
+                    <td className="px-2 py-2.5 text-right font-mono text-[#6B6560]">{row.spread}</td>
+                    <td className="px-3 py-2.5 text-right">
+                      <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
+                        row.signal === "Too thin" ? "bg-[#1A1816] text-[#6B6560]" : "bg-[#1A1816] text-[#6B6560]"
+                      }`}>
+                        {row.signal}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-[10px] text-[#6B6560] leading-relaxed border-t border-[#1A1816] pt-3">
+            Spreads update manually — alert threshold: <span className="text-[#B8956A] font-medium">&gt;3% spread</span>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 // ─── Paper Trades Tab ─────────────────────────────────────────────────────────
 function PaperTradesTab() {
   const trades = useQuery(api.polymarket.listTrades);
@@ -508,6 +695,9 @@ function PaperTradesTab() {
           </div>
         </div>
       )}
+
+      {/* Arb Scanner */}
+      <ArbScannerSection />
 
       {/* Footer note */}
       <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-4">
