@@ -45,22 +45,8 @@ function buildGoogleFlightsUrl(
   return `https://www.google.com/flights?hl=en#flt=${orig}.${dest}.${departureDate};c:USD;e:1;sd:1`;
 }
 
-function buildDeltaAwardUrl(
-  origin: string,
-  destination: string,
-  departureDate: string,
-  returnDate?: string | null,
-): string {
-  const params = new URLSearchParams({
-    tripType: returnDate ? "ROUND_TRIP" : "ONE_WAY",
-    departureAirportCode: origin.toUpperCase(),
-    arrivalAirportCode: destination.toUpperCase(),
-    departureDate,
-    ...(returnDate ? { returnDate } : {}),
-    adults: "2",
-    awardTravel: "true",
-  });
-  return `https://www.delta.com/us/en/book-a-flight/results?${params.toString()}`;
+function buildDeltaAwardUrl(): string {
+  return "https://www.delta.com";
 }
 
 function buildAirlineUrl(
@@ -292,11 +278,11 @@ export default function TravelPage() {
                   🔍 Search flights
                 </a>
                 <a
-                  href={buildDeltaAwardUrl(deal.origin, deal.destination, deal.departureDate, deal.returnDate)}
+                  href={buildDeltaAwardUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-1.5 rounded-lg border border-[#B8956A]/40 px-3 py-2 text-xs font-semibold text-[#B8956A] hover:bg-[#B8956A]/10 transition-colors"
-                  title="Book with SkyMiles on Delta"
+                  title="Open Delta.com"
                 >
                   ✈️ SkyMiles
                 </a>

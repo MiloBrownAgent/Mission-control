@@ -4,12 +4,10 @@
   "description": "Sweeney HQ Dashboard",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#3b82f6",
+  "background_color": "#060606",
+  "theme_color": "#060606",
   "orientation": "portrait",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/api/favicon?mode=mc", "sizes": "32x32", "type": "image/png" }
   ]
 }

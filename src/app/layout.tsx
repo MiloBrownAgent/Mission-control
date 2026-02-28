@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Cormorant_Garamond, Syne } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { Sidebar } from "@/components/sidebar";
@@ -27,20 +28,35 @@ const syne = Syne({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-export const metadata: Metadata = {
-  title: "Mission Control",
-  description: "Sweeney HQ Dashboard",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const host =
+    headersList.get("host") ||
+    headersList.get("x-forwarded-host") ||
+    "";
+  const isFamily =
+    host.includes("home.lookandseen") || host.includes("family");
+  const mode = isFamily ? "hd" : "mc";
+
+  return {
     title: "Mission Control",
-  },
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+    description: "Sweeney HQ Dashboard",
+    manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: "Mission Control",
+    },
+    robots: {
+      index: false,
+      follow: false,
+    },
+    icons: {
+      icon: `/api/favicon?mode=${mode}`,
+      apple: `/api/favicon?mode=${mode}`,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#060606",
