@@ -6,7 +6,9 @@ export const runtime = 'edge'
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const mode = searchParams.get('mode') ?? 'mc' // 'mc' | 'hd'
+  const size = parseInt(searchParams.get('size') ?? '32', 10)
   const label = mode === 'hd' ? 'HD' : 'MC'
+  const fontSize = size <= 32 ? 13 : Math.round(size * 0.38)
 
   return new ImageResponse(
     (
@@ -23,18 +25,16 @@ export async function GET(req: NextRequest) {
         <span
           style={{
             color: '#B8956A',
-            fontSize: 13,
+            fontSize,
             fontFamily: 'system-ui, sans-serif',
             fontWeight: 800,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            fontStyle: 'normal',
+            letterSpacing: '0.05em',
           }}
         >
           {label}
         </span>
       </div>
     ),
-    { width: 32, height: 32 }
+    { width: size, height: size }
   )
 }

@@ -39,13 +39,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const mode = isFamily ? "hd" : "mc";
 
   return {
-    title: "Mission Control",
-    description: "Sweeney HQ Dashboard",
-    manifest: "/manifest.json",
+    title: isFamily ? "Home Dashboard" : "Mission Control",
+    description: isFamily ? "Sweeney family home dashboard" : "Look & Seen work dashboard",
+    manifest: `/api/manifest`,
     appleWebApp: {
       capable: true,
       statusBarStyle: "black-translucent",
-      title: "Mission Control",
+      title: isFamily ? "HD" : "MC",
+      startupImage: `/api/favicon?mode=${mode}&size=512`,
     },
     robots: {
       index: false,
@@ -53,7 +54,10 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: {
       icon: `/api/favicon?mode=${mode}`,
-      apple: `/api/favicon?mode=${mode}`,
+      apple: `/api/favicon?mode=${mode}&size=192`,
+    },
+    other: {
+      "mobile-web-app-capable": "yes",
     },
   };
 }
