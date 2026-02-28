@@ -73,7 +73,6 @@ function getDaysUntil(dateStr: string) {
 }
 
 const upcomingEvents = [
-  { name: "Cammie's 70th Birthday 🎂", date: "2026-02-25", emoji: "🎂" },
   { name: "Wooster Group — Walker Art Center", date: "2026-02-28", time: "3–5 PM", emoji: "🎭" },
   { name: "Mike watches Soren", date: "2026-03-06", time: "5–9 PM", emoji: "👴" },
   { name: "Savannah Trip ✈️", date: "2026-03-11", time: "Mar 11–17", emoji: "✈️" },

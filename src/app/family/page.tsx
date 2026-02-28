@@ -85,13 +85,6 @@ const familyMembers = [
 
 const upcomingEvents = [
   {
-    name: "Cammie's 70th Birthday",
-    date: "2026-02-25",
-    note: "Big one! 🎉",
-    emoji: "🎂",
-    urgent: true,
-  },
-  {
     name: "Wooster Group — Walker Art Center",
     date: "2026-02-28",
     time: "3:00–5:00 PM",
@@ -257,7 +250,7 @@ export default function FamilyPage() {
           Upcoming Family Events
         </h2>
         <div className="space-y-3">
-          {upcomingEvents.map((event) => {
+          {upcomingEvents.filter(e => getDaysUntil(e.date) >= 0).map((event) => {
             const daysUntil = getDaysUntil(event.date);
             const isUrgent = daysUntil <= 7 && daysUntil >= 0;
             const isPast = daysUntil < 0;
