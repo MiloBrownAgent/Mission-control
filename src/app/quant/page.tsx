@@ -98,6 +98,7 @@ function choleskyDecompose(matrix: number[][]): number[][] {
 function runAllHorizons(
   holdings: Holding[],
   totalValue: number,
+  expectedAnnualReturn: number,  // user-specified target median growth rate per year
   corrMatrix: number[][] | null  // Cholesky correlation matrix, null = independent
 ): HorizonResult[] {
   const nAssets = holdings.length;
@@ -127,12 +128,12 @@ function runAllHorizons(
         const h = holdings[j];
         const positionValue = totalValue * weights[j];
         // Target median = expectedAnnualReturn per year.
-        // Standard GBM: S(T) = S0 * exp((μ - ½σ²)*T + σ*√T*Z)
-        // μ = 5yr annualized historical return (arithmetic mean of daily log returns * 252)
+        // GBM with user-specified expected return as median target.
+        // S(T) = S0 * exp(r*T + σ*√T*Z) — median = S0 * e^(r*T) exactly.
         const ST =
           positionValue *
           Math.exp(
-            (h.drift - 0.5 * h.volatility * h.volatility) * hz.years +
+            expectedAnnualReturn * hz.years +
               h.volatility * Math.sqrt(hz.years) * Z_corr[j]
           );
         portfolioEnd += ST;
@@ -1054,6 +1055,7 @@ export default function QuantPage() {
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [totalValue, setTotalValue] = useState(100000);
+  const [expectedReturn, setExpectedReturn] = useState(12); // % per year
 
   // Simulation state
   const [corrMatrix, setCorrMatrix] = useState<number[][] | null>(null);
@@ -1146,12 +1148,12 @@ export default function QuantPage() {
     const id = ++runRef.current;
     setTimeout(() => {
       if (runRef.current !== id) return;
-      const res = runAllHorizons(holdings, totalValue, corr);
+      const res = runAllHorizons(holdings, totalValue, expectedReturn / 100, corr);
       setResults(res);
       setSelectedHorizon(1);
       setRunning(false);
     }, 30);
-  }, [holdings, totalValue, weightsValid]);
+  }, [holdings, totalValue, expectedReturn, weightsValid]);
 
   return (
     <div className="space-y-8 pb-12">
@@ -1366,6 +1368,25 @@ export default function QuantPage() {
                   />
                 </div>
 
+                {/* Expected annual return */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-[#6B6560] uppercase tracking-wider">
+                    Exp. Return:
+                  </span>
+                  <input
+                    type="number"
+                    min={-50}
+                    max={100}
+                    step={1}
+                    value={expectedReturn}
+                    onChange={(e) =>
+                      setExpectedReturn(Math.max(-50, Math.min(100, Number(e.target.value) || 0)))
+                    }
+                    className="w-20 rounded border border-[#1A1816] bg-[#0A0908] px-3 py-1.5 font-mono text-sm text-[#E8E4DF] focus:outline-none focus:border-[#B8956A]/40"
+                  />
+                  <span className="text-xs text-[#6B6560]">%/yr</span>
+                </div>
+
                 {/* Blended vol */}
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-[#6B6560] uppercase tracking-wider">
@@ -1519,11 +1540,11 @@ export default function QuantPage() {
                   Each of the {N_PATHS.toLocaleString()} simulated paths uses{" "}
                   <span className="text-[#9A8878] font-medium">Geometric Brownian Motion (GBM)</span> — the
                   same model used by options traders and institutional risk desks. The formula is{" "}
-                  <span className="text-[#9A8878] font-medium italic">S(T) = S₀ × e^((μ − ½σ²)·T + σ·√T·Z)</span>,
-                  where <span className="text-[#9A8878] font-medium">μ (drift)</span> is each stock&apos;s
-                  5-year annualized historical return derived automatically from live Yahoo Finance data,{" "}
-                  <span className="text-[#9A8878] font-medium">σ (sigma)</span> is the realized annualized
-                  volatility from the same 5-year daily price history,{" "}
+                  <span className="text-[#9A8878] font-medium italic">S(T) = S₀ × e^(r·T + σ·√T·Z)</span>,
+                  where <span className="text-[#9A8878] font-medium">r</span> is your manually set expected
+                  annual return,{" "}
+                  <span className="text-[#9A8878] font-medium">σ (sigma)</span> is each stock&apos;s realized
+                  annualized volatility from 5 years of live daily price history,{" "}
                   <span className="text-[#9A8878] font-medium">T</span> is the time horizon in years, and{" "}
                   <span className="text-[#9A8878] font-medium">Z</span> is a random normal shock that fans the
                   distribution — high-vol positions produce wider spreads between bear and bull outcomes.
