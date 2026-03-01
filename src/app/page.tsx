@@ -352,59 +352,7 @@ export default function DashboardPage() {
       {/* ── WHOOP Recovery ──────────────────────────────────────────────────── */}
       <WhoopWidget data={whoopRecovery} />
 
-      {/* ── CRM Snapshot ────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-
-        {/* Pipeline value */}
-        <Link href="/crm">
-          <Card className="rounded-xl border-[#B8956A]/15 bg-gradient-to-br from-[#B8956A]/5 to-transparent p-4 h-full transition-all hover:shadow-lg hover:border-[#B8956A]/25">
-            <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="h-4 w-4 text-[#B8956A]" />
-              <span className="text-sm font-medium text-[#B8956A]">Open Pipeline</span>
-            </div>
-            <p className="text-3xl font-bold text-[#E8E4DF]">
-              {pipelineSummary ? formatCurrency(activeValue) : "—"}
-            </p>
-            <p className="text-xs text-[#6B6560] mt-1">
-              {pipelineSummary ? `${pipelineSummary.totalDeals} deal${pipelineSummary.totalDeals !== 1 ? "s" : ""} in pipeline` : "Loading…"}
-            </p>
-          </Card>
-        </Link>
-
-        {/* Prospects */}
-        <Link href="/crm">
-          <Card className="rounded-xl border-[#B8956A]/15 bg-gradient-to-br from-[#B8956A]/5 to-transparent p-4 h-full transition-all hover:shadow-lg hover:border-[#B8956A]/25">
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="h-4 w-4 text-[#B8956A]" />
-              <span className="text-sm font-medium text-[#B8956A]">Prospects</span>
-            </div>
-            <p className="text-3xl font-bold text-[#E8E4DF]">
-              {crmStats ? crmStats.totalProspects + crmStats.contacted : "—"}
-            </p>
-            <p className="text-xs text-[#6B6560] mt-1">
-              {crmStats ? `${crmStats.responded} responded` : "Loading…"}
-            </p>
-          </Card>
-        </Link>
-
-        {/* Closed won */}
-        <Link href="/crm">
-          <Card className="rounded-xl border-[#B8956A]/15 bg-gradient-to-br from-[#B8956A]/5 to-transparent p-4 h-full transition-all hover:shadow-lg hover:border-[#B8956A]/25">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="h-4 w-4 text-[#B8956A]" />
-              <span className="text-sm font-medium text-[#B8956A]">Closed Won</span>
-            </div>
-            <p className="text-3xl font-bold text-[#E8E4DF]">
-              {pipelineSummary ? formatCurrency(wonValue) : "—"}
-            </p>
-            <p className="text-xs text-[#6B6560] mt-1">
-              {pipelineSummary
-                ? `${pipelineSummary.byStage.closed_won.count} deal${pipelineSummary.byStage.closed_won.count !== 1 ? "s" : ""} closed`
-                : "Loading…"}
-            </p>
-          </Card>
-        </Link>
-      </div>
+      {/* CRM Snapshot removed from home — view full CRM at /crm */}
 
       {/* ── Upcoming Events ───────────────────────────────────────────────── */}
       <div className="animate-fade-in-up stagger-5">
