@@ -709,15 +709,15 @@ function PaperTradesTab() {
             No open positions
           </div>
         ) : (
-          <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
-            <table className="w-full text-xs">
+          <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-x-auto">
+            <table className="w-full text-xs min-w-[560px]">
               <thead>
                 <tr className="border-b border-[#1A1816]">
                   <th className="text-left text-[#6B6560] font-medium px-4 py-2.5 uppercase tracking-wider">Question</th>
                   <th className="text-center text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider">Pos</th>
                   <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider">Entry%</th>
-                  <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider">My%</th>
-                  <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider">Edge</th>
+                  <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider hidden sm:table-cell">My%</th>
+                  <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider hidden sm:table-cell">Edge</th>
                   <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider">Stake</th>
                   <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider">Resolves</th>
                 </tr>
@@ -760,8 +760,8 @@ function PaperTradesTab() {
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right font-mono text-[#E8E4DF]">{t.entry_price}%</td>
-                      <td className="px-3 py-3 text-right font-mono text-[#E8E4DF]">{t.my_probability}%</td>
-                      <td className={`px-3 py-3 text-right font-mono font-semibold ${edge > 0 ? "text-green-400" : edge < 0 ? "text-red-400" : "text-[#6B6560]"}`}>
+                      <td className="px-3 py-3 text-right font-mono text-[#E8E4DF] hidden sm:table-cell">{t.my_probability}%</td>
+                      <td className={`px-3 py-3 text-right font-mono font-semibold hidden sm:table-cell ${edge > 0 ? "text-green-400" : edge < 0 ? "text-red-400" : "text-[#6B6560]"}`}>
                         {edge > 0 ? "+" : ""}{edge}pp
                       </td>
                       <td className="px-3 py-3 text-right font-mono text-[#E8E4DF]">${t.kelly_stake}</td>
@@ -781,8 +781,8 @@ function PaperTradesTab() {
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#6B6560] mb-3">
             Resolved Trades · {resolvedTrades.length}
           </h2>
-          <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
-            <table className="w-full text-xs">
+          <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-x-auto">
+            <table className="w-full text-xs min-w-[480px]">
               <thead>
                 <tr className="border-b border-[#1A1816]">
                   <th className="text-left text-[#6B6560] font-medium px-4 py-2.5 uppercase tracking-wider">Question</th>
@@ -790,7 +790,7 @@ function PaperTradesTab() {
                   <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider">Entry%</th>
                   <th className="text-center text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider">Result</th>
                   <th className="text-right text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider">P&amp;L</th>
-                  <th className="text-left text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider">Notes</th>
+                  <th className="text-left text-[#6B6560] font-medium px-3 py-2.5 uppercase tracking-wider hidden sm:table-cell">Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -823,7 +823,7 @@ function PaperTradesTab() {
                       <td className={`px-3 py-3 text-right font-mono font-semibold ${(t.pnl ?? 0) >= 0 ? "text-green-400" : "text-red-400"}`}>
                         {t.pnl !== undefined ? fmtPnl(t.pnl) : "–"}
                       </td>
-                      <td className="px-3 py-3 text-[#6B6560] max-w-[200px]">
+                      <td className="px-3 py-3 text-[#6B6560] max-w-[200px] hidden sm:table-cell">
                         <span className="truncate block" title={t.notes}>{t.notes}</span>
                       </td>
                     </tr>

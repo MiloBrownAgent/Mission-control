@@ -10,6 +10,7 @@
 
 import type * as actionItems from "../actionItems.js";
 import type * as activityLog from "../activityLog.js";
+import type * as btcSignals from "../btcSignals.js";
 import type * as classBookings from "../classBookings.js";
 import type * as cleaningTasks from "../cleaningTasks.js";
 import type * as clientLinks from "../clientLinks.js";
@@ -42,6 +43,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   actionItems: typeof actionItems;
   activityLog: typeof activityLog;
+  btcSignals: typeof btcSignals;
   classBookings: typeof classBookings;
   cleaningTasks: typeof cleaningTasks;
   clientLinks: typeof clientLinks;

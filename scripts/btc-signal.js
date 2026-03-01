@@ -25,11 +25,11 @@ const CONVEX_URL  = process.env.CONVEX_URL || 'https://proper-rat-443.convex.clo
 const CONFIGS = {
   '5M': {
     krakenInterval: 5,
-    threshold: 0.0010,      // 0.10%
+    threshold: 0.0005,      // 0.05% — fires on nearly every candle
     count: 6,               // fetch 6 candles — plenty to get 1 closed + 1 forming
-    probBase: 58,
-    probStrong: 68,          // "strong" at >0.25%
-    strongMoveThreshold: 0.0025,
+    probBase: 56,
+    probStrong: 66,          // "strong" at >0.20%
+    strongMoveThreshold: 0.0020,
   },
   '1H': {
     krakenInterval: 60,
@@ -201,34 +201,49 @@ async function main() {
     console.log(`\nNo unresolved signal to resolve.`);
   }
 
-  // ── Step 3: Check forming candle for a new signal ─────────────────────────
+  // ── Step 3: Signal based on CLOSED candle → bet momentum continues into next ─
 
-  const movePct = (formingLive - formingOpen) / formingOpen;
-  const absMov  = Math.abs(movePct);
-  const dir     = movePct >= 0 ? 'UP' : 'DOWN';
+  // Strategy: the just-closed candle moved X% in direction D.
+  // We bet the NEXT (forming) candle continues in direction D.
+  // Signal is placed immediately at candle close; resolved on next run.
 
-  console.log(`\nForming candle move: ${fmtPct(movePct)} → ${dir}`);
+  const closedMove = (closedClose - closedOpen) / closedOpen;
+  const closedAbs  = Math.abs(closedMove);
 
-  if (absMov < cfg.threshold) {
-    console.log(`Move ${(absMov * 100).toFixed(3)}% < threshold ${(cfg.threshold * 100).toFixed(2)}% — no signal`);
+  console.log(`\nClosed candle move: ${fmtPct(closedMove)} → ${closedDir}`);
+
+  if (closedAbs < cfg.threshold) {
+    console.log(`Move ${(closedAbs * 100).toFixed(3)}% < threshold ${(cfg.threshold * 100).toFixed(2)}% — no signal`);
     return;
   }
 
-  // Probability scoring
-  let prob = absMov > cfg.strongMoveThreshold ? cfg.probStrong : cfg.probBase;
-  if (closedDir === dir) prob += 5; // prior candle aligned = momentum bonus
-  prob = Math.min(prob, 78);        // cap
+  // Check if we already have a signal for the FORMING candle (avoid dupes)
+  // The forming candle's open time IS the signal target (we're betting on it)
+  const existingCheck = unresolvedSignal && unresolvedSignal.candle_open_time === formingOpenTime;
+  if (existingCheck) {
+    console.log(`Signal for ${formingOpenTime} already exists — skipping`);
+    return;
+  }
 
-  console.log(`\n✅ SIGNAL: ${dir} | Prob: ${prob}% | Move: ${fmtPct(movePct)} | |Δ|: ${(absMov * 100).toFixed(4)}%`);
+  // Probability scoring: base + strong move bonus + two-candle momentum bonus
+  const prevClosed = candles[candles.length - 3]; // candle before closed
+  const prevDir    = prevClosed ? (parseFloat(prevClosed[4]) >= parseFloat(prevClosed[1]) ? 'UP' : 'DOWN') : null;
 
-  // Store in Convex
+  let prob = closedAbs > cfg.strongMoveThreshold ? cfg.probStrong : cfg.probBase;
+  if (prevDir === closedDir) prob += 4; // two consecutive candles same direction
+  prob = Math.min(prob, 78);
+
+  console.log(`\n✅ SIGNAL: ${closedDir} (continuation) | Prob: ${prob}% | Closed move: ${fmtPct(closedMove)}`);
+  console.log(`   Betting next candle (${formingOpenTime}) continues ${closedDir}`);
+
+  // Store — candle_open_time is the FORMING candle (the one we're betting on)
   const result = await convexMutation('btcSignals:addSignal', {
     candle_open_time:  formingOpenTime,
     interval:          INTERVAL,
     open_price:        formingOpen,
-    signal_price:      formingLive,
-    signal_direction:  dir,
-    signal_confidence: parseFloat((absMov * 100).toFixed(4)),
+    signal_price:      formingOpen,   // signal placed at candle open
+    signal_direction:  closedDir,     // bet on continuation
+    signal_confidence: parseFloat((closedAbs * 100).toFixed(4)),
     polymarket_url:    'https://polymarket.com/crypto/bitcoin',
     my_probability:    prob,
   });
