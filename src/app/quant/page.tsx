@@ -78,30 +78,62 @@ function percentile(sorted: number[], p: number): number {
   return sorted[Math.min(idx, sorted.length - 1)];
 }
 
+function choleskyDecompose(matrix: number[][]): number[][] {
+  const n = matrix.length;
+  const L: number[][] = Array.from({ length: n }, () => new Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j <= i; j++) {
+      let sum = 0;
+      for (let k = 0; k < j; k++) sum += L[i][k] * L[j][k];
+      if (i === j) {
+        L[i][j] = Math.sqrt(Math.max(0, matrix[i][i] - sum));
+      } else {
+        L[i][j] = L[j][j] > 0 ? (matrix[i][j] - sum) / L[j][j] : 0;
+      }
+    }
+  }
+  return L;
+}
+
 function runAllHorizons(
   holdings: Holding[],
   totalValue: number,
-  expectedAnnualReturn: number  // target median growth rate per year (e.g. 0.12 = 12%)
+  expectedAnnualReturn: number,  // target median growth rate per year (e.g. 0.12 = 12%)
+  corrMatrix: number[][] | null  // Cholesky correlation matrix, null = independent
 ): HorizonResult[] {
+  const nAssets = holdings.length;
   const weights = holdings.map((h) => h.weight / 100);
+  // Precompute Cholesky factor once (reused across all horizons + paths)
+  const L = corrMatrix && nAssets > 1 ? choleskyDecompose(corrMatrix) : null;
 
   return HORIZONS.map((hz) => {
     const terminals: number[] = new Array(N_PATHS);
 
     for (let i = 0; i < N_PATHS; i++) {
+      // Draw independent normals then apply Cholesky for correlated shocks
+      const Z_raw = Array.from({ length: nAssets }, () => randn());
+      const Z_corr: number[] = new Array(nAssets).fill(0);
+      if (L) {
+        for (let row = 0; row < nAssets; row++) {
+          for (let col = 0; col <= row; col++) {
+            Z_corr[row] += L[row][col] * Z_raw[col];
+          }
+        }
+      } else {
+        for (let k = 0; k < nAssets; k++) Z_corr[k] = Z_raw[k];
+      }
+
       let portfolioEnd = 0;
-      for (let j = 0; j < holdings.length; j++) {
+      for (let j = 0; j < nAssets; j++) {
         const h = holdings[j];
         const positionValue = totalValue * weights[j];
-        const Z = randn();
         // Target median = expectedAnnualReturn per year.
-        // Setting mu = r + ½σ² → (mu - ½σ²)*T simplifies to r*T.
-        // Volatility still spreads the distribution, but median = S0 * e^(r*T).
+        // S(T) = S0 * exp(r*T + σ*√T*Z_corr[j])
         const ST =
           positionValue *
           Math.exp(
             expectedAnnualReturn * hz.years +
-              h.volatility * Math.sqrt(hz.years) * Z
+              h.volatility * Math.sqrt(hz.years) * Z_corr[j]
           );
         portfolioEnd += ST;
       }
@@ -1025,6 +1057,8 @@ export default function QuantPage() {
   const [expectedReturn, setExpectedReturn] = useState(12); // % per year, median target
 
   // Simulation state
+  const [corrMatrix, setCorrMatrix] = useState<number[][] | null>(null);
+  const [corrLoading, setCorrLoading] = useState(false);
   const [results, setResults] = useState<HorizonResult[] | null>(null);
   const [running, setRunning] = useState(false);
   const [selectedHorizon, setSelectedHorizon] = useState(1); // index into results
@@ -1087,18 +1121,38 @@ export default function QuantPage() {
     );
   };
 
-  const runSim = useCallback(() => {
+  const runSim = useCallback(async () => {
     if (!weightsValid || holdings.length === 0) return;
     setRunning(true);
+
+    // Fetch correlation matrix for 2+ holdings
+    let corr: number[][] | null = null;
+    if (holdings.length > 1) {
+      try {
+        setCorrLoading(true);
+        const tickers = holdings.map((h) => h.ticker).join(",");
+        const res = await fetch(`/api/quant/correlation?tickers=${encodeURIComponent(tickers)}`);
+        const data = await res.json();
+        corr = data.matrix || null;
+        setCorrMatrix(corr);
+      } catch {
+        corr = null;
+      } finally {
+        setCorrLoading(false);
+      }
+    } else {
+      setCorrMatrix(null);
+    }
+
     const id = ++runRef.current;
     setTimeout(() => {
       if (runRef.current !== id) return;
-      const res = runAllHorizons(holdings, totalValue, expectedReturn / 100);
+      const res = runAllHorizons(holdings, totalValue, expectedReturn / 100, corr);
       setResults(res);
-      setSelectedHorizon(1); // default to 1yr
+      setSelectedHorizon(1);
       setRunning(false);
     }, 30);
-  }, [holdings, totalValue, weightsValid]);
+  }, [holdings, totalValue, expectedReturn, weightsValid]);
 
   return (
     <div className="space-y-8 pb-12">
@@ -1342,6 +1396,16 @@ export default function QuantPage() {
                   </span>
                 </div>
 
+                {/* Correlation status */}
+                {holdings.length > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <div className={`h-1.5 w-1.5 rounded-full ${corrMatrix ? "bg-[#B8956A]" : "bg-[#3A3530]"}`} />
+                    <span className="text-[10px] text-[#6B6560] uppercase tracking-wider">
+                      {corrLoading ? "Fetching corr…" : corrMatrix ? `${holdings.length}×${holdings.length} corr` : "Run to correlate"}
+                    </span>
+                  </div>
+                )}
+
                 {/* Run button */}
                 <button
                   onClick={runSim}
@@ -1471,19 +1535,25 @@ export default function QuantPage() {
               {/* Methodology note */}
               <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-4">
                 <p className="text-[10px] text-[#6B6560] leading-relaxed">
-                  <span className="text-[#B8956A] font-medium">
-                    Methodology:
-                  </span>{" "}
-                  Geometric Brownian Motion with{" "}
-                  {N_PATHS.toLocaleString()} Monte Carlo paths across 6
-                  horizons (6mo\u201330yr). Each position simulated independently
-                  using Box-Muller normal random variables. Terminal values: S
-                  <sub>T</sub> = S<sub>0</sub> · exp((\u03BC \u2212 \u03C3\u00B2/2)T
-                  + \u03C3\u221AT · Z). Live vol and drift from 1yr daily
-                  Yahoo Finance data.{" "}
-                  <span className="text-amber-400">
-                    \u26A0\uFE0F Not financial advice.
-                  </span>
+                  <span className="text-[#B8956A] font-medium">How This Works —</span>{" "}
+                  Each of the {N_PATHS.toLocaleString()} simulated paths uses{" "}
+                  <span className="text-[#9A8878] font-medium">Geometric Brownian Motion (GBM)</span> — the
+                  same model used by options traders and institutional risk desks. Every position grows via{" "}
+                  <span className="text-[#9A8878] font-medium italic">S(T) = S₀ × e^(r·T + σ·√T·Z)</span>,
+                  where <span className="text-[#9A8878] font-medium">r</span> is your expected annual return,{" "}
+                  <span className="text-[#9A8878] font-medium">σ</span> is each stock&apos;s realized
+                  volatility pulled from one year of live daily price history,{" "}
+                  <span className="text-[#9A8878] font-medium">T</span> is the time horizon in years, and{" "}
+                  <span className="text-[#9A8878] font-medium">Z</span> is a random shock drawn from a standard
+                  normal distribution — ensuring the median outcome compounds at exactly your target return while
+                  volatility fans the distribution into a range of outcomes. When multiple holdings are present, a{" "}
+                  <span className="text-[#9A8878] font-medium">Cholesky-decomposed correlation matrix</span> is
+                  built from live return data so correlated assets generate correlated shocks rather than
+                  independent ones, producing a more realistic portfolio distribution.{" "}
+                  <span className="text-[#9A8878] font-medium">P10</span> is the outcome in the worst 10% of
+                  scenarios, <span className="text-[#9A8878] font-medium">P50</span> is the median, and{" "}
+                  <span className="text-[#9A8878] font-medium">P90</span> is the best 10%.{" "}
+                  <span className="text-amber-400">⚠️ Not financial advice.</span>
                 </p>
               </div>
             </>
