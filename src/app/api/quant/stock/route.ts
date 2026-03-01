@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   if (!ticker) return NextResponse.json({ error: "ticker required" }, { status: 400 });
 
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1y`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5y`;
     const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" }, next: { revalidate: 300 } });
     const data = await res.json();
 
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     const rawDrift = mean * 252;
     // Cap drift at realistic bounds — historical 1yr return is a terrible
     // predictor of future drift. Max 25% (aggressive growth), min -30%.
-    const cappedDrift = Math.max(-0.30, Math.min(0.25, rawDrift));
+    const cappedDrift = Math.max(-0.40, Math.min(0.40, rawDrift));
 
     return NextResponse.json({
       ticker,

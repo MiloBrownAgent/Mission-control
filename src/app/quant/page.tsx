@@ -98,7 +98,6 @@ function choleskyDecompose(matrix: number[][]): number[][] {
 function runAllHorizons(
   holdings: Holding[],
   totalValue: number,
-  expectedAnnualReturn: number,  // target median growth rate per year (e.g. 0.12 = 12%)
   corrMatrix: number[][] | null  // Cholesky correlation matrix, null = independent
 ): HorizonResult[] {
   const nAssets = holdings.length;
@@ -128,11 +127,12 @@ function runAllHorizons(
         const h = holdings[j];
         const positionValue = totalValue * weights[j];
         // Target median = expectedAnnualReturn per year.
-        // S(T) = S0 * exp(r*T + σ*√T*Z_corr[j])
+        // Standard GBM: S(T) = S0 * exp((μ - ½σ²)*T + σ*√T*Z)
+        // μ = 5yr annualized historical return (arithmetic mean of daily log returns * 252)
         const ST =
           positionValue *
           Math.exp(
-            expectedAnnualReturn * hz.years +
+            (h.drift - 0.5 * h.volatility * h.volatility) * hz.years +
               h.volatility * Math.sqrt(hz.years) * Z_corr[j]
           );
         portfolioEnd += ST;
@@ -1054,7 +1054,6 @@ export default function QuantPage() {
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [totalValue, setTotalValue] = useState(100000);
-  const [expectedReturn, setExpectedReturn] = useState(12); // % per year, median target
 
   // Simulation state
   const [corrMatrix, setCorrMatrix] = useState<number[][] | null>(null);
@@ -1147,12 +1146,12 @@ export default function QuantPage() {
     const id = ++runRef.current;
     setTimeout(() => {
       if (runRef.current !== id) return;
-      const res = runAllHorizons(holdings, totalValue, expectedReturn / 100, corr);
+      const res = runAllHorizons(holdings, totalValue, corr);
       setResults(res);
       setSelectedHorizon(1);
       setRunning(false);
     }, 30);
-  }, [holdings, totalValue, expectedReturn, weightsValid]);
+  }, [holdings, totalValue, weightsValid]);
 
   return (
     <div className="space-y-8 pb-12">
@@ -1367,25 +1366,6 @@ export default function QuantPage() {
                   />
                 </div>
 
-                {/* Expected annual return */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-[#6B6560] uppercase tracking-wider">
-                    Exp. Return:
-                  </span>
-                  <input
-                    type="number"
-                    min={-50}
-                    max={100}
-                    step={1}
-                    value={expectedReturn}
-                    onChange={(e) =>
-                      setExpectedReturn(Math.max(-50, Math.min(100, Number(e.target.value) || 0)))
-                    }
-                    className="w-20 rounded border border-[#1A1816] bg-[#0A0908] px-3 py-1.5 font-mono text-sm text-[#E8E4DF] focus:outline-none focus:border-[#B8956A]/40"
-                  />
-                  <span className="text-xs text-[#6B6560]">%/yr</span>
-                </div>
-
                 {/* Blended vol */}
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-[#6B6560] uppercase tracking-wider">
@@ -1538,20 +1518,21 @@ export default function QuantPage() {
                   <span className="text-[#B8956A] font-medium">How This Works —</span>{" "}
                   Each of the {N_PATHS.toLocaleString()} simulated paths uses{" "}
                   <span className="text-[#9A8878] font-medium">Geometric Brownian Motion (GBM)</span> — the
-                  same model used by options traders and institutional risk desks. Every position grows via{" "}
-                  <span className="text-[#9A8878] font-medium italic">S(T) = S₀ × e^(r·T + σ·√T·Z)</span>,
-                  where <span className="text-[#9A8878] font-medium">r</span> is your expected annual return,{" "}
-                  <span className="text-[#9A8878] font-medium">σ</span> is each stock&apos;s realized
-                  volatility pulled from one year of live daily price history,{" "}
+                  same model used by options traders and institutional risk desks. The formula is{" "}
+                  <span className="text-[#9A8878] font-medium italic">S(T) = S₀ × e^((μ − ½σ²)·T + σ·√T·Z)</span>,
+                  where <span className="text-[#9A8878] font-medium">μ (drift)</span> is each stock&apos;s
+                  5-year annualized historical return derived automatically from live Yahoo Finance data,{" "}
+                  <span className="text-[#9A8878] font-medium">σ (sigma)</span> is the realized annualized
+                  volatility from the same 5-year daily price history,{" "}
                   <span className="text-[#9A8878] font-medium">T</span> is the time horizon in years, and{" "}
-                  <span className="text-[#9A8878] font-medium">Z</span> is a random shock drawn from a standard
-                  normal distribution — ensuring the median outcome compounds at exactly your target return while
-                  volatility fans the distribution into a range of outcomes. When multiple holdings are present, a{" "}
+                  <span className="text-[#9A8878] font-medium">Z</span> is a random normal shock that fans the
+                  distribution — high-vol positions produce wider spreads between bear and bull outcomes.
+                  When multiple holdings are present, a{" "}
                   <span className="text-[#9A8878] font-medium">Cholesky-decomposed correlation matrix</span> is
-                  built from live return data so correlated assets generate correlated shocks rather than
-                  independent ones, producing a more realistic portfolio distribution.{" "}
-                  <span className="text-[#9A8878] font-medium">P10</span> is the outcome in the worst 10% of
-                  scenarios, <span className="text-[#9A8878] font-medium">P50</span> is the median, and{" "}
+                  built from live return data so correlated assets move together in the simulation rather than
+                  independently.{" "}
+                  <span className="text-[#9A8878] font-medium">P10</span> is the worst-10% scenario,{" "}
+                  <span className="text-[#9A8878] font-medium">P50</span> is the median, and{" "}
                   <span className="text-[#9A8878] font-medium">P90</span> is the best 10%.{" "}
                   <span className="text-amber-400">⚠️ Not financial advice.</span>
                 </p>
