@@ -36,8 +36,12 @@ export const bulkInsert = mutation({
       returnDate: v.optional(v.string()),
       cashPricePerPerson: v.number(),
       cashPriceTotal: v.number(),
-      skyMilesPerPerson: v.number(),
-      skyMilesTotal: v.number(),
+      cashFarePerPerson: v.optional(v.number()),
+      cashFareTotal: v.optional(v.number()),
+      skyMilesPerPerson: v.optional(v.number()),
+      skyMilesTotal: v.optional(v.number()),
+      centsPerMile: v.optional(v.number()),
+      priceSource: v.optional(v.string()),
       cabinClass: v.string(),
       dealScore: v.number(),
       sourceUrl: v.optional(v.string()),
@@ -73,6 +77,35 @@ export const clearAll = mutation({
       await ctx.db.delete(deal._id);
     }
     return all.length;
+  },
+});
+
+export const upsertCashFares = mutation({
+  args: {
+    weekOf: v.string(),
+    fares: v.array(v.object({
+      destination: v.string(),
+      cashFarePerPerson: v.number(),
+      cashFareTotal: v.number(),
+      centsPerMile: v.optional(v.number()),
+    })),
+  },
+  handler: async (ctx, args) => {
+    const deals = await ctx.db
+      .query("flightDeals")
+      .withIndex("by_week", (q) => q.eq("weekOf", args.weekOf))
+      .collect();
+    for (const fare of args.fares) {
+      const deal = deals.find((d) => d.destination === fare.destination);
+      if (deal) {
+        await ctx.db.patch(deal._id, {
+          cashFarePerPerson: fare.cashFarePerPerson,
+          cashFareTotal: fare.cashFareTotal,
+          centsPerMile: fare.centsPerMile,
+        });
+      }
+    }
+    return args.fares.length;
   },
 });
 

@@ -31,7 +31,7 @@ function formatMiles(miles: number) {
   return miles.toLocaleString();
 }
 
-function buildGoogleFlightsUrl(
+function buildFlightSearchUrl(
   origin: string,
   destination: string,
   departureDate: string,
@@ -39,15 +39,23 @@ function buildGoogleFlightsUrl(
 ): string {
   const orig = origin.toUpperCase();
   const dest = destination.toUpperCase();
-  // Dates must be YYYY-MM-DD (already stored that way in Convex)
+  // Kayak has a reliable deep-link format that always lands on search results
   if (returnDate) {
-    return `https://www.google.com/flights#flt=${orig}.${dest}.${departureDate}*${dest}.${orig}.${returnDate};c:USD;px:2`;
+    return `https://www.kayak.com/flights/${orig}-${dest}/${departureDate}/${returnDate}?adults=2`;
   }
-  return `https://www.google.com/flights#flt=${orig}.${dest}.${departureDate};c:USD;px:2`;
+  return `https://www.kayak.com/flights/${orig}-${dest}/${departureDate}?adults=2`;
+}
+
+function normalizeDeltaCabin(cabinClass?: string): string {
+  const raw = (cabinClass ?? "").toLowerCase();
+  if (raw.includes("business")) return "BUSINESS";
+  if (raw.includes("first")) return "FIRST";
+  if (raw.includes("comfort") || raw.includes("premium")) return "FIRST_CLASS"; // Delta Comfort+
+  return "ECONOMY";
 }
 
 function buildDeltaAwardUrl(origin: string, destination: string, departureDate: string, returnDate?: string | null, cabinClass?: string): string {
-  const cabin = (cabinClass ?? "ECONOMY").toUpperCase();
+  const cabin = normalizeDeltaCabin(cabinClass);
   const tripType = returnDate ? "ROUND_TRIP" : "ONE_WAY";
   return `https://www.delta.com/flight-search/book-a-flight#/results/outbound/1/${cabin}/${origin}/${destination}/${departureDate}/MILES/${tripType}/2/0/0/0`;
 }
@@ -59,7 +67,7 @@ function buildAirlineUrl(
   departureDate: string,
   returnDate?: string | null,
 ): string {
-  return buildGoogleFlightsUrl(origin, destination, departureDate, returnDate);
+  return buildFlightSearchUrl(origin, destination, departureDate, returnDate);
 }
 
 type SortMode = "score" | "price" | "nonstop";
@@ -94,7 +102,7 @@ export default function TravelPage() {
   function buildSearchUrl() {
     if (!searchTo || !searchDate) return "#";
     const dest = searchTo.toUpperCase().trim();
-    return buildGoogleFlightsUrl("MSP", dest, searchDate, searchReturn || null);
+    return buildFlightSearchUrl("MSP", dest, searchDate, searchReturn || null);
   }
 
   return (
@@ -111,7 +119,7 @@ export default function TravelPage() {
                 Travel ✈️
               </h1>
               <p className="text-sm text-[#6B6560]">
-                Best Delta + partner fares for 2, departing 4–8 weeks out from MSP
+                Best Delta cash fares for 2 from MSP — real prices from Expedia & Travelocity
               </p>
             </div>
           </div>
@@ -225,36 +233,23 @@ export default function TravelPage() {
               </div>
 
               {/* Price */}
-              <div className="rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2 space-y-1.5">
-                <div>
-                  <p className="text-[10px] text-[#6B6560] uppercase tracking-wide font-semibold mb-0.5">Miles</p>
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <span className="text-xl font-bold text-[#B8956A]">
-                      {formatMiles(deal.skyMilesPerPerson)}
-                    </span>
-                    <span className="text-xs text-[#6B6560]">SkyMiles/person</span>
-                    <span className="text-[#1A1816]">·</span>
-                    <span className="text-sm font-semibold text-[#B8956A]">
-                      {formatMiles(deal.skyMilesTotal)}
-                    </span>
-                    <span className="text-xs text-[#6B6560]">total for 2</span>
-                  </div>
+              <div className="rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2.5">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-2xl font-bold text-[#E8E4DF]">
+                    ${deal.cashPricePerPerson.toLocaleString()}
+                  </span>
+                  <span className="text-sm text-[#6B6560]">per person</span>
+                  <span className="text-[#2A2825]">·</span>
+                  <span className="text-lg font-bold text-[#B8956A]">
+                    ${deal.cashPriceTotal.toLocaleString()}
+                  </span>
+                  <span className="text-sm text-[#6B6560]">for 2</span>
                 </div>
-                <div>
-                  <p className="text-[10px] text-[#6B6560] uppercase tracking-wide font-semibold mb-0.5">Cash (taxes + fees)</p>
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <span className="text-lg font-bold text-[#E8E4DF]">
-                      ${deal.cashPricePerPerson.toLocaleString()}
-                    </span>
-                    <span className="text-xs text-[#6B6560]">per person</span>
-                    <span className="text-[#1A1816]">·</span>
-                    <span className="text-sm font-semibold text-[#E8E4DF]">
-                      ${deal.cashPriceTotal.toLocaleString()}
-                    </span>
-                    <span className="text-xs text-[#6B6560]">total for 2</span>
-                  </div>
-                </div>
-                <p className="text-[10px] text-[#6B6560]/60">Award pricing from Delta.com</p>
+                <p className="text-[10px] text-[#6B6560] mt-1">
+                  {"priceSource" in deal && (deal as {priceSource?: string}).priceSource
+                    ? `From ${(deal as {priceSource?: string}).priceSource}`
+                    : "Round-trip · Economy"}
+                </p>
               </div>
 
               {/* Dates */}
@@ -270,25 +265,14 @@ export default function TravelPage() {
               </div>
 
               {/* CTA */}
-              <div className="flex gap-2">
-                <a
-                  href={buildGoogleFlightsUrl(deal.origin, deal.destination, deal.departureDate, deal.returnDate)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#B8956A] hover:bg-[#CDAA7E] px-3 py-2 text-xs font-bold text-[#060606] transition-colors"
-                >
-                  🔍 Search flights
-                </a>
-                <a
-                  href={buildDeltaAwardUrl(deal.origin, deal.destination, deal.departureDate, deal.returnDate, deal.cabinClass)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 rounded-lg border border-[#B8956A]/40 px-3 py-2 text-xs font-semibold text-[#B8956A] hover:bg-[#B8956A]/10 transition-colors"
-                  title="Open Delta.com"
-                >
-                  ✈️ SkyMiles
-                </a>
-              </div>
+              <a
+                href={buildFlightSearchUrl(deal.origin, deal.destination, deal.departureDate, deal.returnDate)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#B8956A] hover:bg-[#CDAA7E] px-3 py-2.5 text-sm font-bold text-[#060606] transition-colors"
+              >
+                🔍 Search on Kayak
+              </a>
             </div>
           ))}
         </div>
@@ -343,7 +327,7 @@ export default function TravelPage() {
               : "bg-[#1A1816] text-[#6B6560] pointer-events-none"
           }`}
         >
-          ✈️ Search on Google Flights
+          ✈️ Search on Kayak
         </a>
       </div>
     </div>

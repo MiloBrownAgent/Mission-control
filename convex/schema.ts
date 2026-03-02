@@ -364,10 +364,14 @@ export default defineSchema({
     isNonstop: v.boolean(),
     departureDate: v.string(),
     returnDate: v.optional(v.string()),
-    cashPricePerPerson: v.number(),
-    cashPriceTotal: v.number(),
-    skyMilesPerPerson: v.number(),  // actual SkyMiles required per person for award travel
-    skyMilesTotal: v.number(),      // x2 for two people
+    cashPricePerPerson: v.number(),  // round-trip cash fare per person
+    cashPriceTotal: v.number(),      // round-trip cash fare for 2
+    cashFarePerPerson: v.optional(v.number()),
+    cashFareTotal: v.optional(v.number()),
+    skyMilesPerPerson: v.optional(v.number()),
+    skyMilesTotal: v.optional(v.number()),
+    centsPerMile: v.optional(v.number()),
+    priceSource: v.optional(v.string()),  // e.g. "Expedia confirmed Mar 1"
     cabinClass: v.string(),
     dealScore: v.number(),
     sourceUrl: v.optional(v.string()),
