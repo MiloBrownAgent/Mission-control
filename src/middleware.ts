@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/login', '/api/auth', '/api/favicon', '/api/manifest', '/api/dropbox/callback', '/api/dropbox/folders', '/api/dropbox/download', '/api/whoop', '/privacy', '/_next', '/favicon.ico', '/manifest.json', '/icons'];
+const PUBLIC_PATHS = ['/login', '/api/auth', '/api/favicon', '/api/manifest', '/api/dropbox/callback', '/api/dropbox/folders', '/api/dropbox/download', '/api/whoop', '/api/guest-preferences', '/privacy', '/s/', '/_next', '/favicon.ico', '/manifest.json', '/icons'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -22,7 +22,7 @@ export function middleware(request: NextRequest) {
   if (authCookie?.value === 'authenticated') {
     // Redirect family users away from work-only root to family home
     if (isFamilyMode && pathname === '/') {
-      return NextResponse.redirect(new URL('/family-home', request.url));
+      return NextResponse.redirect(new URL('/today', request.url));
     }
     const response = NextResponse.next();
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');

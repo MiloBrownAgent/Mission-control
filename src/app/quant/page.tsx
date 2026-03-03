@@ -21,6 +21,7 @@ import {
   Loader2,
   Activity,
   AlertTriangle,
+  Gauge,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -1043,9 +1044,308 @@ function PaperTradesTab() {
   );
 }
 
+// ─── Sentiment Gauge SVG ──────────────────────────────────────────────────────
+function SentimentGauge({ score }: { score: number }) {
+  // Semicircular gauge: -100 (left) to +100 (right)
+  // Arc from 180° (left) to 0° (right)
+  const clampedScore = Math.max(-100, Math.min(100, score));
+  const normalized = (clampedScore + 100) / 200; // 0 to 1
+  const needleAngle = 180 - normalized * 180; // 180° (left/-100) to 0° (right/+100)
+  const needleRad = (needleAngle * Math.PI) / 180;
+
+  const cx = 150, cy = 140, r = 110;
+  const needleX = cx + r * 0.85 * Math.cos(needleRad);
+  const needleY = cy - r * 0.85 * Math.sin(needleRad);
+
+  // Zone arcs (as SVG paths)
+  function arcPath(startDeg: number, endDeg: number): string {
+    const startRad = (startDeg * Math.PI) / 180;
+    const endRad = (endDeg * Math.PI) / 180;
+    const x1 = cx + r * Math.cos(Math.PI - startRad);
+    const y1 = cy - r * Math.sin(Math.PI - startRad);
+    const x2 = cx + r * Math.cos(Math.PI - endRad);
+    const y2 = cy - r * Math.sin(Math.PI - endRad);
+    const largeArc = endDeg - startDeg > 90 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
+  }
+
+  // Zones mapped to 0-180° where 0°=score -100, 180°=score +100
+  // score -100→-30 = 0°→63°, -30→-10 = 63°→81°, -10→+10 = 81°→99°, +10→+30 = 99°→117°, +30→+100 = 117°→180°
+  const zones = [
+    { start: 0, end: 63, color: "#DC2626" },      // Red: -100 to -30
+    { start: 63, end: 81, color: "#EA580C" },     // Orange: -30 to -10
+    { start: 81, end: 99, color: "#EAB308" },     // Yellow: -10 to +10
+    { start: 99, end: 117, color: "#84CC16" },    // Light green: +10 to +30
+    { start: 117, end: 180, color: "#22C55E" },   // Green: +30 to +100
+  ];
+
+  function getScoreColor(s: number): string {
+    if (s <= -30) return "#DC2626";
+    if (s <= -10) return "#EA580C";
+    if (s <= 10) return "#EAB308";
+    if (s <= 30) return "#84CC16";
+    return "#22C55E";
+  }
+
+  function getLabel(s: number): string {
+    if (s <= -50) return "Extreme Fear";
+    if (s <= -30) return "Fear";
+    if (s <= -10) return "Slightly Bearish";
+    if (s <= 10) return "Neutral";
+    if (s <= 30) return "Slightly Bullish";
+    if (s <= 50) return "Greed";
+    return "Extreme Greed";
+  }
+
+  return (
+    <div className="flex flex-col items-center">
+      <svg viewBox="0 0 300 165" className="w-full max-w-[320px]">
+        {/* Zone arcs */}
+        {zones.map((z, i) => (
+          <path
+            key={i}
+            d={arcPath(z.start, z.end)}
+            fill="none"
+            stroke={z.color}
+            strokeWidth={18}
+            strokeLinecap="round"
+            opacity={0.3}
+          />
+        ))}
+        {/* Active zone highlight */}
+        {zones.map((z, i) => {
+          const scoreStart = -100 + (z.start / 180) * 200;
+          const scoreEnd = -100 + (z.end / 180) * 200;
+          if (clampedScore >= scoreStart && clampedScore <= scoreEnd) {
+            return (
+              <path
+                key={`active-${i}`}
+                d={arcPath(z.start, z.end)}
+                fill="none"
+                stroke={z.color}
+                strokeWidth={18}
+                strokeLinecap="round"
+                opacity={0.8}
+              />
+            );
+          }
+          return null;
+        })}
+        {/* Needle */}
+        <line
+          x1={cx}
+          y1={cy}
+          x2={needleX}
+          y2={needleY}
+          stroke={getScoreColor(clampedScore)}
+          strokeWidth={3}
+          strokeLinecap="round"
+        />
+        <circle cx={cx} cy={cy} r={6} fill={getScoreColor(clampedScore)} />
+        <circle cx={cx} cy={cy} r={3} fill="#0D0C0A" />
+        {/* Labels */}
+        <text x={30} y={155} fill="#6B6560" fontSize="9" textAnchor="middle">-100</text>
+        <text x={270} y={155} fill="#6B6560" fontSize="9" textAnchor="middle">+100</text>
+        <text x={150} y={18} fill="#6B6560" fontSize="9" textAnchor="middle">0</text>
+      </svg>
+      <div className="text-center -mt-2">
+        <p className="text-3xl font-bold font-mono" style={{ color: getScoreColor(clampedScore) }}>
+          {clampedScore > 0 ? "+" : ""}{clampedScore}
+        </p>
+        <p className="text-xs text-[#6B6560] mt-0.5">{getLabel(clampedScore)}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Sentiment Tab ────────────────────────────────────────────────────────────
+function SentimentTab() {
+  const latest = useQuery(api.himsSentiment.latest);
+  const todayReadings = useQuery(api.himsSentiment.todayReadings);
+
+  if (latest === undefined) {
+    return (
+      <div className="flex items-center justify-center py-16 text-[#6B6560] text-sm">
+        Loading sentiment data…
+      </div>
+    );
+  }
+
+  if (latest === null) {
+    return (
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-8 text-center">
+        <Gauge className="h-8 w-8 text-[#6B6560] mx-auto mb-3" />
+        <p className="text-sm text-[#6B6560]">No sentiment data yet.</p>
+        <p className="text-[10px] text-[#6B6560] mt-1">
+          Run <code className="text-[#B8956A]">node scripts/hims-sentiment.js</code> to generate a reading.
+        </p>
+      </div>
+    );
+  }
+
+  const chartData = (todayReadings ?? []).map((r) => ({
+    time: new Date(r.checkedAt).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "America/Chicago",
+    }),
+    score: r.score,
+    price: r.priceAtCheck ?? null,
+  }));
+
+  const lastUpdated = new Date(latest.checkedAt).toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Top row: Gauge + Stats */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* Gauge Card */}
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-semibold text-[#E8E4DF]">$HIMS Sentiment Gauge</p>
+              <p className="text-[10px] text-[#6B6560]">Twitter sentiment · ~100+ tweet sample</p>
+            </div>
+            <span className="text-[10px] text-[#6B6560] bg-[#1A1816] rounded px-2 py-1">
+              {lastUpdated}
+            </span>
+          </div>
+          <SentimentGauge score={latest.score} />
+        </div>
+
+        {/* Stats Card */}
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-6 space-y-4">
+          <p className="text-sm font-semibold text-[#E8E4DF]">Reading Details</p>
+
+          <div className="grid grid-cols-2 gap-3">
+            {latest.priceAtCheck !== undefined && (
+              <div className="rounded-lg border border-[#1A1816] bg-[#0A0908] p-3">
+                <p className="text-[10px] text-[#6B6560] uppercase tracking-widest mb-1">Price</p>
+                <p className="text-lg font-bold font-mono text-[#E8E4DF]">
+                  ${latest.priceAtCheck.toFixed(2)}
+                </p>
+              </div>
+            )}
+            <div className="rounded-lg border border-[#1A1816] bg-[#0A0908] p-3">
+              <p className="text-[10px] text-[#6B6560] uppercase tracking-widest mb-1">Tweets</p>
+              <p className="text-lg font-bold font-mono text-[#E8E4DF]">{latest.tweetCount}</p>
+            </div>
+            <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-3">
+              <p className="text-[10px] text-[#6B6560] uppercase tracking-widest mb-1">Bullish</p>
+              <p className="text-lg font-bold font-mono text-green-400">{latest.bullishCount}</p>
+            </div>
+            <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3">
+              <p className="text-[10px] text-[#6B6560] uppercase tracking-widest mb-1">Bearish</p>
+              <p className="text-lg font-bold font-mono text-red-400">{latest.bearishCount}</p>
+            </div>
+            <div className="rounded-lg border border-[#1A1816] bg-[#0A0908] p-3">
+              <p className="text-[10px] text-[#6B6560] uppercase tracking-widest mb-1">Neutral</p>
+              <p className="text-lg font-bold font-mono text-[#6B6560]">{latest.neutralCount}</p>
+            </div>
+            <div className="rounded-lg border border-[#1A1816] bg-[#0A0908] p-3">
+              <p className="text-[10px] text-[#6B6560] uppercase tracking-widest mb-1">Readings Today</p>
+              <p className="text-lg font-bold font-mono text-[#B8956A]">{todayReadings?.length ?? 0}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Intraday Chart */}
+      {chartData.length > 1 && (
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-semibold text-[#E8E4DF]">Intraday Sentiment</p>
+              <p className="text-[10px] text-[#6B6560]">15-min readings · today CST</p>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={chartData} margin={{ top: 8, right: 12, left: 8, bottom: 8 }}>
+              <XAxis
+                dataKey="time"
+                tick={{ fontSize: 10, fill: "#6B6560" }}
+                tickLine={false}
+                axisLine={{ stroke: "#1A1816" }}
+              />
+              <YAxis
+                domain={[-100, 100]}
+                tick={{ fontSize: 10, fill: "#6B6560" }}
+                tickLine={false}
+                axisLine={false}
+                width={36}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "#0D0C0A",
+                  border: "1px solid #1A1816",
+                  borderRadius: 8,
+                  fontSize: 11,
+                }}
+                labelStyle={{ color: "#6B6560" }}
+              />
+              <ReferenceLine y={0} stroke="#1A1816" strokeDasharray="4 3" />
+              <Line
+                type="monotone"
+                dataKey="score"
+                name="Sentiment"
+                stroke="#B8956A"
+                strokeWidth={2.5}
+                dot={{ fill: "#B8956A", r: 3 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Top Tweets */}
+      {(latest.topBullish || latest.topBearish) && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {latest.topBullish && (
+            <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4">
+              <p className="text-[10px] text-green-400 uppercase tracking-widest font-semibold mb-2">
+                🟢 Top Bullish Tweet
+              </p>
+              <p className="text-xs text-[#E8E4DF] leading-relaxed whitespace-pre-line">
+                {latest.topBullish}
+              </p>
+            </div>
+          )}
+          {latest.topBearish && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+              <p className="text-[10px] text-red-400 uppercase tracking-widest font-semibold mb-2">
+                🔴 Top Bearish Tweet
+              </p>
+              <p className="text-xs text-[#E8E4DF] leading-relaxed whitespace-pre-line">
+                {latest.topBearish}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Methodology */}
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-4">
+        <p className="text-[10px] text-[#6B6560] leading-relaxed">
+          <span className="text-[#B8956A] font-medium">How This Works —</span>{" "}
+          Runs 3 parallel searches (cashtag, stock name, company name) pulling ~100-150 unique tweets mentioning $HIMS via Bird CLI, scores each tweet against a keyword lexicon
+          (bullish/bearish/neutral), and computes an aggregate score from -100 (Extreme Fear) to +100 (Extreme Greed).
+          Score is smoothed: 70% current reading + 30% last reading to reduce noise. Runs every 15 min during market hours (Mon–Fri, 8:30 AM – 3 PM CST).{" "}
+          <span className="text-amber-400">⚠️ Not financial advice.</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function QuantPage() {
-  const [activeTab, setActiveTab] = useState<"simulator" | "paper-trades">(
+  const [activeTab, setActiveTab] = useState<"simulator" | "paper-trades" | "sentiment">(
     "simulator"
   );
 
@@ -1201,10 +1501,23 @@ export default function QuantPage() {
           <Activity className="h-3.5 w-3.5" />
           Paper Trades
         </button>
+        <button
+          onClick={() => setActiveTab("sentiment")}
+          className={`flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all ${
+            activeTab === "sentiment"
+              ? "bg-[#B8956A] text-[#060606] shadow-sm"
+              : "text-[#6B6560] hover:text-[#E8E4DF]"
+          }`}
+        >
+          <Gauge className="h-3.5 w-3.5" />
+          Sentiment
+        </button>
       </div>
 
       {/* ── Tab Content ── */}
-      {activeTab === "paper-trades" ? (
+      {activeTab === "sentiment" ? (
+        <SentimentTab />
+      ) : activeTab === "paper-trades" ? (
         <PaperTradesTab />
       ) : (
         <>

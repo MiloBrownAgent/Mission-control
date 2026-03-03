@@ -3,7 +3,7 @@ import { Geist, Geist_Mono, Cormorant_Garamond, Syne } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
-import { Sidebar } from "@/components/sidebar";
+import { AppShell } from "@/components/app-shell";
 import { CommandPalette } from "@/components/command-palette";
 
 const geistSans = Geist({
@@ -39,8 +39,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const mode = isFamily ? "hd" : "mc";
 
   return {
-    title: isFamily ? "Home Dashboard" : "Mission Control",
-    description: isFamily ? "Sweeney family home dashboard" : "Look & Seen work dashboard",
+    title: isFamily ? "The Sweeney Family" : "Mission Control",
+    description: isFamily ? "The Sweeney Family" : "Look & Seen work dashboard",
     manifest: `/api/manifest`,
     appleWebApp: {
       capable: true,
@@ -90,12 +90,9 @@ export default async function RootLayout({
       >
         <ConvexClientProvider>
           <CommandPalette />
-          <Sidebar />
-          <main className="min-h-screen pt-14 md:pt-0 md:pl-64">
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 md:px-8 md:py-8">
-              {children}
-            </div>
-          </main>
+          <AppShell>
+            {children}
+          </AppShell>
         </ConvexClientProvider>
       </body>
     </html>

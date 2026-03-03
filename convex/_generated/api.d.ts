@@ -23,6 +23,7 @@ import type * as dropboxConfig from "../dropboxConfig.js";
 import type * as events from "../events.js";
 import type * as flightDeals from "../flightDeals.js";
 import type * as groceryItems from "../groceryItems.js";
+import type * as himsSentiment from "../himsSentiment.js";
 import type * as meals from "../meals.js";
 import type * as memories from "../memories.js";
 import type * as outreach from "../outreach.js";
@@ -56,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   events: typeof events;
   flightDeals: typeof flightDeals;
   groceryItems: typeof groceryItems;
+  himsSentiment: typeof himsSentiment;
   meals: typeof meals;
   memories: typeof memories;
   outreach: typeof outreach;

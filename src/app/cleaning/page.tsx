@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
+import { Calendar, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -13,9 +14,9 @@ type Room = typeof ROOMS[number];
 type Priority = typeof PRIORITIES[number];
 
 const priorityConfig = {
-  must: { label: "MUST", bg: "bg-red-500/20", text: "text-red-400", border: "border-red-500/30" },
-  if_time: { label: "IF TIME", bg: "bg-amber-500/20", text: "text-amber-400", border: "border-amber-500/30" },
-  skip: { label: "SKIP", bg: "bg-[#1A1816]", text: "text-[#6B6560]", border: "border-[#1A1816]" },
+  must: { label: "MUST", bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
+  if_time: { label: "IF TIME", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+  skip: { label: "SKIP", bg: "bg-[#F7F4EF]", text: "text-[#5C6B5E]", border: "border-[#E8E4DD]" },
 };
 
 const roomEmojis: Record<string, string> = {
@@ -138,32 +139,32 @@ export default function CleaningPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-[#B8956A]/30 bg-gradient-to-br from-[#B8956A]/10 via-[#B8956A]/5 to-transparent p-6">
-        <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-[#B8956A]/10 blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-[#E8E4DD] bg-[#FDFCFA] p-6">
+        <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-[#B8965A]/5 blur-3xl" />
         <div className="relative">
           <div className="flex items-center gap-3 mb-1">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#B8956A] to-[#CDAA7E] shadow-lg text-xl">
-              🧹
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#B8965A]/10">
+              <Sparkles className="h-5 w-5 text-[#B8965A]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold font-[family-name:var(--font-syne)] text-[#E8E4DF]">
-                Lindsey&apos;s List 🧹
+              <h1 className="text-2xl font-light font-[family-name:var(--font-display)] text-[#2C2C2C]">
+                Lindsey&apos;s List
               </h1>
-              <p className="text-sm text-[#6B6560]">Comes every other Friday</p>
+              <p className="text-sm text-[#5C6B5E]">Comes every other Friday</p>
             </div>
           </div>
 
           {/* Next visit callout */}
-          <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#B8956A]/30 bg-[#B8956A]/10 px-4 py-3">
-            <span className="text-lg">📅</span>
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#B8965A]/20 bg-[#B8965A]/5 px-4 py-3">
+            <Calendar className="h-4 w-4 text-[#B8965A] shrink-0" />
             <div>
               {visitInfo ? (
                 <>
-                  <p className="text-sm font-semibold text-[#E8E4DF]">{visitInfo.label}</p>
-                  <p className="text-xs text-[#6B6560]">{visitInfo.sub}</p>
+                  <p className="text-sm font-medium text-[#2C2C2C]">{visitInfo.label}</p>
+                  <p className="text-xs text-[#5C6B5E]">{visitInfo.sub}</p>
                 </>
               ) : (
-                <p className="text-sm font-semibold text-[#E8E4DF]">Loading visit date…</p>
+                <p className="text-sm font-medium text-[#2C2C2C]">Loading visit date...</p>
               )}
             </div>
           </div>
@@ -171,12 +172,12 @@ export default function CleaningPage() {
           {/* Progress */}
           <div className="mt-4">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-[#6B6560]">{completedCount} of {totalCount} tasks complete</span>
-              <span className="text-xs font-semibold text-[#B8956A]">{progress}%</span>
+              <span className="text-xs text-[#5C6B5E]">{completedCount} of {totalCount} tasks complete</span>
+              <span className="text-xs font-semibold text-[#B8965A]">{progress}%</span>
             </div>
-            <div className="h-2 w-full rounded-full bg-[#1A1816]">
+            <div className="h-2 w-full rounded-full bg-[#E8E4DD]">
               <div
-                className="h-2 rounded-full bg-gradient-to-r from-[#B8956A] to-[#CDAA7E] transition-all duration-500"
+                className="h-2 rounded-full bg-[#B8965A] transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -188,7 +189,7 @@ export default function CleaningPage() {
       {tasks === undefined ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-[#0D0C0A]" />
+            <div key={i} className="h-20 animate-pulse rounded-xl bg-[#F7F4EF] border border-[#E8E4DD]" />
           ))}
         </div>
       ) : (
@@ -198,15 +199,15 @@ export default function CleaningPage() {
             if (roomTasks.length === 0) return null;
             const roomDone = roomTasks.filter((t) => t.completedAt !== undefined).length;
             return (
-              <Card key={room} className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[#1A1816] bg-[#0D0C0A]">
+              <Card key={room} className="rounded-xl border border-[#E8E4DD] bg-white overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[#E8E4DD] bg-[#F7F4EF]">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{roomEmojis[room] ?? "🏠"}</span>
-                    <h2 className="font-semibold font-[family-name:var(--font-syne)] text-[#E8E4DF]">{room}</h2>
+                    <Sparkles className="h-4 w-4 text-[#B8965A]" />
+                    <h2 className="font-medium text-[#2C2C2C]">{room}</h2>
                   </div>
-                  <span className="text-xs text-[#6B6560]">{roomDone}/{roomTasks.length}</span>
+                  <span className="text-xs text-[#5C6B5E]">{roomDone}/{roomTasks.length}</span>
                 </div>
-                <div className="divide-y divide-[#1A1816]">
+                <div className="divide-y divide-[#E8E4DD]">
                   {roomTasks.map((t) => {
                     const pc = priorityConfig[t.priority];
                     const done = t.completedAt !== undefined;
@@ -215,12 +216,12 @@ export default function CleaningPage() {
                     if (isEditing) {
                       // Inline edit mode
                       return (
-                        <div key={t._id} className="px-4 py-3 bg-[#0D0C0A] space-y-2">
+                        <div key={t._id} className="px-4 py-3 bg-[#F7F4EF] space-y-2">
                           <input
                             type="text"
                             value={editTask}
                             onChange={(e) => setEditTask(e.target.value)}
-                            className="w-full rounded-lg border border-[#B8956A]/40 bg-[#060606] text-[#E8E4DF] text-sm px-3 py-2 placeholder:text-[#6B6560] focus:outline-none focus:ring-1 focus:ring-[#B8956A]"
+                            className="w-full rounded-lg border border-[#B8965A]/40 bg-white text-[#2C2C2C] text-sm px-3 py-2 placeholder:text-[#5C6B5E]/40 focus:outline-none focus:ring-1 focus:ring-[#B8965A]"
                             onKeyDown={(e) => {
                               if (e.key === "Enter") saveEdit(t._id as Id<"cleaningTasks">);
                               if (e.key === "Escape") cancelEdit();
@@ -238,8 +239,8 @@ export default function CleaningPage() {
                                   onClick={() => setEditPriority(p)}
                                   className={`text-[10px] font-bold px-2 py-1 rounded border transition-all ${
                                     active
-                                      ? `${pCfg.bg} ${pCfg.text} ${pCfg.border} ring-1 ring-offset-0 ${p === "must" ? "ring-red-500/40" : p === "if_time" ? "ring-amber-500/40" : "ring-[#6B6560]/40"}`
-                                      : "bg-[#0D0C0A] text-[#6B6560] border-[#1A1816] hover:border-[#6B6560]"
+                                      ? `${pCfg.bg} ${pCfg.text} ${pCfg.border} ring-1 ring-offset-0 ${p === "must" ? "ring-red-300" : p === "if_time" ? "ring-amber-300" : "ring-[#E8E4DD]"}`
+                                      : "bg-white text-[#5C6B5E] border-[#E8E4DD] hover:border-[#B8965A]/30"
                                   }`}
                                 >
                                   {pCfg.label}
@@ -251,7 +252,7 @@ export default function CleaningPage() {
                               <button
                                 onClick={() => saveEdit(t._id as Id<"cleaningTasks">)}
                                 disabled={saving || !editTask.trim()}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#B8956A]/20 text-[#B8956A] hover:bg-[#B8956A]/30 disabled:opacity-40 transition-colors"
+                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#B8965A]/10 text-[#B8965A] hover:bg-[#B8965A]/20 disabled:opacity-40 transition-colors"
                                 title="Save"
                               >
                                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -260,7 +261,7 @@ export default function CleaningPage() {
                               </button>
                               <button
                                 onClick={cancelEdit}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1A1816] text-[#6B6560] hover:text-[#E8E4DF] transition-colors"
+                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E8E4DD] text-[#5C6B5E] hover:text-[#2C2C2C] transition-colors"
                                 title="Cancel"
                               >
                                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -284,36 +285,36 @@ export default function CleaningPage() {
                           onClick={() => toggleComplete({ id: t._id as Id<"cleaningTasks"> })}
                           className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
                             done
-                              ? "border-[#B8956A] bg-[#B8956A]"
-                              : "border-[#6B6560] hover:border-[#B8956A]"
+                              ? "border-[#B8965A] bg-[#B8965A]"
+                              : "border-[#B8B0A4] hover:border-[#B8965A]"
                           }`}
                         >
                           {done && (
-                            <svg className="h-3 w-3 text-[#0D0C0A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
                           )}
                         </button>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`text-sm font-medium ${done ? "line-through text-[#6B6560]" : "text-[#E8E4DF]"}`}>
+                            <span className={`text-sm font-medium ${done ? "line-through text-[#B8B0A4]" : "text-[#2C2C2C]"}`}>
                               {t.task}
                             </span>
                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${pc.bg} ${pc.text} ${pc.border}`}>
                               {pc.label}
                             </span>
                             {!t.recurring && (
-                              <span className="text-[10px] text-[#6B6560] italic">one-time</span>
+                              <span className="text-[10px] text-[#5C6B5E]/60 italic">one-time</span>
                             )}
                           </div>
                           {t.notes && (
-                            <p className="text-xs text-[#6B6560] mt-0.5">{t.notes}</p>
+                            <p className="text-xs text-[#5C6B5E] mt-0.5">{t.notes}</p>
                           )}
                         </div>
                         {/* Edit button (visible on hover) */}
                         <button
                           onClick={() => startEdit(t._id, t.task, t.priority as Priority)}
-                          className="text-[#6B6560] hover:text-[#B8956A] transition-colors shrink-0 opacity-0 group-hover:opacity-100 mt-0.5 mr-1"
+                          className="text-[#B8B0A4] hover:text-[#B8965A] transition-colors shrink-0 opacity-0 group-hover:opacity-100 mt-0.5 mr-1"
                           title="Edit task"
                         >
                           <PencilIcon className="h-3.5 w-3.5" />
@@ -321,7 +322,7 @@ export default function CleaningPage() {
                         {/* Delete */}
                         <button
                           onClick={() => removeTask({ id: t._id as Id<"cleaningTasks"> })}
-                          className="text-[#6B6560] hover:text-red-400 transition-colors shrink-0 opacity-0 group-hover:opacity-100 mt-0.5"
+                          className="text-[#B8B0A4] hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover:opacity-100 mt-0.5"
                           title="Remove task"
                         >
                           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -340,25 +341,25 @@ export default function CleaningPage() {
 
       {/* Add task form */}
       {showForm ? (
-        <Card className="rounded-xl border border-[#B8956A]/30 bg-[#0D0C0A] p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Add a Task</h3>
+        <Card className="rounded-xl border border-[#B8965A]/20 bg-[#FDFCFA] p-4 space-y-3">
+          <h3 className="text-sm font-medium text-[#2C2C2C]">Add a Task</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-[#6B6560] mb-1 block">Room</label>
+              <label className="text-xs text-[#5C6B5E]/60 mb-1 block">Room</label>
               <select
                 value={newRoom}
                 onChange={(e) => setNewRoom(e.target.value as Room)}
-                className="w-full rounded-lg border border-[#1A1816] bg-[#060606] text-[#E8E4DF] text-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#B8956A]/50"
+                className="w-full rounded-lg border border-[#E8E4DD] bg-[#F7F4EF] text-[#2C2C2C] text-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#B8965A]/30"
               >
                 {ROOMS.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs text-[#6B6560] mb-1 block">Priority</label>
+              <label className="text-xs text-[#5C6B5E]/60 mb-1 block">Priority</label>
               <select
                 value={newPriority}
                 onChange={(e) => setNewPriority(e.target.value as Priority)}
-                className="w-full rounded-lg border border-[#1A1816] bg-[#060606] text-[#E8E4DF] text-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#B8956A]/50"
+                className="w-full rounded-lg border border-[#E8E4DD] bg-[#F7F4EF] text-[#2C2C2C] text-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#B8965A]/30"
               >
                 <option value="must">MUST</option>
                 <option value="if_time">IF TIME</option>
@@ -367,25 +368,25 @@ export default function CleaningPage() {
             </div>
           </div>
           <div>
-            <label className="text-xs text-[#6B6560] mb-1 block">Task</label>
+            <label className="text-xs text-[#5C6B5E]/60 mb-1 block">Task</label>
             <input
               type="text"
               value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
               placeholder="What needs to be done?"
-              className="w-full rounded-lg border border-[#1A1816] bg-[#060606] text-[#E8E4DF] text-sm px-3 py-2 placeholder:text-[#6B6560] focus:outline-none focus:ring-1 focus:ring-[#B8956A]/50"
+              className="w-full rounded-lg border border-[#E8E4DD] bg-[#F7F4EF] text-[#2C2C2C] text-sm px-3 py-2 placeholder:text-[#5C6B5E]/40 focus:outline-none focus:ring-1 focus:ring-[#B8965A]/30"
               onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") setShowForm(false); }}
               autoFocus
             />
           </div>
           <div>
-            <label className="text-xs text-[#6B6560] mb-1 block">Notes (optional)</label>
+            <label className="text-xs text-[#5C6B5E]/60 mb-1 block">Notes (optional)</label>
             <input
               type="text"
               value={newNotes}
               onChange={(e) => setNewNotes(e.target.value)}
               placeholder="Any special instructions..."
-              className="w-full rounded-lg border border-[#1A1816] bg-[#060606] text-[#E8E4DF] text-sm px-3 py-2 placeholder:text-[#6B6560] focus:outline-none focus:ring-1 focus:ring-[#B8956A]/50"
+              className="w-full rounded-lg border border-[#E8E4DD] bg-[#F7F4EF] text-[#2C2C2C] text-sm px-3 py-2 placeholder:text-[#5C6B5E]/40 focus:outline-none focus:ring-1 focus:ring-[#B8965A]/30"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -394,13 +395,13 @@ export default function CleaningPage() {
               className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
                 newRecurring
                   ? "border-[#B8956A]/40 bg-[#B8956A]/10 text-[#B8956A]"
-                  : "border-[#1A1816] bg-[#0D0C0A] text-[#6B6560]"
+                  : "border-[#E8E4DD] bg-[#F7F4EF] text-[#5C6B5E]"
               }`}
             >
               <span>{newRecurring ? "🔄" : "1️⃣"}</span>
               {newRecurring ? "Recurring" : "One-time"}
             </button>
-            <p className="text-xs text-[#6B6560]">
+            <p className="text-xs text-[#5C6B5E]">
               {newRecurring ? "Shows every visit" : "Removed after visit"}
             </p>
           </div>
@@ -408,14 +409,14 @@ export default function CleaningPage() {
             <Button
               onClick={handleAdd}
               disabled={adding || !newTask.trim()}
-              className="bg-[#B8956A] hover:bg-[#CDAA7E] text-[#060606] font-semibold text-sm"
+              className="bg-[#B8965A] hover:bg-[#A6854F] text-white font-semibold text-sm"
             >
               {adding ? "Adding..." : "Add Task"}
             </Button>
             <Button
               variant="outline"
               onClick={() => setShowForm(false)}
-              className="border-[#1A1816] text-[#6B6560] hover:text-[#E8E4DF]"
+              className="border-[#E8E4DD] text-[#5C6B5E] hover:text-[#2C2C2C]"
             >
               Cancel
             </Button>
@@ -424,7 +425,7 @@ export default function CleaningPage() {
       ) : (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full rounded-xl border border-dashed border-[#B8956A]/30 bg-[#B8956A]/5 hover:bg-[#B8956A]/10 px-4 py-3 text-sm text-[#B8956A] transition-colors font-medium"
+          className="w-full rounded-xl border border-dashed border-[#B8965A]/20 bg-[#B8965A]/5 hover:bg-[#B8965A]/10 px-4 py-3 text-sm text-[#B8965A] transition-colors font-medium"
         >
           + Add a task
         </button>
@@ -436,20 +437,20 @@ export default function CleaningPage() {
           variant="outline"
           onClick={() => clearCompleted()}
           disabled={completedCount === 0}
-          className="border-[#1A1816] text-[#6B6560] hover:text-red-400 hover:border-red-500/30 disabled:opacity-40"
+          className="border-[#E8E4DD] text-[#5C6B5E] hover:text-red-500 hover:border-red-300 disabled:opacity-40"
         >
           🗑 Clear {completedCount > 0 ? `${completedCount} ` : ""}completed
         </Button>
         <Button
           variant="outline"
           onClick={() => resetForNextVisit()}
-          className="border-[#1A1816] text-[#6B6560] hover:text-[#B8956A] hover:border-[#B8956A]/30"
+          className="border-[#E8E4DD] text-[#5C6B5E] hover:text-[#B8965A] hover:border-[#B8965A]/30"
         >
           🔄 Reset for next visit
         </Button>
       </div>
 
-      <p className="text-center text-xs text-[#6B6560] pb-4">
+      <p className="text-center text-xs text-[#5C6B5E]/60 pb-4">
         "Clear completed" — run after Lindsey leaves · "Reset for next visit" — run before next cleaning
       </p>
     </div>

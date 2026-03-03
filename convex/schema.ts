@@ -395,6 +395,18 @@ export default defineSchema({
     resolved_at: v.optional(v.number()),
   }).index("by_created", ["created_at"]).index("by_resolved", ["outcome"]),
 
+  hims_sentiment: defineTable({
+    score: v.number(),
+    tweetCount: v.number(),
+    bullishCount: v.number(),
+    bearishCount: v.number(),
+    neutralCount: v.number(),
+    topBullish: v.optional(v.string()),
+    topBearish: v.optional(v.string()),
+    priceAtCheck: v.optional(v.number()),
+    checkedAt: v.number(),
+  }).index("by_checked", ["checkedAt"]),
+
   polymarket_trades: defineTable({
     question: v.string(),                          // "US recession by end of 2026?"
     position: v.union(v.literal("Yes"), v.literal("No")),

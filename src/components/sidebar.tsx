@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Brain,
   CalendarDays,
   ListTodo,
   Menu,
@@ -20,46 +19,52 @@ import {
   Command,
   ShieldAlert,
   House,
-  DollarSign,
   ShoppingCart,
-  Wrench,
   Link2,
   Sparkles,
   Plane,
   TrendingUp,
   LayoutGrid,
+  Baby,
+  Dog,
+  BookOpen,
+  FolderLock,
+  Cake,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 import { useAppMode } from "@/lib/app-mode";
 
 const workNavigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard, iconClassName: undefined },
-  { name: "Tasks", href: "/tasks", icon: ListTodo, iconClassName: undefined },
-  { name: "Calendar", href: "/calendar", icon: CalendarDays, iconClassName: undefined },
-  { name: "CRM", href: "/crm", icon: Target, iconClassName: undefined },
-  { name: "Projects", href: "/projects", icon: Layers, iconClassName: undefined },
-  { name: "Content", href: "/content", icon: FileText, iconClassName: undefined },
-  { name: "LS Grid", href: "/ls-grid", icon: LayoutGrid, iconClassName: undefined },
-  { name: "Team", href: "/team", icon: Users, iconClassName: undefined },
-  { name: "Office", href: "/office", icon: Building2, iconClassName: undefined },
-  { name: "Client Links", href: "/office/links", icon: Link2, iconClassName: undefined },
-  { name: "Quant", href: "/quant", icon: TrendingUp, iconClassName: undefined },
-  { name: "Emergency", href: "/emergency", icon: ShieldAlert, iconClassName: "text-red-600" },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Tasks", href: "/tasks", icon: ListTodo },
+  { name: "Calendar", href: "/calendar", icon: CalendarDays },
+  { name: "CRM", href: "/crm", icon: Target },
+  { name: "Projects", href: "/projects", icon: Layers },
+  { name: "Content", href: "/content", icon: FileText },
+  { name: "LS Grid", href: "/ls-grid", icon: LayoutGrid },
+  { name: "Team", href: "/team", icon: Users },
+  { name: "Office", href: "/office", icon: Building2 },
+  { name: "Client Links", href: "/office/links", icon: Link2 },
+  { name: "Quant", href: "/quant", icon: TrendingUp },
+  { name: "Emergency", href: "/emergency", icon: ShieldAlert, urgent: true },
 ];
 
 const familyNavigation = [
-  { name: "Emergency", href: "/emergency", icon: ShieldAlert, iconClassName: "text-red-600" },
-  { name: "Family", href: "/family", icon: Heart, iconClassName: undefined },
-  { name: "Meals", href: "/meals", icon: UtensilsCrossed, iconClassName: undefined },
-  { name: "Grocery List", href: "/grocery", icon: ShoppingCart, iconClassName: undefined },
-  { name: "Maintenance", href: "/maintenance", icon: Wrench, iconClassName: undefined },
-  { name: "Lindsey's List", href: "/cleaning", icon: Sparkles, iconClassName: "text-amber-400" },
-  { name: "Travel ✈️", href: "/travel", icon: Plane, iconClassName: undefined },
-  { name: "Calendar", href: "/calendar", icon: CalendarDays, iconClassName: undefined },
-  { name: "Home", href: "/family-home", icon: House, iconClassName: undefined },
+  { name: "Today", href: "/today", icon: LayoutDashboard },
+  { name: "Emergency", href: "/emergency", icon: ShieldAlert, urgent: true },
+  { name: "Soren", href: "/soren", icon: Baby },
+  { name: "Rigs", href: "/rigs", icon: Dog },
+  { name: "Meals", href: "/meals", icon: UtensilsCrossed },
+  { name: "Grocery List", href: "/grocery", icon: ShoppingCart },
+  { name: "Babysitter Mode", href: "/babysitter", icon: Baby },
+  { name: "Family Directory", href: "/family", icon: Heart },
+  { name: "Birthdays & Gifts", href: "/birthdays", icon: Cake },
+  { name: "Vault", href: "/vault", icon: FolderLock },
+  { name: "Home Manual", href: "/home-manual", icon: BookOpen },
+  { name: "Lindsey's List", href: "/cleaning", icon: Sparkles },
+  { name: "Travel", href: "/travel", icon: Plane },
+  { name: "Calendar", href: "/calendar", icon: CalendarDays },
 ];
 
 export function Sidebar() {
@@ -68,31 +73,42 @@ export function Sidebar() {
   const mode = useAppMode();
 
   const navigation = mode === 'family' ? familyNavigation : workNavigation;
-  const title = mode === 'family' ? 'Sweeney HQ' : 'Mission Control';
-  const subtitle = mode === 'family' ? 'Sweeney Family' : 'Sweeney HQ';
+  const isFamily = mode === 'family';
 
   return (
     <>
       {/* Mobile header bar */}
       <div className={cn(
-        "fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-3 border-b backdrop-blur-sm px-4 md:hidden",
-        mode === 'family'
-          ? "border-[#E5DDD4] bg-[#FAF9F6]/95"
-          : "border-[#1A1816] bg-[#060606]/95"
+        "fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-3 border-b px-4 md:hidden",
+        isFamily
+          ? "border-[#E8E4DD] bg-[#FDFCFA]/95 backdrop-blur-md"
+          : "border-[#1A1816] bg-[#060606]/95 backdrop-blur-sm"
       )}>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0"
+        <button
+          className={cn(
+            "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
+            isFamily ? "hover:bg-[#E8E4DD] text-[#2C2C2C]" : "hover:bg-[#1A1816] text-[#E8E4DF]"
+          )}
           onClick={() => setMobileOpen(!mobileOpen)}
         >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#B8956A] to-[#CDAA7E]">
-            <Rocket className="h-3.5 w-3.5 text-[#060606]" />
-          </div>
-          <h1 className={cn("text-sm font-semibold font-[family-name:var(--font-syne)]", mode === 'family' ? "text-[#1C1208]" : "text-[#E8E4DF]")}>{title}</h1>
+          {mobileOpen ? <X className="h-5 w-5" strokeWidth={1.5} /> : <Menu className="h-5 w-5" strokeWidth={1.5} />}
+        </button>
+        <div className="flex items-center gap-2.5">
+          {isFamily ? (
+            <>
+              <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#B8965A]/25">
+                <span className="text-sm font-light text-[#B8965A] font-[family-name:var(--font-display)]">S</span>
+              </div>
+              <span className="text-sm font-light tracking-wide text-[#2C2C2C] font-[family-name:var(--font-display)]">Sweeney</span>
+            </>
+          ) : (
+            <>
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#B8956A] to-[#CDAA7E]">
+                <Rocket className="h-3.5 w-3.5 text-[#060606]" />
+              </div>
+              <span className="text-sm font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Mission Control</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -100,8 +116,8 @@ export function Sidebar() {
       {mobileOpen && (
         <div
           className={cn(
-            "fixed inset-0 z-30 backdrop-blur-sm md:hidden",
-            mode === 'family' ? "bg-[#1C1208]/30" : "bg-[#060606]/60"
+            "fixed inset-0 z-30 md:hidden transition-opacity",
+            isFamily ? "bg-[#1C1208]/20 backdrop-blur-sm" : "bg-[#060606]/60 backdrop-blur-sm"
           )}
           onClick={() => setMobileOpen(false)}
         />
@@ -110,119 +126,89 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r transition-transform duration-200 md:translate-x-0",
-          mode === 'family'
-            ? "border-[#E5DDD4] bg-[#F5F2ED]"
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r transition-transform duration-300 ease-out md:translate-x-0",
+          isFamily
+            ? "border-[#E8E4DD] bg-[#FDFCFA]"
             : "border-[#1A1816] bg-[#080806]",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Header with gradient accent */}
+        {/* Logo area */}
         <div className={cn(
-          "relative flex h-16 items-center gap-3 border-b px-6 overflow-hidden",
-          mode === 'family' ? "border-[#E5DDD4]" : "border-[#1A1816]"
+          "flex h-16 items-center px-7",
+          isFamily ? "border-b border-[#E8E4DD]" : "border-b border-[#1A1816]"
         )}>
-          <div className={cn(
-            "absolute inset-0 bg-gradient-to-r to-transparent",
-            mode === 'family'
-              ? "from-[#2E6B50]/5 via-[#C07A1A]/5"
-              : "from-[#B8956A]/5 via-[#CDAA7E]/5"
-          )} />
-          <div className={cn(
-            "relative flex h-8 w-8 items-center justify-center rounded-lg shadow-lg",
-            mode === 'family'
-              ? "bg-gradient-to-br from-[#2E6B50] to-[#C07A1A]"
-              : "bg-gradient-to-br from-[#B8956A] to-[#CDAA7E]"
-          )}>
-            {mode === 'family' ? (
-              <Heart className="h-4 w-4 text-white" />
-            ) : (
-              <Rocket className="h-4 w-4 text-[#060606]" />
-            )}
-          </div>
-          <div className="relative">
-            <h1 className={cn(
-              "text-sm font-semibold font-[family-name:var(--font-syne)]",
-              mode === 'family' ? "text-[#1C1208]" : "text-[#E8E4DF]"
-            )}>{title}</h1>
-            <p className={cn("text-[10px]", mode === 'family' ? "text-[#6B5B4E]" : "text-[#6B6560]")}>{subtitle}</p>
-          </div>
-        </div>
-
-        {/* User */}
-        <div className={cn(
-          "flex items-center gap-3 border-b px-6 py-4",
-          mode === 'family' ? "border-[#E5DDD4]" : "border-[#1A1816]"
-        )}>
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className={cn(
-              "text-sm font-medium",
-              mode === 'family' ? "bg-[#2E6B50]/10 text-[#2E6B50]" : "bg-[#B8956A]/10 text-[#B8956A]"
-            )}>
-              {mode === 'family' ? '🏠' : 'D'}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className={cn(
-              "text-sm font-medium",
-              mode === 'family' ? "text-[#1C1208]" : "text-[#E8E4DF]"
-            )}>
-              {mode === 'family' ? 'Sweeney Family' : 'Dave Sweeney'}
-            </p>
-            <div className="flex items-center gap-1.5">
-              <div className={cn(
-                "h-1.5 w-1.5 rounded-full animate-pulse",
-                mode === 'family' ? "bg-[#2E6B50]" : "bg-[#B8956A]"
-              )} />
-              <p className={cn("text-[10px]", mode === 'family' ? "text-[#6B5B4E]" : "text-[#6B6560]")}>
-                {mode === 'family' ? 'Family Hub' : 'Online'}
-              </p>
+          {isFamily ? (
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#B8965A]/25">
+                <span className="text-lg font-light text-[#B8965A] font-[family-name:var(--font-display)]">S</span>
+              </div>
+              <span className="text-[17px] font-light tracking-wide text-[#2C2C2C] font-[family-name:var(--font-display)]">Sweeney</span>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#B8956A] to-[#CDAA7E] shadow-lg">
+                <Rocket className="h-4 w-4 text-[#060606]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Mission Control</p>
+                <p className="text-[10px] text-[#6B6560]">Sweeney HQ</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-3">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
-                  mode === 'family'
-                    ? isActive
-                      ? "bg-[#2E6B50]/10 text-[#1C1208] border border-[#2E6B50]/20 shadow-sm"
-                      : "text-[#6B5B4E] hover:bg-[#EDE9E3] hover:text-[#1C1208]"
-                    : isActive
-                      ? "bg-[#B8956A]/10 text-[#E8E4DF] border border-[#B8956A]/20 shadow-sm"
-                      : "text-[#6B6560] hover:bg-[#1A1816]/60 hover:text-[#E8E4DF]"
-                )}
-              >
-                <item.icon
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <div className="space-y-1">
+            {navigation.map((item) => {
+              const isActive = pathname === item.href;
+              const isUrgent = 'urgent' in item && item.urgent;
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "h-4 w-4 transition-colors",
-                    isActive
-                      ? mode === 'family' ? "text-[#2E6B50]" : "text-[#B8956A]"
-                      : item.iconClassName
+                    "group relative flex items-center gap-3 rounded-lg px-3 min-h-[48px] text-[15px] transition-all duration-200",
+                    isFamily
+                      ? isActive
+                        ? "bg-[#F5F0E8] text-[#2C2C2C]"
+                        : "text-[#6B5B4E] hover:bg-[#F5F0E8] hover:text-[#2C2C2C]"
+                      : isActive
+                        ? "bg-[#B8956A]/10 text-[#E8E4DF]"
+                        : "text-[#6B6560] hover:bg-[#1A1816]/60 hover:text-[#E8E4DF]"
                   )}
-                />
-                {item.name}
-                {isActive && (
-                  <div className={cn(
-                    "ml-auto h-1.5 w-1.5 rounded-full",
-                    mode === 'family' ? "bg-[#2E6B50]" : "bg-[#B8956A]"
-                  )} />
-                )}
-              </Link>
-            );
-          })}
+                >
+                  {/* Active indicator — thin gold left border */}
+                  {isActive && isFamily && (
+                    <div className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-[#B8965A]" />
+                  )}
+                  {isActive && !isFamily && (
+                    <div className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-[#B8956A]" />
+                  )}
+
+                  <item.icon
+                    className={cn(
+                      "h-[18px] w-[18px] shrink-0 transition-colors",
+                      isActive
+                        ? isFamily ? "text-[#B8965A]" : "text-[#B8956A]"
+                        : isUrgent
+                          ? "text-red-500"
+                          : ""
+                    )}
+                    strokeWidth={1.5}
+                  />
+                  <span className="font-normal">{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         {/* ⌘K hint — only in work mode */}
-        {mode === 'work' && (
+        {!isFamily && (
           <div className="border-t border-[#1A1816] px-3 py-3">
             <button
               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-[#6B6560] hover:bg-[#1A1816]/60 hover:text-[#E8E4DF] transition-colors"
@@ -240,11 +226,14 @@ export function Sidebar() {
 
         {/* Footer */}
         <div className={cn(
-          "border-t px-6 py-3",
-          mode === 'family' ? "border-[#E5DDD4]" : "border-[#1A1816]"
+          "border-t px-7 py-4",
+          isFamily ? "border-[#E8E4DD]" : "border-[#1A1816]"
         )}>
-          <p className={cn("text-[10px]", mode === 'family' ? "text-[#6B5B4E]" : "text-[#6B6560]")}>
-            {mode === 'family' ? 'Sweeney HQ — Family Mode' : 'Mission Control v3.0 — Production'}
+          <p className={cn(
+            "text-[11px] tracking-wide",
+            isFamily ? "text-[#B8B0A4]" : "text-[#6B6560]"
+          )}>
+            {isFamily ? 'sweeney.family' : 'Mission Control v3.0'}
           </p>
         </div>
       </aside>

@@ -133,7 +133,7 @@ function MealModal({ meal, onClose }: MealModalProps) {
             />
           </div>
         ) : (
-          <div className="w-full h-40 flex items-center justify-center bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-b border-[#1A1816]">
+          <div className="w-full h-40 flex items-center justify-center bg-[#FDFCFA] border-b border-[#1A1816]">
             <p className="font-[family-name:var(--font-display)] italic text-2xl text-amber-400/70 px-6 text-center leading-snug">
               {meal.name}
             </p>
@@ -187,7 +187,7 @@ function MealModal({ meal, onClose }: MealModalProps) {
 
           {/* Soren's version */}
           {meal.mealType === "dinner" && meal.sorenMeal && (
-            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+            <div className="rounded-lg border border-amber-500/20 bg-[#B8965A]/5 px-3 py-2">
               <p className="text-xs text-amber-400/70 mb-0.5">👶 Soren&apos;s version</p>
               <p className="text-sm text-[#E8E4DF]">{meal.sorenMeal}</p>
             </div>
@@ -243,7 +243,7 @@ function MealModal({ meal, onClose }: MealModalProps) {
                   onClick={handleCustomSwap}
                   disabled={!customName.trim()}
                   size="sm"
-                  className="w-full bg-amber-500 hover:bg-amber-600 text-black disabled:opacity-40"
+                  className="w-full bg-[#B8965A] hover:bg-[#A6854F] text-white disabled:opacity-40"
                 >
                   <Check className="h-3.5 w-3.5 mr-1" /> Swap it
                 </Button>
@@ -320,7 +320,7 @@ function MealCell({ weekStart, day, mealType, meal, onViewMeal }: MealCellProps)
           }}
         />
         <div className="flex gap-1.5">
-          <Button size="sm" className="h-6 px-2 text-[10px] bg-amber-500 hover:bg-amber-600 text-black" onClick={handleSave}>
+          <Button size="sm" className="h-6 px-2 text-[10px] bg-[#B8965A] hover:bg-[#A6854F] text-white" onClick={handleSave}>
             <Check className="h-3 w-3 mr-1" /> Save
           </Button>
           <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={handleCancel}>
@@ -337,8 +337,8 @@ function MealCell({ weekStart, day, mealType, meal, onViewMeal }: MealCellProps)
         onClick={() => meal ? onViewMeal(meal) : setEditing(true)}
         className={`w-full rounded-lg border text-left transition-all duration-150 p-2 min-h-[48px] ${
           meal
-            ? "border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40 hover:bg-amber-500/10"
-            : "border-dashed border-border/40 hover:border-amber-500/30 hover:bg-amber-500/5"
+            ? "border-amber-500/20 bg-[#B8965A]/5 hover:border-amber-500/40 hover:bg-amber-500/10"
+            : "border-dashed border-border/40 hover:border-amber-500/30 hover:bg-[#B8965A]/5"
         }`}
       >
         {meal ? (
@@ -455,24 +455,24 @@ export default function MealsPage() {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent p-6">
+        <div className="relative overflow-hidden rounded-2xl border border-[#E8E4DD] bg-[#FDFCFA] p-6">
           <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-amber-500/10 blur-3xl" />
           <div className="relative flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#B8965A]">
                 <UtensilsCrossed className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">Meal Planner</h1>
-                <p className="text-sm text-muted-foreground">Sweeney Family Kitchen 🍳</p>
+                <h1 className="text-2xl font-light tracking-wide font-[family-name:var(--font-display)] text-[#2C2C2C]">Meal Planner</h1>
+                <p className="text-sm text-muted-foreground">Sweeney Family Kitchen</p>
               </div>
             </div>
             <div className="flex gap-2">
-              <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">
+              <Badge className="bg-[#B8965A]/10 text-[#B8965A] border-[#B8965A]/20">
                 {totalMeals} meals planned
               </Badge>
-              <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-                👶 Soren-friendly
+              <Badge className="bg-[#5C6B5E]/10 text-[#5C6B5E] border-[#5C6B5E]/20">
+                Soren-friendly
               </Badge>
             </div>
           </div>
@@ -485,7 +485,7 @@ export default function MealsPage() {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-card text-sm font-medium">
-              <CalendarDays className="h-4 w-4 text-amber-400" />
+              <CalendarDays className="h-4 w-4 text-[#B8965A]" />
               Week of {weekLabel}
             </div>
             <Button variant="outline" size="icon" onClick={nextWeek} className="h-8 w-8">
@@ -498,7 +498,7 @@ export default function MealsPage() {
               onClick={() => setActiveTab("plan")}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                 activeTab === "plan"
-                  ? "bg-amber-500/20 text-amber-300"
+                  ? "bg-[#B8965A]/10 text-[#B8965A]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -508,7 +508,7 @@ export default function MealsPage() {
               onClick={() => setActiveTab("grocery")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                 activeTab === "grocery"
-                  ? "bg-emerald-500/20 text-emerald-300"
+                  ? "bg-[#5C6B5E]/10 text-[#5C6B5E]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -520,13 +520,13 @@ export default function MealsPage() {
 
         {/* Seed button if empty */}
         {activeTab === "plan" && meals !== undefined && meals.length === 0 && (
-          <Card className="border-dashed border-amber-500/30 bg-amber-500/5 p-6 text-center">
+          <Card className="border-dashed border-[#B8965A]/20 bg-[#B8965A]/5 p-6 text-center">
             <p className="text-muted-foreground mb-4">No meals planned for this week.</p>
             <Button
               onClick={() => seedMeals({})}
-              className="bg-amber-500 hover:bg-amber-600 text-black"
+              className="bg-[#B8965A] hover:bg-[#A6854F] text-white"
             >
-              🌱 Seed sample meals (week of Feb 23)
+              Seed sample meals
             </Button>
           </Card>
         )}
@@ -534,7 +534,7 @@ export default function MealsPage() {
         {/* Click-to-view hint */}
         {activeTab === "plan" && meals && meals.length > 0 && (
           <p className="text-xs text-[#6B6560] text-center">
-            💡 Tap a meal to view details · hover and click ✏️ to edit
+            Tap a meal to view details
           </p>
         )}
 
@@ -594,7 +594,7 @@ export default function MealsPage() {
                 const date = addDays(weekMonday, dayIndex);
                 return (
                   <Card key={day} className="border-border bg-card overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-amber-500/5">
+                    <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-[#B8965A]/5">
                       <span className="font-semibold text-sm">{day}</span>
                       <span className="text-xs text-muted-foreground">{format(date, "MMM d")}</span>
                     </div>
@@ -630,16 +630,16 @@ export default function MealsPage() {
 
         {/* Grocery list tab */}
         {activeTab === "grocery" && (
-          <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent p-6">
+          <Card className="border-[#5C6B5E]/20 bg-[#FDFCFA] p-6">
             <div className="flex items-center gap-2 mb-4">
-              <ShoppingCart className="h-5 w-5 text-emerald-400" />
+              <ShoppingCart className="h-5 w-5 text-[#5C6B5E]" />
               <h2 className="font-semibold">Grocery List — {weekLabel}</h2>
             </div>
             <Textarea
               value={displayedGrocery}
               onChange={(e) => setGroceryText(e.target.value)}
               placeholder="Paste or type your grocery list here...&#10;&#10;Proteins: chicken thighs, eggs...&#10;Produce: bananas, avocados...&#10;Baby: puffs, pouches..."
-              className="min-h-[320px] font-mono text-sm bg-background/50 border-emerald-500/20 focus:border-emerald-500/40 resize-none"
+              className="min-h-[320px] font-mono text-sm bg-background/50 border-[#E8E4DD] focus:border-[#B8965A]/30 resize-none"
             />
             <div className="flex items-center justify-between mt-4">
               <p className="text-xs text-muted-foreground">
@@ -648,7 +648,7 @@ export default function MealsPage() {
               <Button
                 onClick={handleGrocerySave}
                 disabled={grocerySaving || groceryText === null}
-                className="bg-emerald-500 hover:bg-emerald-600 text-black disabled:opacity-50"
+                className="bg-[#B8965A] hover:bg-[#A6854F] text-white disabled:opacity-50"
               >
                 {grocerySaving ? "Saving..." : "Save List"}
               </Button>
