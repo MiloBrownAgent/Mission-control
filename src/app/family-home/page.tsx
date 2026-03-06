@@ -135,6 +135,9 @@ function FamilyHomePage() {
     }
   }, [mode, router]);
 
+  // Don't render anything until mode is resolved — prevents flash on mc.lookandseen.com
+  if (mode === null) return null;
+
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [now, setNow] = useState(new Date());
   const [groceryInput, setGroceryInput] = useState("");

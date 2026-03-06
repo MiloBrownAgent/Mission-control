@@ -25,6 +25,8 @@ import {
   CreditCard,
   Armchair,
   Gauge,
+  Download,
+  FileText,
 } from "lucide-react";
 
 /* ─── Helpers ─── */
@@ -146,11 +148,12 @@ const reservations: Reservation[] = [
   { item: "Shinkansen Tokyo \u2192 Kyoto (Family Car)", date: "Apr 6", status: "not-booked", note: "Seat reservations open ~Mar 6" },
   { item: "Shinkansen Kyoto \u2192 Tokyo (Family Car)", date: "Apr 9", status: "not-booked", note: "Seat reservations open ~Mar 9" },
   { item: "teamLab Biovortex", date: "Apr 7, 1 PM", status: "booked", note: "2 adults + 1 child" },
-  { item: "teamLab Borderless", date: "Apr 10", status: "optional", note: "\u00A5500 off coupon from Biovortex email" },
-  { item: "Luggage forwarding Tokyo \u2192 Kyoto", date: "Apr 2 check-in", status: "concierge", note: "Andaz concierge \u2014 request at check-in" },
-  { item: "Gonpachi Nishiazabu lunch", date: "Apr 3", status: "concierge", note: "Note Soren\u2019s age for seating" },
-  { item: "Shimokitazawa dinner rec", date: "Apr 4", status: "concierge", note: "Ask Andaz for izakaya/ramen pick" },
-  { item: "Baby amenities (crib, diaper pail)", date: "Apr 2 check-in", status: "concierge", note: "Andaz concierge" },
+  { item: "teamLab Borderless", date: "Apr 10", status: "optional", note: "\u00A5500 (~$3) off coupon from Biovortex email" },
+  { item: "Baby amenities (crib, diaper pail, humidifier)", date: "Apr 2 & Apr 9", status: "booked", note: "Confirmed by Andaz front office \u2014 both stays" },
+  { item: "Luggage forwarding Tokyo \u2192 Kyoto", date: "Apr 6", status: "booked", note: "Confirmed \u2014 tell front desk by 5 PM, max \u00A55,410 (~$36)/bag" },
+  { item: "Gonpachi Nishiazabu lunch", date: "Apr 3, 12:00 PM", status: "booked", note: "2 adults + 1 baby \u2014 arrive on time, 15-min cancel window. Amanda: walnut/pecan allergy noted." },
+  { item: "Dashin Soan dinner (Shimokitazawa)", date: "Apr 4, 5:30 PM", status: "booked", note: "Course menu \u00A58,000 (~$54)/person. Cancel 4+ days out; \u00A58,800 (~$59)/person fee <3 days." },
+  { item: "Tavern Grill & Lounge \u2014 arrival dinner", date: "Apr 2, ~7:30 PM", status: "concierge", note: "In-hotel, 51F \u2014 reservation requested via Andaz concierge" },
   { item: "Gion Tanto dinner", date: "Apr 7", status: "concierge", note: "Via Ace Hotel Kyoto concierge" },
   { item: "Awomb lunch", date: "Apr 8", status: "concierge", note: "Via Ace Hotel Kyoto concierge" },
   { item: "Sushi Ishimatsu confirmation", date: "Apr 9", status: "concierge", note: "Via Ace Hotel Kyoto concierge" },
@@ -306,9 +309,9 @@ export default function JapanTripPage() {
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" strokeWidth={1.5} />
               <div>
-                <p className="text-xs font-medium text-amber-700">Seat Reservations Not Yet Open</p>
+                <p className="text-xs font-medium text-amber-700">Seat Reservations — Action Needed</p>
                 <p className="text-xs text-amber-600 mt-0.5">
-                  Opens ~March 6 (Apr 6 train) and ~March 9 (Apr 9 train). Soren is a lap infant, no ticket needed.
+                  Apr 6 train reservations open ~March 6 (today). Apr 9 train opens ~March 9. Book via Smart-EX. Soren is a lap infant, no ticket needed.
                 </p>
               </div>
             </div>
@@ -329,7 +332,7 @@ export default function JapanTripPage() {
               <DayItem icon={MapPin}>
                 Evening: <MapsLink name="Hamarikyu Gardens" /> (flat, stroller-perfect)
               </DayItem>
-              <DayItem icon={Utensils}>Dinner: hotel or Toranomon Hills. No reservation. Early sleep.</DayItem>
+              <DayItem icon={Utensils}>Dinner: <MapsLink name="Tavern Grill & Lounge Andaz Tokyo" /> (51F, in-hotel) &mdash; reservation requested via Andaz concierge</DayItem>
               <DayItem icon={Baby}>Priority: get Soren on local time</DayItem>
             </div>
           </DayCard>
@@ -345,7 +348,7 @@ export default function JapanTripPage() {
               </DayItem>
               <DayItem icon={Baby}>9-10:30 AM: Soren morning nap in stroller through Ginza</DayItem>
               <DayItem icon={Utensils}>
-                <span className="font-medium">Lunch:</span> <MapsLink name="Gonpachi Nishiazabu" /> (izakaya, via Andaz concierge)
+                <span className="font-medium">Lunch: <MapsLink name="Gonpachi Nishiazabu" /></span> &mdash; 12:00 PM, BOOKED (2 adults + 1 baby). Arrive on time, 15-min window. Amanda walnut/pecan allergy noted.
               </DayItem>
               <DayItem icon={Camera}>
                 <span className="font-medium">1-2:30 PM:</span> Soren nap &rarr; <MapsLink name="OJAS Karimoku Research Center Nishiazabu" /> (Between Space &amp; Sound, noon-6 PM, Thu-Fri, free)
@@ -369,7 +372,7 @@ export default function JapanTripPage() {
               <DayItem icon={Coffee}>
                 <span className="font-medium">3 PM:</span> <MapsLink name="Shimokitazawa Tokyo" /> &mdash; vintage shops, caf&eacute;s
               </DayItem>
-              <DayItem icon={Utensils}>Dinner: Ask Andaz concierge for Shimokitazawa izakaya/ramen</DayItem>
+              <DayItem icon={Utensils}><span className="font-medium">Dinner: <MapsLink name="Dashin Soan Shimokitazawa" /></span> &mdash; 5:30 PM, BOOKED (2 adults + 1 baby). Course menu. No perfume. Arrive on time.</DayItem>
             </div>
           </DayCard>
 
@@ -616,6 +619,26 @@ export default function JapanTripPage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* PDF Itinerary */}
+      <section>
+        <SectionHeader>Itinerary PDF</SectionHeader>
+        <a
+          href="/japan-2026-itinerary.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-4 rounded-2xl border border-[#B8965A]/20 bg-[#B8965A]/5 p-5 hover:bg-[#B8965A]/10 transition-colors active:bg-[#B8965A]/15"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#B8965A]/10 shrink-0">
+            <FileText className="h-6 w-6 text-[#B8965A]" strokeWidth={1.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[15px] font-medium text-[#2C2C2C]">Japan 2026 — Full Itinerary</h3>
+            <p className="text-xs text-[#5C6B5E] mt-0.5">Complete day-by-day guide, reservations, hotels, and travel notes</p>
+          </div>
+          <Download className="h-4 w-4 text-[#B8965A] shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" strokeWidth={1.5} />
+        </a>
       </section>
 
       {/* Footer */}

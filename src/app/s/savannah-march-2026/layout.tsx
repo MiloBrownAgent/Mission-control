@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Welcome to Savannah",
-  description: "Your guide to The Ford Field & River Club — March 11–17, 2026",
+  title: "Vienna, Dylan and Fillipa do Savannah",
+  description: "Your guide to The Ford Field & River Club — March 12–16, 2026",
   openGraph: {
-    title: "Welcome to Savannah",
-    description: "Your guide to The Ford Field & River Club — March 11–17, 2026",
+    title: "Vienna, Dylan and Fillipa do Savannah",
+    description: "Your guide to The Ford Field & River Club — March 12–16, 2026",
     images: ["https://sweeney.family/savannah-hero.jpg"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Welcome to Savannah",
-    description: "Your guide to The Ford Field & River Club — March 11–17, 2026",
+    title: "Vienna, Dylan and Fillipa do Savannah",
+    description: "Your guide to The Ford Field & River Club — March 12–16, 2026",
     images: ["https://sweeney.family/savannah-hero.jpg"],
   },
 };

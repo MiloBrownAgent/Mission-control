@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   MapPin,
   Phone,
@@ -32,6 +32,10 @@ import {
   Wifi,
   Copy,
   Check,
+  Cloud,
+  CloudRain,
+  CloudSun,
+  Plane,
 } from "lucide-react";
 
 /* ─── Design tokens ─── */
@@ -51,6 +55,54 @@ const IMAGES = {
   aerial: "https://fordfieldandriverclub.com/wp-content/uploads/2022/03/DJI_0122-1024x683.jpg",
   oaks: "https://fordfieldandriverclub.com/wp-content/uploads/2025/05/div.col-6-10-1.jpg",
 };
+
+/* ─── Tab definitions ─── */
+const TABS = [
+  { id: "essentials", label: "Essentials", icon: Compass },
+  { id: "dining", label: "Dining", icon: UtensilsCrossed },
+  { id: "explore", label: "Explore", icon: TreePine },
+  { id: "baby", label: "Baby Tips", icon: Baby },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
+/* ─── Scroll animation hook ─── */
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+    );
+    observer.observe(node);
+    return () => { observer.unobserve(node); };
+  }, []);
+
+  return { ref, isVisible };
+}
+
+function AnimatedSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const { ref, isVisible } = useScrollReveal();
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+      } ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
@@ -122,6 +174,110 @@ function InfoCard({ title, children, icon: Icon, image }: { title: string; child
   );
 }
 
+/* ─── Restaurant Card ─── */
+function RestaurantCard({
+  name,
+  address,
+  phone,
+  desc,
+  reservation,
+  kidNote,
+  icon: Icon = UtensilsCrossed,
+  iconBg = "bg-[#C07A1A]/10",
+  iconColor = "text-[#C07A1A]",
+}: {
+  name: string;
+  address: string;
+  phone: string;
+  desc: string;
+  reservation: string;
+  kidNote: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  iconBg?: string;
+  iconColor?: string;
+}) {
+  return (
+    <div className={`rounded-2xl border ${borderColor} ${bgAlt} p-5`}>
+      <div className="flex items-start gap-3">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconBg} shrink-0 mt-0.5`}>
+          <Icon className={`h-5 w-5 ${iconColor}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={`text-[15px] font-medium ${textPrimary}`}>{name}</p>
+          <p className={`text-sm ${textSecondary} mt-1.5 leading-relaxed`}>{desc}</p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <a
+              href={`tel:${phone.replace(/[^+\d]/g, "")}`}
+              className="flex items-center gap-1.5 rounded-lg border border-[#E8E4DD] bg-white px-3 py-2 text-xs text-[#2C2C2C] active:bg-[#E8E4DD] transition-colors min-h-[36px]"
+            >
+              <Phone className="h-3 w-3 text-[#B8965A]" />
+              {phone}
+            </a>
+            <a
+              href={`https://maps.google.com/?q=${encodeURIComponent(address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg border border-[#E8E4DD] bg-white px-3 py-2 text-xs text-[#2C2C2C] active:bg-[#E8E4DD] transition-colors min-h-[36px]"
+            >
+              <MapPin className="h-3 w-3 text-[#5C6B5E]" />
+              {address}
+            </a>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#B8965A]/10 px-2.5 py-1 text-[11px] text-[#B8965A] font-medium">
+              <Clock className="h-3 w-3" />
+              {reservation}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#5C6B5E]/10 px-2.5 py-1 text-[11px] text-[#5C6B5E] font-medium">
+              <Baby className="h-3 w-3" />
+              {kidNote}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Weather forecast data ─── */
+const FORECAST = [
+  { day: "Wed", date: 12, high: 71, low: 52, condition: "Sunny", icon: Sun },
+  { day: "Thu", date: 13, high: 69, low: 51, condition: "Partly Cloudy", icon: CloudSun },
+  { day: "Fri", date: 14, high: 72, low: 54, condition: "Sunny", icon: Sun },
+  { day: "Sat", date: 15, high: 70, low: 53, condition: "Partly Cloudy", icon: CloudSun },
+  { day: "Sun", date: 16, high: 67, low: 48, condition: "Scattered Showers", icon: CloudRain },
+];
+
+function WeatherForecast() {
+  return (
+    <div className={`rounded-2xl border ${borderColor} ${bg} p-5 overflow-hidden`}>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#B8965A]/10">
+          <Sun className="h-4 w-4 text-[#B8965A]" />
+        </div>
+        <div>
+          <h3 className={`font-medium ${textPrimary} text-[15px]`}>Savannah Weather — March 12–16</h3>
+        </div>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+        {FORECAST.map((day) => (
+          <div
+            key={day.day}
+            className={`flex-shrink-0 w-[88px] rounded-xl border ${borderColor} ${bgAlt} p-3 text-center`}
+          >
+            <p className={`text-xs font-medium ${textPrimary}`}>{day.day} {day.date}</p>
+            <day.icon className="h-6 w-6 text-[#B8965A] mx-auto my-2" />
+            <p className={`text-sm font-medium ${textPrimary}`}>{day.high}°</p>
+            <p className="text-xs text-[#5C6B5E]/60">{day.low}°</p>
+            <p className="text-[10px] text-[#5C6B5E]/50 mt-1 leading-tight">{day.condition}</p>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-[#5C6B5E]/40 mt-3 text-right">Updated daily</p>
+    </div>
+  );
+}
+
 function WifiCard() {
   const [copied, setCopied] = useState(false);
   const password = "TopDawg2019";
@@ -132,7 +288,6 @@ function WifiCard() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback
       const el = document.createElement("textarea");
       el.value = password;
       document.body.appendChild(el);
@@ -202,183 +357,16 @@ function SectionImage({ src, alt }: { src: string; alt: string }) {
   );
 }
 
-export default function SavannahGuidePage() {
-  const [formData, setFormData] = useState({
-    coffee: "",
-    dietary: "",
-    breakfast: "",
-    activities: "",
-    other: "",
-  });
-  const [formState, setFormState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+/* ─── Tab Content Components ─── */
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formState === "sent") return;
-    setFormState("sending");
-    try {
-      const res = await fetch("/api/guest-preferences", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (res.ok) {
-        setFormState("sent");
-      } else {
-        setFormState("error");
-      }
-    } catch {
-      setFormState("error");
-    }
-  };
-
+function EssentialsTab() {
   return (
-    <div className={`min-h-screen ${bg}`}>
-      {/* Hero with Ford property image */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={IMAGES.hero} alt="The Ford Field & River Club" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2C2C2C]/70 via-[#2C2C2C]/50 to-[#2C2C2C]/80" />
-        </div>
-        <div className="relative max-w-2xl mx-auto px-6 py-20 md:py-28 text-center">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="h-px w-8 bg-[#B8965A]/40" />
-            <Compass className="h-5 w-5 text-[#B8965A]" />
-            <div className="h-px w-8 bg-[#B8965A]/40" />
-          </div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-[#B8965A] mb-4">March 11–17, 2026</p>
-          <h1 className="text-3xl md:text-5xl font-light tracking-wide font-[family-name:var(--font-display)] text-white mb-3">
-            Welcome to Savannah
-          </h1>
-          <p className="text-sm text-white/70 max-w-md mx-auto leading-relaxed">
-            A guide for Vienna, Dylan &amp; Filippa — your complete companion to The Ford Field &amp; River Club, Savannah dining, and everything you need for a perfect week in the Low Country.
-          </p>
-          <div className="flex items-center justify-center gap-3 mt-8">
-            <div className="h-px w-8 bg-[#B8965A]/20" />
-            <div className="h-1.5 w-1.5 rounded-full bg-[#B8965A]/40" />
-            <div className="h-px w-8 bg-[#B8965A]/20" />
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-2xl mx-auto px-5 py-8 space-y-10">
-
-        {/* ── Address ── */}
-        <a
-          href="https://www.google.com/maps/search/?api=1&query=35+Belted+Kingfisher+Richmond+Hill+GA"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 bg-white border border-[#E8E4DD] rounded-xl p-4 hover:border-[#B8965A] transition-colors"
-        >
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#B8965A]/10 flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-[#B8965A]" />
-          </div>
-          <div>
-            <p className="text-[#2C2C2C] font-medium text-[15px]">35 Belted Kingfisher</p>
-            <p className="text-[#8A7E72] text-sm">Richmond Hill, GA — Tap for directions</p>
-          </div>
-        </a>
-
-        {/* ── Personal Note ── */}
-        <div className="bg-[#F7F4EF] border border-[#E8E4DD] rounded-2xl p-6 md:p-8">
-          <p className="font-[family-name:var(--font-display)] text-[#2C2C2C] text-[17px] md:text-[19px] leading-relaxed italic">
-            Really glad you guys are coming down. No plans, no itinerary — just good hangs, good food, and two babies causing chaos on the lawn. We put this together so you have everything in one spot if you need it. See you soon.
-          </p>
-          <p className="text-[#B8965A] text-sm mt-4 tracking-wide">— D & A</p>
-        </div>
-
-        {/* ── Preferences ── */}
-        {formState === "sent" ? (
-          <div className={`rounded-2xl border ${borderColor} ${bgAlt} p-6 text-center`}>
-            <CheckCircle className="h-8 w-8 text-[#5C6B5E] mx-auto mb-3" />
-            <p className={`font-medium ${textPrimary} text-[15px]`}>Got it — thank you!</p>
-            <p className={`text-sm ${textSecondary} mt-1`}>We&apos;ll make sure everything&apos;s ready.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className={`rounded-2xl border ${borderColor} ${bg} p-6 md:p-8 space-y-5`}>
-            <div>
-              <p className={`font-medium ${textPrimary} text-[15px] font-[family-name:var(--font-display)]`}>Help us get things ready</p>
-              <p className={`text-sm ${textSecondary} mt-1`}>A few quick things so the fridge is stocked and the coffee is right.</p>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-xs font-medium uppercase tracking-[0.15em] ${textSecondary} mb-2`}>How do you take your coffee?</label>
-                <input
-                  type="text"
-                  placeholder="Black, oat milk latte, don't drink coffee..."
-                  value={formData.coffee}
-                  onChange={(e) => setFormData({ ...formData, coffee: e.target.value })}
-                  className={`w-full rounded-xl border ${borderColor} ${bgAlt} px-4 py-3 text-sm ${textPrimary} placeholder:text-[#B5AFA7] focus:outline-none focus:border-[#B8965A] transition-colors`}
-                />
-              </div>
-              <div>
-                <label className={`block text-xs font-medium uppercase tracking-[0.15em] ${textSecondary} mb-2`}>Any dietary restrictions or allergies?</label>
-                <input
-                  type="text"
-                  placeholder="None, vegetarian, gluten-free..."
-                  value={formData.dietary}
-                  onChange={(e) => setFormData({ ...formData, dietary: e.target.value })}
-                  className={`w-full rounded-xl border ${borderColor} ${bgAlt} px-4 py-3 text-sm ${textPrimary} placeholder:text-[#B5AFA7] focus:outline-none focus:border-[#B8965A] transition-colors`}
-                />
-              </div>
-              <div>
-                <label className={`block text-xs font-medium uppercase tracking-[0.15em] ${textSecondary} mb-2`}>What would you love to have for breakfast in your fridge?</label>
-                <input
-                  type="text"
-                  placeholder="Yogurt, eggs, fruit, pastries..."
-                  value={formData.breakfast}
-                  onChange={(e) => setFormData({ ...formData, breakfast: e.target.value })}
-                  className={`w-full rounded-xl border ${borderColor} ${bgAlt} px-4 py-3 text-sm ${textPrimary} placeholder:text-[#B5AFA7] focus:outline-none focus:border-[#B8965A] transition-colors`}
-                />
-              </div>
-              <div>
-                <label className={`block text-xs font-medium uppercase tracking-[0.15em] ${textSecondary} mb-2`}>Anything you&apos;re especially hoping to do?</label>
-                <input
-                  type="text"
-                  placeholder="Golf, spa, explore downtown Savannah..."
-                  value={formData.activities}
-                  onChange={(e) => setFormData({ ...formData, activities: e.target.value })}
-                  className={`w-full rounded-xl border ${borderColor} ${bgAlt} px-4 py-3 text-sm ${textPrimary} placeholder:text-[#B5AFA7] focus:outline-none focus:border-[#B8965A] transition-colors`}
-                />
-              </div>
-              <div>
-                <label className={`block text-xs font-medium uppercase tracking-[0.15em] ${textSecondary} mb-2`}>Anything else we should know?</label>
-                <textarea
-                  placeholder="Filippa's schedule, things you're bringing, whatever..."
-                  value={formData.other}
-                  onChange={(e) => setFormData({ ...formData, other: e.target.value })}
-                  rows={3}
-                  className={`w-full rounded-xl border ${borderColor} ${bgAlt} px-4 py-3 text-sm ${textPrimary} placeholder:text-[#B5AFA7] focus:outline-none focus:border-[#B8965A] transition-colors resize-none`}
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              disabled={formState === "sending"}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#5C6B5E] text-white py-3.5 text-sm font-medium hover:bg-[#4A5A4C] active:bg-[#3F4E41] transition-colors disabled:opacity-60 min-h-[48px]"
-            >
-              {formState === "sending" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Send className="h-4 w-4" />
-                  Send
-                </>
-              )}
-            </button>
-          </form>
-        )}
-
-        {/* ── WiFi & Baby Essentials ── */}
-        <div className="space-y-4">
-          <WifiCard />
-          <BabyEssentialsCard />
-        </div>
-
-        {/* ── Essential Contacts ── */}
+    <div className="space-y-10">
+      {/* Essential Contacts */}
+      <AnimatedSection>
         <section>
           <SectionHeader>Essential Contacts</SectionHeader>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <PhoneButton number="+1 (952) 239-0143" label="Dave Sweeney" icon={Users} />
             <PhoneButton number="+1 (916) 529-5298" label="Amanda Sweeney" icon={Users} />
             <PhoneButton number="+1 (912) 756-5666" label="Ford Field & River Club — Main" icon={Building} />
@@ -389,8 +377,10 @@ export default function SavannahGuidePage() {
             <PhoneButton number="+1 (912) 350-8000" label="Memorial Health ER" icon={Shield} />
           </div>
         </section>
+      </AnimatedSection>
 
-        {/* ── Ford Field & River Club ── */}
+      {/* Ford Field & River Club */}
+      <AnimatedSection>
         <section>
           <SectionHeader>The Ford Field &amp; River Club</SectionHeader>
           <InfoCard title="History & Heritage" icon={Landmark} image={IMAGES.mainHouse}>
@@ -407,8 +397,10 @@ export default function SavannahGuidePage() {
             </div>
           </InfoCard>
         </section>
+      </AnimatedSection>
 
-        {/* ── On-Property Amenities ── */}
+      {/* On-Property Amenities */}
+      <AnimatedSection>
         <section>
           <SectionHeader>On-Property Amenities</SectionHeader>
           <div className="space-y-3">
@@ -445,8 +437,164 @@ export default function SavannahGuidePage() {
             </div>
           </div>
         </section>
+      </AnimatedSection>
+    </div>
+  );
+}
 
-        {/* ── Live Oaks & Spanish Moss ── */}
+function DiningTab() {
+  return (
+    <div className="space-y-10">
+      <AnimatedSection>
+        <section>
+          <SectionHeader>Savannah Dining</SectionHeader>
+
+          <p className={`text-xs ${textSecondary} uppercase tracking-[0.2em] mb-3`}>Fine Dining &amp; Special Occasions</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
+            <RestaurantCard
+              name="The Olde Pink House"
+              address="23 Abercorn St, Savannah, GA"
+              phone="(912) 232-4286"
+              desc="18th-century mansion. Southern fine dining at its best. Dinner only."
+              reservation="Phone reservations"
+              kidNote="Fine dining but spacious — babies okay early dinner"
+            />
+            <RestaurantCard
+              name="The Grey"
+              address="109 MLK Jr Blvd, Savannah, GA"
+              phone="(912) 662-5999"
+              desc="James Beard Award-winning restaurant in a restored 1938 Greyhound bus terminal. One of the best in the South."
+              reservation="Resy"
+              kidNote="Upscale but accommodating — doable with babies at brunch"
+            />
+            <RestaurantCard
+              name="Husk Savannah"
+              address="12 W Oglethorpe Ave, Savannah, GA 31401"
+              phone="(912) 349-2600"
+              desc="Chef Sean Brock's modern Southern cuisine in an 1890s building on Oglethorpe Square. Changing menu celebrates Low Country ingredients."
+              reservation="Resy"
+              kidNote="Upscale — better as a date night if you can get a sitter"
+            />
+            <RestaurantCard
+              name="Common Thread"
+              address="122 E 37th St, Savannah, GA 31401"
+              phone="(912) 944-7482"
+              desc="New American with Southern roots. Intimate, thoughtful menu — one of Savannah's best kept secrets. We have a reservation here Friday the 14th."
+              reservation="Reservations recommended"
+              kidNote="Intimate space — best enjoyed without the little ones"
+            />
+          </div>
+
+          <p className={`text-xs ${textSecondary} uppercase tracking-[0.2em] mb-3`}>Casual &amp; Family-Friendly</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
+            <RestaurantCard
+              name="Mrs. Wilkes' Dining Room"
+              address="107 W Jones St, Savannah, GA"
+              phone="(912) 232-5997"
+              desc="Legendary boarding house-style lunch. Communal tables, fried chicken, collard greens. Cash only."
+              reservation="Walk-in only (expect a line)"
+              kidNote="Family-style — very kid-friendly"
+            />
+            <RestaurantCard
+              name="Treylor Park"
+              address="115 E Bay St, Savannah, GA"
+              phone="(912) 495-5557"
+              desc="Creative Southern comfort. Great cocktails. Casual but excellent."
+              reservation="Walk-ins + some reservations"
+              kidNote="Very casual — great with kids"
+            />
+            <RestaurantCard
+              name="The Pirates' House"
+              address="20 E Broad St, Savannah, GA"
+              phone="(912) 233-5757"
+              desc="Historic tavern since 1753. Fun atmosphere, solid seafood."
+              reservation="Reservations accepted"
+              kidNote="Very kid-friendly, touristy but fun"
+            />
+            <RestaurantCard
+              name="Little Duck Diner"
+              address="102 E Broad St, Savannah, GA"
+              phone="(912) 235-7809"
+              desc="Elevated diner fare. Brunch favorite. Charming, compact."
+              reservation="Walk-in"
+              kidNote="Very casual, baby-friendly"
+            />
+            <RestaurantCard
+              name="Huey's on the River"
+              address="115 E River St, Savannah, GA"
+              phone="(912) 234-7385"
+              desc="New Orleans-style on River Street. Beignets and views."
+              reservation="Reservations accepted"
+              kidNote="Casual waterfront — kid-friendly"
+            />
+          </div>
+
+          <p className={`text-xs ${textSecondary} uppercase tracking-[0.2em] mb-3`}>Waterfront &amp; Outdoor</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <RestaurantCard
+              name="The Wyld Dock Bar"
+              address="2740 Livingston Ave, Savannah, GA 31404"
+              phone="(912) 692-1219"
+              desc="Casual waterfront spot on the marsh — outdoor seating with incredible views. Seafood, craft cocktails, live music sometimes. Perfect for a laid-back afternoon."
+              reservation="No reservations"
+              kidNote="Spacious outdoor layout — very baby-friendly"
+              icon={Waves}
+              iconBg="bg-[#5C6B5E]/10"
+              iconColor="text-[#5C6B5E]"
+            />
+          </div>
+        </section>
+      </AnimatedSection>
+    </div>
+  );
+}
+
+function ExploreTab() {
+  return (
+    <div className="space-y-10">
+      {/* Things to Do */}
+      <AnimatedSection>
+        <section>
+          <SectionHeader>Things to Do</SectionHeader>
+          <div className="space-y-3">
+            {[
+              { name: "Forsyth Park", desc: "Savannah\u2019s crown jewel. 30 acres of live oaks, the iconic fountain, and a Saturday farmers market. Perfect for a stroller walk.", address: "Forsyth Park, Savannah, GA", icon: TreePine },
+              { name: "The Squares", desc: "Wander through Savannah\u2019s 22 historic squares. Each one is different. Highlights: Chippewa, Monterey, Madison, and Lafayette.", address: "Chippewa Square, Savannah, GA", icon: Compass },
+              { name: "River Street", desc: "Nine blocks of shops, galleries, and restaurants along the Savannah River on restored cotton warehouses. Cobblestone — watch the stroller wheels.", address: "River Street, Savannah, GA", icon: Waves },
+              { name: "Wormsloe Historic Site", desc: "A mile-long avenue of 400+ live oaks draped in Spanish moss. One of the most photographed spots in the South. Colonial estate ruins at the end.", address: "Wormsloe Historic Site, Savannah, GA", icon: TreePine },
+              { name: "Bonaventure Cemetery", desc: "Hauntingly beautiful Victorian cemetery on a bluff over the Wilmington River. Made famous by Midnight in the Garden of Good and Evil.", address: "Bonaventure Cemetery, Savannah, GA", icon: Flower2 },
+              { name: "SCAD Museum of Art", desc: "Contemporary art museum housed in a stunning 1853 railroad building. World-class rotating exhibitions.", address: "SCAD Museum of Art, Savannah, GA", icon: Sparkles },
+              { name: "Cathedral of St. John the Baptist", desc: "French Gothic cathedral built in 1876. Breathtaking stained glass and soaring spires. Free to visit.", address: "Cathedral of St. John the Baptist, Savannah, GA", icon: Church },
+              { name: "Leopold\u2019s Ice Cream", desc: "Iconic Savannah ice cream shop since 1919. Always a line, always worth it. Try the Tutti Frutti or Lemon Custard.", address: "Leopold's Ice Cream, 212 E Broughton St, Savannah, GA", icon: Heart },
+              { name: "Tybee Island Beach", desc: "Just 20 minutes east of Savannah. Wide, sandy beach perfect for a relaxed morning or afternoon. Tybee Island Light Station \u2014 one of the tallest in America \u2014 is worth a visit. Laid-back beach town with casual seafood spots. Very baby-friendly \u2014 bring sunscreen, a pop-up tent, and enjoy the waves.", address: "Tybee Island, GA", icon: Sun },
+            ].map((place) => (
+              <a
+                key={place.name}
+                href={`https://maps.google.com/?q=${encodeURIComponent(place.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block rounded-2xl border ${borderColor} ${bgAlt} p-5 active:bg-[#E8E4DD] transition-colors`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5C6B5E]/10 shrink-0 mt-0.5">
+                    <place.icon className="h-5 w-5 text-[#5C6B5E]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-[15px] font-medium ${textPrimary}`}>{place.name}</p>
+                    <p className={`text-sm ${textSecondary} mt-1.5 leading-relaxed`}>{place.desc}</p>
+                    <p className="text-xs text-[#5C6B5E]/60 flex items-center gap-1 mt-2">
+                      <MapPin className="h-3 w-3" />Open in Maps
+                    </p>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      </AnimatedSection>
+
+      {/* Live Oaks & Spanish Moss */}
+      <AnimatedSection>
         <section>
           <SectionHeader>The Live Oaks &amp; Spanish Moss</SectionHeader>
           <SectionImage src={IMAGES.oaks} alt="Live oaks draped in Spanish moss" />
@@ -487,117 +635,33 @@ export default function SavannahGuidePage() {
             </div>
           </div>
         </section>
+      </AnimatedSection>
 
-        {/* ── Golf ── */}
+      {/* Peak Azalea Season */}
+      <AnimatedSection>
         <section>
-          <SectionHeader>Golf for Dylan</SectionHeader>
-          <div className="space-y-3">
-            <InfoCard title="Pete Dye Course at Ford" icon={Flag}>
-              <p className={`text-sm ${textSecondary} leading-relaxed mb-3`}>
-                250 acres, no tee times needed. The signature course right on property.
-              </p>
-            </InfoCard>
-
-            <p className={`text-xs ${textSecondary} uppercase tracking-[0.2em] mt-6 mb-2`}>Nearby Courses</p>
-
-            <div className="space-y-2">
-              {[
-                { name: "Southbridge Golf Club", phone: "+19126515455", display: "(912) 651-5455" },
-                { name: "Club at Savannah Harbor", phone: "+19122012007", display: "(912) 201-2007" },
-                { name: "Hunter Golf Club", phone: "+19123159115", display: "(912) 315-9115" },
-              ].map((course) => (
-                <a key={course.name} href={`tel:${course.phone}`} className={`flex items-center gap-3 rounded-2xl border ${borderColor} ${bgAlt} px-5 py-4 active:bg-[#E8E4DD] transition-colors min-h-[56px]`}>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5C6B5E]/10 shrink-0">
-                    <Flag className="h-5 w-5 text-[#5C6B5E]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${textPrimary}`}>{course.name}</p>
-                    <p className="text-xs text-[#5C6B5E]">{course.display}</p>
-                  </div>
-                  <Phone className="h-4 w-4 text-[#B8965A] shrink-0" />
-                </a>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Restaurants ── */}
-        <section>
-          <SectionHeader>Savannah Dining</SectionHeader>
-
-          <p className={`text-xs ${textSecondary} uppercase tracking-[0.2em] mb-3`}>Fine Dining &amp; Dinner</p>
-          <div className="space-y-3 mb-8">
-            {[
-              { name: "The Olde Pink House", address: "23 Abercorn St, Savannah, GA", desc: "18th-century mansion. Southern fine dining at its best. Reservation recommended." },
-              { name: "Mrs. Wilkes\u2019 Dining Room", address: "107 W Jones St, Savannah, GA", desc: "Legendary boarding house-style lunch. Communal tables, fried chicken, collard greens. Cash only, expect a line." },
-              { name: "Treylor Park", address: "115 E Bay St, Savannah, GA", desc: "Creative Southern comfort. Great cocktails. Casual but excellent." },
-              { name: "The Pirates\u2019 House", address: "20 E Broad St, Savannah, GA", desc: "Historic tavern since 1753. Fun atmosphere, solid seafood." },
-              { name: "Little Duck Diner", address: "131 W Congress St, Savannah, GA", desc: "Elevated diner fare. Brunch favorite. Charming, compact." },
-              { name: "Huey\u2019s on the River", address: "115 E River St, Savannah, GA", desc: "New Orleans-style on River Street. Beignets and views." },
-            ].map((restaurant) => (
-              <a
-                key={restaurant.name}
-                href={`https://maps.google.com/?q=${encodeURIComponent(restaurant.address)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block rounded-2xl border ${borderColor} ${bgAlt} p-5 active:bg-[#E8E4DD] transition-colors`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#C07A1A]/10 shrink-0 mt-0.5">
-                    <UtensilsCrossed className="h-5 w-5 text-[#C07A1A]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-[15px] font-medium ${textPrimary}`}>{restaurant.name}</p>
-                    <p className="text-xs text-[#5C6B5E] flex items-center gap-1 mt-0.5">
-                      <MapPin className="h-3 w-3 shrink-0" />{restaurant.address}
-                    </p>
-                    <p className={`text-sm ${textSecondary} mt-2 leading-relaxed`}>{restaurant.desc}</p>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-
-          <p className={`text-xs ${textSecondary} uppercase tracking-[0.2em] mb-3`}>Casual &amp; Waterfront</p>
-          <div className="space-y-3">
-            <div className={`rounded-2xl border ${borderColor} ${bgAlt} p-5`}>
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5C6B5E]/10 shrink-0 mt-0.5">
-                  <Waves className="h-5 w-5 text-[#5C6B5E]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-[15px] font-medium ${textPrimary}`}>The Wyld Dock Bar</p>
-                  <p className="text-xs text-[#5C6B5E] flex items-center gap-1 mt-0.5">
-                    <MapPin className="h-3 w-3 shrink-0" />2740 Livingston Ave, Savannah, GA 31404
-                  </p>
-                  <p className={`text-sm ${textSecondary} mt-2 leading-relaxed`}>
-                    Casual waterfront spot on the marsh — outdoor seating with incredible views. Seafood, craft cocktails, live music sometimes. Very baby-friendly (spacious outdoor layout). Perfect for a laid-back afternoon.
-                  </p>
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    <a
-                      href="tel:+19126921219"
-                      className="flex items-center gap-1.5 rounded-lg border border-[#E8E4DD] bg-white px-3 py-2 text-xs text-[#2C2C2C] active:bg-[#E8E4DD] transition-colors min-h-[36px]"
-                    >
-                      <Phone className="h-3 w-3 text-[#B8965A]" />
-                      (912) 692-1219
-                    </a>
-                    <a
-                      href="https://maps.google.com/?q=2740+Livingston+Ave,+Savannah,+GA+31404"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 rounded-lg border border-[#E8E4DD] bg-white px-3 py-2 text-xs text-[#2C2C2C] active:bg-[#E8E4DD] transition-colors min-h-[36px]"
-                    >
-                      <MapPin className="h-3 w-3 text-[#5C6B5E]" />
-                      Open in Maps
-                    </a>
-                  </div>
-                </div>
+          <SectionHeader>Peak Azalea Season</SectionHeader>
+          <div className={`rounded-2xl border ${borderColor} ${bg} p-5`}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#B8965A]/10">
+                <Flower2 className="h-4 w-4 text-[#B8965A]" />
               </div>
+              <h3 className={`font-medium ${textPrimary} text-[15px]`}>The City in Bloom</h3>
+            </div>
+            <div className={`text-sm ${textSecondary} leading-relaxed space-y-3`}>
+              <p>
+                Mid-March is peak azalea season in Savannah. The entire city erupts in color — pinks, whites, reds, and purples lining every square and garden path. Forsyth Park and Bonaventure Cemetery are especially stunning this time of year.
+              </p>
+              <p className="text-[#B8965A] italic">
+                You&apos;re coming at one of the most beautiful times to visit.
+              </p>
             </div>
           </div>
         </section>
+      </AnimatedSection>
 
-        {/* ── Savannah History ── */}
+      {/* Savannah History */}
+      <AnimatedSection>
         <section>
           <SectionHeader>A Brief History of Savannah</SectionHeader>
           <InfoCard title="The Hostess City" icon={BookOpen}>
@@ -614,46 +678,15 @@ export default function SavannahGuidePage() {
             </div>
           </InfoCard>
         </section>
+      </AnimatedSection>
+    </div>
+  );
+}
 
-        {/* ── Things to Do ── */}
-        <section>
-          <SectionHeader>Things to Do</SectionHeader>
-          <div className="space-y-3">
-            {[
-              { name: "Forsyth Park", desc: "Savannah\u2019s crown jewel. 30 acres of live oaks, the iconic fountain, and a Saturday farmers market. Perfect for a stroller walk.", address: "Forsyth Park, Savannah, GA", icon: TreePine },
-              { name: "The Squares", desc: "Wander through Savannah\u2019s 22 historic squares. Each one is different. Highlights: Chippewa, Monterey, Madison, and Lafayette.", address: "Chippewa Square, Savannah, GA", icon: Compass },
-              { name: "River Street", desc: "Nine blocks of shops, galleries, and restaurants along the Savannah River on restored cotton warehouses. Cobblestone — watch the stroller wheels.", address: "River Street, Savannah, GA", icon: Waves },
-              { name: "Wormsloe Historic Site", desc: "A mile-long avenue of 400+ live oaks draped in Spanish moss. One of the most photographed spots in the South. Colonial estate ruins at the end.", address: "Wormsloe Historic Site, Savannah, GA", icon: TreePine },
-              { name: "Bonaventure Cemetery", desc: "Hauntingly beautiful Victorian cemetery on a bluff over the Wilmington River. Made famous by Midnight in the Garden of Good and Evil.", address: "Bonaventure Cemetery, Savannah, GA", icon: Flower2 },
-              { name: "SCAD Museum of Art", desc: "Contemporary art museum housed in a stunning 1853 railroad building. World-class rotating exhibitions.", address: "SCAD Museum of Art, Savannah, GA", icon: Sparkles },
-              { name: "Cathedral of St. John the Baptist", desc: "French Gothic cathedral built in 1876. Breathtaking stained glass and soaring spires. Free to visit.", address: "Cathedral of St. John the Baptist, Savannah, GA", icon: Church },
-              { name: "Leopold\u2019s Ice Cream", desc: "Iconic Savannah ice cream shop since 1919. Always a line, always worth it. Try the Tutti Frutti or Lemon Custard.", address: "Leopold's Ice Cream, 212 E Broughton St, Savannah, GA", icon: Heart },
-            ].map((place) => (
-              <a
-                key={place.name}
-                href={`https://maps.google.com/?q=${encodeURIComponent(place.address)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block rounded-2xl border ${borderColor} ${bgAlt} p-5 active:bg-[#E8E4DD] transition-colors`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5C6B5E]/10 shrink-0 mt-0.5">
-                    <place.icon className="h-5 w-5 text-[#5C6B5E]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-[15px] font-medium ${textPrimary}`}>{place.name}</p>
-                    <p className={`text-sm ${textSecondary} mt-1.5 leading-relaxed`}>{place.desc}</p>
-                    <p className="text-xs text-[#5C6B5E]/60 flex items-center gap-1 mt-2">
-                      <MapPin className="h-3 w-3" />Open in Maps
-                    </p>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Baby Tips ── */}
+function BabyTipsTab() {
+  return (
+    <div className="space-y-10">
+      <AnimatedSection>
         <section>
           <SectionHeader>Traveling with Baby</SectionHeader>
           <div className="space-y-3">
@@ -663,6 +696,24 @@ export default function SavannahGuidePage() {
               </p>
             </InfoCard>
 
+            <InfoCard title="Baby-Friendly Spots" icon={Heart}>
+              <div className={`text-sm ${textSecondary} leading-relaxed space-y-2`}>
+                <p><strong>Forsyth Park</strong> — Wide, flat paths perfect for strollers. Shaded benches everywhere. Saturday farmers market is fun with babies.</p>
+                <p><strong>The Wyld Dock Bar</strong> — Spacious outdoor layout on the marsh. Relaxed vibe, easy with babies.</p>
+                <p><strong>Tybee Island Beach</strong> — Wide sandy beach, calm waves. Bring a pop-up tent for shade.</p>
+                <p><strong>Leopold&apos;s Ice Cream</strong> — Quick stop, always a treat. The line moves fast.</p>
+                <p><strong>River Street</strong> — Fun to walk but cobblestone can be rough on strollers. Stick to the upper level walkway where possible.</p>
+              </div>
+            </InfoCard>
+
+            <InfoCard title="Stroller Tips" icon={Navigation}>
+              <div className={`text-sm ${textSecondary} leading-relaxed space-y-2`}>
+                <p>Savannah is very walkable but some surfaces are tricky. The historic district has a mix of brick sidewalks, cobblestone, and paved paths.</p>
+                <p><strong>Best for strollers:</strong> Forsyth Park paths, the squares (paved crossings), Broughton Street shopping district.</p>
+                <p><strong>Trickier:</strong> River Street cobblestones, some narrow sidewalks in the Historic District. A lightweight, maneuverable stroller is your friend here.</p>
+              </div>
+            </InfoCard>
+
             <div className="space-y-2">
               <p className={`text-xs ${textSecondary} uppercase tracking-[0.2em] mb-2`}>Emergency Pediatric Care</p>
               <PhoneButton number="+1 (912) 691-2424" label="Pediatric Associates of Savannah" icon={Baby} />
@@ -670,6 +721,320 @@ export default function SavannahGuidePage() {
             </div>
           </div>
         </section>
+      </AnimatedSection>
+    </div>
+  );
+}
+
+/* ─── Main Page ─── */
+export default function SavannahGuidePage() {
+  const [formData, setFormData] = useState({
+    coffee: "",
+    dietary: "",
+    breakfast: "",
+    activities: "",
+    other: "",
+  });
+  const [formState, setFormState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [scrollY, setScrollY] = useState(0);
+  const [activeTab, setActiveTab] = useState<TabId>("essentials");
+  const tabBarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formState === "sent") return;
+    setFormState("sending");
+    try {
+      const res = await fetch("/api/guest-preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (res.ok) {
+        setFormState("sent");
+      } else {
+        setFormState("error");
+      }
+    } catch {
+      setFormState("error");
+    }
+  };
+
+  const handleTabChange = useCallback((tab: TabId) => {
+    setActiveTab(tab);
+    // Scroll to just above the tab bar so it's visible
+    if (tabBarRef.current) {
+      const tabBarTop = tabBarRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: tabBarTop - 8, behavior: "smooth" });
+    }
+  }, []);
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "essentials":
+        return <EssentialsTab />;
+      case "dining":
+        return <DiningTab />;
+      case "explore":
+        return <ExploreTab />;
+      case "baby":
+        return <BabyTipsTab />;
+    }
+  };
+
+  return (
+    <div className={`min-h-screen ${bg}`}>
+      {/* Hero — full bleed with parallax */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src={IMAGES.hero}
+            alt="The Ford Field & River Club"
+            className="w-full h-full object-cover"
+            style={{ transform: `translateY(${scrollY * 0.3}px)` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2C2C2C]/70 via-[#2C2C2C]/50 to-[#2C2C2C]/80" />
+        </div>
+        <div className="relative max-w-3xl mx-auto px-6 py-20 md:py-28 text-center">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="h-px w-8 bg-[#B8965A]/40" />
+            <Compass className="h-5 w-5 text-[#B8965A]" />
+            <div className="h-px w-8 bg-[#B8965A]/40" />
+          </div>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#B8965A] mb-4">March 12–16, 2026</p>
+          <h1 className="text-3xl md:text-5xl font-light tracking-wide font-[family-name:var(--font-display)] text-white mb-3">
+            Welcome to Savannah
+          </h1>
+          <p className="text-sm text-white/70 max-w-md mx-auto leading-relaxed">
+            A guide for Vienna, Dylan &amp; Filippa — your complete companion to The Ford Field &amp; River Club, Savannah dining, and everything you need for a perfect week in the Low Country.
+          </p>
+          <div className="flex items-center justify-center gap-3 mt-8">
+            <div className="h-px w-8 bg-[#B8965A]/20" />
+            <div className="h-1.5 w-1.5 rounded-full bg-[#B8965A]/40" />
+            <div className="h-px w-8 bg-[#B8965A]/20" />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-5 py-8 space-y-10">
+
+        {/* ── Personal Note ── */}
+        <AnimatedSection>
+          <div className="bg-[#F7F4EF] border border-[#E8E4DD] rounded-2xl p-6 md:p-8">
+            <p className="font-[family-name:var(--font-display)] text-[#2C2C2C] text-[17px] md:text-[19px] leading-relaxed italic">
+              Really glad you guys are coming down. No plans, no itinerary — just good hangs, good food, and two babies causing chaos on the lawn. We put this together so you have everything in one spot if you need it. See you soon.
+            </p>
+            <p className="text-[#B8965A] text-sm mt-4 tracking-wide">— D & A</p>
+          </div>
+        </AnimatedSection>
+
+        {/* ── Weather Forecast ── */}
+        <AnimatedSection>
+          <WeatherForecast />
+        </AnimatedSection>
+
+        {/* ── Your Flights ── */}
+        <AnimatedSection>
+          <div className={`rounded-2xl border ${borderColor} ${bg} p-5 space-y-3`}>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5C6B5E]/10">
+                <Plane className="h-4 w-4 text-[#5C6B5E]" />
+              </div>
+              <h3 className={`font-medium ${textPrimary} text-[15px]`}>Your Flights</h3>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className={`rounded-xl border ${borderColor} ${bgAlt} p-4`}>
+                <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#5C6B5E] mb-1">Arriving</p>
+                <p className={`font-medium ${textPrimary} text-[15px]`}>DL 2574 — MSP → SAV</p>
+                <p className="text-sm text-[#5C6B5E] mt-1">Wed, March 12 · 9:00 AM – 11:46 AM</p>
+              </div>
+              <div className={`rounded-xl border ${borderColor} ${bgAlt} p-4`}>
+                <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#5C6B5E] mb-1">Departing</p>
+                <p className={`font-medium ${textPrimary} text-[15px]`}>DL 2574 — SAV → MSP</p>
+                <p className="text-sm text-[#5C6B5E] mt-1">Sun, March 16 · 12:31 PM – 3:39 PM</p>
+              </div>
+            </div>
+          </div>
+        </AnimatedSection>
+
+        {/* ── Address ── */}
+        <AnimatedSection>
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=35+Belted+Kingfisher+Richmond+Hill+GA"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 bg-white border border-[#E8E4DD] rounded-xl p-4 hover:border-[#B8965A] transition-colors"
+          >
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#B8965A]/10 flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-[#B8965A]" />
+            </div>
+            <div>
+              <p className="text-[#2C2C2C] font-medium text-[15px]">35 Belted Kingfisher</p>
+              <p className="text-[#8A7E72] text-sm">Richmond Hill, GA — Tap for directions</p>
+            </div>
+          </a>
+        </AnimatedSection>
+
+        {/* ── Preferences ── */}
+        <AnimatedSection>
+          {formState === "sent" ? (
+            <div className={`rounded-2xl border ${borderColor} ${bgAlt} p-6 text-center`}>
+              <CheckCircle className="h-8 w-8 text-[#5C6B5E] mx-auto mb-3" />
+              <p className={`font-medium ${textPrimary} text-[15px]`}>Got it — thank you!</p>
+              <p className={`text-sm ${textSecondary} mt-1`}>We&apos;ll make sure everything&apos;s ready.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="rounded-2xl border border-[#E8C4C4]/40 bg-[#FDF2F0] p-6 md:p-8 space-y-5">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-light font-[family-name:var(--font-display)] text-[#2C2C2C] tracking-wide">Help us get things ready</h2>
+                <p className={`text-sm ${textSecondary} mt-2`}>A few quick things so the fridge is stocked and the coffee is right.</p>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-xs font-medium uppercase tracking-[0.15em] ${textSecondary} mb-2`}>How do you take your coffee?</label>
+                  <input
+                    type="text"
+                    placeholder="Black, oat milk latte, don't drink coffee..."
+                    value={formData.coffee}
+                    onChange={(e) => setFormData({ ...formData, coffee: e.target.value })}
+                    className={`w-full rounded-xl border ${borderColor} ${bgAlt} px-4 py-3 text-sm ${textPrimary} placeholder:text-[#B5AFA7] focus:outline-none focus:border-[#B8965A] transition-colors`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-medium uppercase tracking-[0.15em] ${textSecondary} mb-2`}>Any dietary restrictions or allergies?</label>
+                  <input
+                    type="text"
+                    placeholder="None, vegetarian, gluten-free..."
+                    value={formData.dietary}
+                    onChange={(e) => setFormData({ ...formData, dietary: e.target.value })}
+                    className={`w-full rounded-xl border ${borderColor} ${bgAlt} px-4 py-3 text-sm ${textPrimary} placeholder:text-[#B5AFA7] focus:outline-none focus:border-[#B8965A] transition-colors`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-medium uppercase tracking-[0.15em] ${textSecondary} mb-2`}>What would you love to have for breakfast in your fridge?</label>
+                  <input
+                    type="text"
+                    placeholder="Yogurt, eggs, fruit, pastries..."
+                    value={formData.breakfast}
+                    onChange={(e) => setFormData({ ...formData, breakfast: e.target.value })}
+                    className={`w-full rounded-xl border ${borderColor} ${bgAlt} px-4 py-3 text-sm ${textPrimary} placeholder:text-[#B5AFA7] focus:outline-none focus:border-[#B8965A] transition-colors`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-medium uppercase tracking-[0.15em] ${textSecondary} mb-2`}>Anything you&apos;re especially hoping to do?</label>
+                  <input
+                    type="text"
+                    placeholder="Golf, spa, explore downtown Savannah..."
+                    value={formData.activities}
+                    onChange={(e) => setFormData({ ...formData, activities: e.target.value })}
+                    className={`w-full rounded-xl border ${borderColor} ${bgAlt} px-4 py-3 text-sm ${textPrimary} placeholder:text-[#B5AFA7] focus:outline-none focus:border-[#B8965A] transition-colors`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-medium uppercase tracking-[0.15em] ${textSecondary} mb-2`}>Anything else we should know?</label>
+                  <textarea
+                    placeholder="Filippa's schedule, things you're bringing, whatever..."
+                    value={formData.other}
+                    onChange={(e) => setFormData({ ...formData, other: e.target.value })}
+                    rows={3}
+                    className={`w-full rounded-xl border ${borderColor} ${bgAlt} px-4 py-3 text-sm ${textPrimary} placeholder:text-[#B5AFA7] focus:outline-none focus:border-[#B8965A] transition-colors resize-none`}
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={formState === "sending"}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#5C6B5E] text-white py-3.5 text-sm font-medium hover:bg-[#4A5A4C] active:bg-[#3F4E41] transition-colors disabled:opacity-60 min-h-[48px]"
+              >
+                {formState === "sending" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Send
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+        </AnimatedSection>
+
+        {/* ── WiFi & Baby Essentials ── */}
+        <AnimatedSection>
+          <div className="space-y-4">
+            <WifiCard />
+            <BabyEssentialsCard />
+          </div>
+        </AnimatedSection>
+      </div>
+
+      {/* ── Sticky Tab Bar ── */}
+      <div
+        ref={tabBarRef}
+        className="sticky top-0 z-50 bg-[#FDFCFA]/95 backdrop-blur-md border-b border-[#E8E4DD]"
+      >
+        <div className="max-w-3xl mx-auto px-5">
+          <div className="flex overflow-x-auto scrollbar-hide">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-all duration-200 relative min-h-[48px] flex-1 justify-center ${
+                    isActive
+                      ? "text-[#2C2C2C]"
+                      : "text-[#5C6B5E]/60 hover:text-[#5C6B5E]"
+                  }`}
+                >
+                  <TabIcon className={`h-4 w-4 ${isActive ? "text-[#B8965A]" : ""}`} />
+                  <span>{tab.label}</span>
+                  {isActive && (
+                    <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-[#B8965A] rounded-full" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tab Content ── */}
+      <div className="max-w-3xl mx-auto px-5 py-8">
+        <div
+          key={activeTab}
+          className="animate-in fade-in duration-300"
+          style={{ animation: "fadeIn 300ms ease-out" }}
+        >
+          {renderTabContent()}
+        </div>
+      </div>
+
+      {/* ── Below Tabs: Always Visible ── */}
+      <div className="max-w-3xl mx-auto px-5 pb-8 space-y-10">
+        {/* ── Forrest Gump ── */}
+        <AnimatedSection>
+          <div className="rounded-2xl overflow-hidden border border-[#E8E4DD]">
+            <video
+              src="https://media.tenor.com/4EElxXeHiZwAAAPo/forrest-gump-wave.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full"
+            />
+            <div className="bg-[#F7F4EF] px-5 py-4 text-center">
+              <p className="text-lg italic text-[#5C6B5E] font-[family-name:var(--font-display)]">See y&apos;all soon.</p>
+            </div>
+          </div>
+        </AnimatedSection>
 
         {/* Footer */}
         <div className="text-center py-8">
@@ -683,6 +1048,14 @@ export default function SavannahGuidePage() {
           </p>
         </div>
       </div>
+
+      {/* ── Fade-in animation keyframe ── */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

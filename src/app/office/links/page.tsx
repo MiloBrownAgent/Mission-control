@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -31,11 +31,13 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-const CLIENT_OPTIONS = [
+// Fallback list — used until Dropbox loads
+const FALLBACK_CLIENT_OPTIONS = [
   { slug: "lifetime", label: "Life Time" },
   { slug: "knock", label: "Knock" },
   { slug: "target", label: "Target" },
   { slug: "colossal", label: "Colossal Biosciences" },
+  { slug: "shipt", label: "Shipt" },
 ];
 
 interface DropboxEntry {
@@ -54,8 +56,34 @@ export default function LinksPage() {
   const [generatedUrl, setGeneratedUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [clientOptions, setClientOptions] = useState(FALLBACK_CLIENT_OPTIONS);
+  const [loadingClients, setLoadingClients] = useState(false);
 
   const dropboxConfig = useQuery(api.dropboxConfig.getConfig);
+
+  // Dynamically load client list from Dropbox /Clients/ directory
+  useEffect(() => {
+    async function loadClientsFromDropbox() {
+      setLoadingClients(true);
+      try {
+        const res = await fetch("/api/dropbox/folders?path=/Clients");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.folders && data.folders.length > 0) {
+          const dynamic = data.folders.map((f: DropboxEntry) => ({
+            slug: f.name.toLowerCase().replace(/\s+/g, ""),
+            label: f.name,
+          }));
+          setClientOptions(dynamic);
+        }
+      } catch {
+        // Fall back to static list silently
+      } finally {
+        setLoadingClients(false);
+      }
+    }
+    loadClientsFromDropbox();
+  }, []);
   const links = useQuery(
     api.clientLinks.listLinks,
     selectedClient ? { clientSlug: selectedClient } : "skip"
@@ -103,7 +131,7 @@ export default function LinksPage() {
     setGeneratedUrl("");
 
     if (isDropboxConnected) {
-      const clientName = CLIENT_OPTIONS.find((c) => c.slug === slug)?.label || slug;
+      const clientName = clientOptions.find((c) => c.slug === slug)?.label || slug;
       browseFolder(`/Clients/${clientName.replace(/\s+/g, "")}`);
     }
   };
@@ -195,12 +223,12 @@ export default function LinksPage() {
           {/* Client Selector */}
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Client</label>
-            <Select value={selectedClient} onValueChange={handleClientChange}>
+            <Select value={selectedClient} onValueChange={handleClientChange} disabled={loadingClients}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a client" />
+                <SelectValue placeholder={loadingClients ? "Loading clients…" : "Select a client"} />
               </SelectTrigger>
               <SelectContent>
-                {CLIENT_OPTIONS.map((c) => (
+                {clientOptions.map((c) => (
                   <SelectItem key={c.slug} value={c.slug}>{c.label}</SelectItem>
                 ))}
               </SelectContent>

@@ -12,8 +12,8 @@ export function getAppMode(): AppMode {
   return 'work';
 }
 
-export function useAppMode(): AppMode {
-  const [mode, setMode] = useState<AppMode>('work');
+export function useAppMode(): AppMode | null {
+  const [mode, setMode] = useState<AppMode | null>(null);
   useEffect(() => {
     setMode(getAppMode());
   }, []);

@@ -195,6 +195,9 @@ export default function DashboardPage() {
     if (mode === "family") router.replace("/family-home");
   }, [mode, router]);
 
+  // Don't render anything until mode is resolved — prevents flash on sweeney.family
+  if (mode === null) return null;
+
   const tasks           = useQuery(api.tasks.list);
   const upcomingEvents  = useQuery(api.events.listUpcoming, { limit: 5 });
   const actionBatch     = useQuery(api.actionItems.getLatestBatch);
