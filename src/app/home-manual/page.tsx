@@ -167,6 +167,34 @@ export default function HomeManualPage() {
     { key: "maintenance", label: "Maintenance", icon: Hammer },
   ];
 
+  // Trash / recycling schedule
+  const now = new Date();
+
+  // Garbage: every Friday ~8:00 AM
+  const nextGarbage = new Date(now);
+  const daysUntilFriday = (5 - now.getDay() + 7) % 7;
+  nextGarbage.setDate(now.getDate() + daysUntilFriday);
+  nextGarbage.setHours(8, 0, 0, 0);
+  if (nextGarbage <= now) {
+    nextGarbage.setDate(nextGarbage.getDate() + 7);
+  }
+
+  // Recycling: every other Friday ~9:00 AM, anchored to Mar 13, 2026
+  const recyclingAnchor = new Date("2026-03-13T09:00:00");
+  const nextRecycling = new Date(recyclingAnchor);
+  while (nextRecycling <= now) {
+    nextRecycling.setDate(nextRecycling.getDate() + 14);
+  }
+
+  const formatPickup = (date: Date) =>
+    date.toLocaleString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto pb-8">
       {/* Header */}
@@ -246,9 +274,32 @@ export default function HomeManualPage() {
 
           <section>
             <SectionHeader>Garbage & Recycling</SectionHeader>
-            <div className="rounded-2xl border border-dashed border-[#E8E4DD] bg-[#F7F4EF] p-8 text-center">
-              <Trash2 className="h-6 w-6 text-[#5C6B5E]/30 mx-auto mb-2" />
-              <p className="text-sm text-[#5C6B5E]/60">Pickup schedule coming soon</p>
+            <div className="rounded-2xl border border-[#E8E4DD] bg-[#FDFCFA] p-5 space-y-3">
+              <div className="rounded-xl border border-[#E8E4DD] bg-[#F7F4EF] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#B8965A]/10 shrink-0">
+                    <Trash2 className="h-4 w-4 text-[#B8965A]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-[#2C2C2C]">Garbage</p>
+                    <p className="text-xs text-[#5C6B5E] mt-0.5">Every Friday around 8:00 AM</p>
+                    <p className="text-xs text-[#8A7E72] mt-1">Next pickup: {formatPickup(nextGarbage)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-[#E8E4DD] bg-[#F7F4EF] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#5C6B5E]/10 shrink-0">
+                    <Clock className="h-4 w-4 text-[#5C6B5E]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-[#2C2C2C]">Recycling</p>
+                    <p className="text-xs text-[#5C6B5E] mt-0.5">Every other Friday around 9:00 AM</p>
+                    <p className="text-xs text-[#8A7E72] mt-1">Next pickup: {formatPickup(nextRecycling)}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
         </div>
