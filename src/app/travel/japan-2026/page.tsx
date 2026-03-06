@@ -145,8 +145,8 @@ function StatusBadge({ status }: { status: ReservationStatus }) {
 }
 
 const reservations: Reservation[] = [
-  { item: "Shinkansen Tokyo \u2192 Kyoto (Family Car)", date: "Apr 6", status: "not-booked", note: "Seat reservations open ~Mar 6" },
-  { item: "Shinkansen Kyoto \u2192 Tokyo (Family Car)", date: "Apr 9", status: "not-booked", note: "Seat reservations open ~Mar 9" },
+  { item: "Shinkansen Tokyo \u2192 Kyoto", date: "Apr 6, 11:00 AM", status: "booked", note: "Nozomi 255 \u2014 Car 4, Seats 19A & 19B \u2014 \u00A527,540 (~$185)" },
+  { item: "Shinkansen Kyoto \u2192 Tokyo", date: "Apr 9, 3:01 PM", status: "booked", note: "Nozomi 28 \u2014 arrives Tokyo 5:15 PM \u2014 \u00A527,540 (~$185)" },
   { item: "teamLab Biovortex", date: "Apr 7, 1 PM", status: "booked", note: "2 adults + 1 child" },
   { item: "teamLab Borderless", date: "Apr 10", status: "optional", note: "\u00A5500 (~$3) off coupon from Biovortex email" },
   { item: "Baby amenities (crib, diaper pail, humidifier)", date: "Apr 2 & Apr 9", status: "booked", note: "Confirmed by Andaz front office \u2014 both stays" },
@@ -287,34 +287,26 @@ export default function JapanTripPage() {
             <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium ml-auto">Tickets Booked via Smart-EX</span>
           </div>
 
-          <div className="rounded-xl border border-[#E8E4DD] bg-[#F7F4EF] px-4 py-3.5">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
             <div className="flex items-center justify-between mb-1">
               <p className="text-sm font-medium text-[#2C2C2C]">Tokyo &rarr; Kyoto</p>
-              <span className="text-xs text-[#B8965A]">Apr 6</span>
+              <span className="text-xs text-emerald-700 font-medium">Apr 6 · Confirmed</span>
             </div>
             <p className="text-xs text-[#5C6B5E]">Nozomi 255 &middot; 11:00 AM &rarr; 1:15 PM</p>
-            <p className="text-xs text-[#5C6B5E]/60 mt-0.5">Family car &middot; E seats (Mt. Fuji right-side view)</p>
+            <p className="text-xs text-[#5C6B5E] mt-0.5">Car 4 &middot; Seats 19A &amp; 19B &middot; &yen;27,540 (~$185)</p>
           </div>
 
-          <div className="rounded-xl border border-[#E8E4DD] bg-[#F7F4EF] px-4 py-3.5">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
             <div className="flex items-center justify-between mb-1">
               <p className="text-sm font-medium text-[#2C2C2C]">Kyoto &rarr; Tokyo</p>
-              <span className="text-xs text-[#B8965A]">Apr 9</span>
+              <span className="text-xs text-emerald-700 font-medium">Apr 9 · Confirmed</span>
             </div>
-            <p className="text-xs text-[#5C6B5E]">Nozomi &middot; 3 or 4 PM departure</p>
-            <p className="text-xs text-[#5C6B5E]/60 mt-0.5">Family car &middot; D seats (Fuji view reversed)</p>
+            <p className="text-xs text-[#5C6B5E]">Nozomi 28 &middot; 3:01 PM &rarr; 5:15 PM</p>
+            <p className="text-xs text-[#5C6B5E] mt-0.5">&yen;27,540 (~$185) &middot; Reservation #2003</p>
           </div>
 
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" strokeWidth={1.5} />
-              <div>
-                <p className="text-xs font-medium text-amber-700">Seat Reservations — Action Needed</p>
-                <p className="text-xs text-amber-600 mt-0.5">
-                  Apr 6 train reservations open ~March 6 (today). Apr 9 train opens ~March 9. Book via Smart-EX. Soren is a lap infant, no ticket needed.
-                </p>
-              </div>
-            </div>
+          <div className="rounded-xl border border-[#E8E4DD] bg-[#F7F4EF] p-3">
+            <p className="text-xs text-[#5C6B5E]">Soren is a lap infant &mdash; no Shinkansen ticket needed (under 6). Total: &yen;55,080 (~$370).</p>
           </div>
         </div>
       </section>
