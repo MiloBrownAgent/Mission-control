@@ -154,9 +154,12 @@ const reservations: Reservation[] = [
   { item: "Gonpachi Nishiazabu lunch", date: "Apr 3, 12:00 PM", status: "booked", note: "2 adults + 1 baby \u2014 arrive on time, 15-min cancel window. Amanda: walnut/pecan allergy noted." },
   { item: "Dashin Soan dinner (Shimokitazawa)", date: "Apr 4, 5:30 PM", status: "booked", note: "Course menu \u00A58,000 (~$54)/person. Cancel 4+ days out; \u00A58,800 (~$59)/person fee <3 days." },
   { item: "Tavern Grill & Lounge \u2014 arrival dinner", date: "Apr 2, ~7:30 PM", status: "concierge", note: "In-hotel, 51F \u2014 reservation requested via Andaz concierge" },
-  { item: "Gion Tanto dinner", date: "Apr 7", status: "concierge", note: "Via Ace Hotel Kyoto concierge" },
-  { item: "Awomb lunch", date: "Apr 8", status: "concierge", note: "Via Ace Hotel Kyoto concierge" },
-  { item: "Sushi Ishimatsu confirmation", date: "Apr 9", status: "concierge", note: "Via Ace Hotel Kyoto concierge" },
+  { item: "Ace Hotel CC Authorization", date: "ASAP", status: "not-booked", note: "Required before dining guarantees. Complete Canary Tech link from Reina's email." },
+  { item: "Bed guard for Soren — Kyoto", date: "Apr 6 check-in", status: "booked", note: "Confirmed by Ace Hotel (Yuko Tanaka)" },
+  { item: "Apr 6 dinner — Mr. Maurice (in-hotel)", date: "Apr 6", status: "optional", note: "Italian, kid-friendly, Ace recommends for arrival night" },
+  { item: "Apr 7 dinner — Gion Tanto (okonomiyaki)", date: "Apr 7", status: "not-booked", note: "Walk-in only — no reservations. Arrive early. Backup: Manmaru no Tsuki" },
+  { item: "Apr 8 lunch — Nakagyo (soba/udon/ramen)", date: "Apr 8", status: "optional", note: "Walk-in friendly — most don't take reservations. See Ace rec list." },
+  { item: "Apr 9 lunch — Sushi Ishimatsu", date: "Apr 9", status: "optional", note: "Walk-in only — arrive before opening. Near Philosopher\u2019s Path." },
 ];
 
 /* ─── Main Page ─── */
@@ -412,7 +415,7 @@ export default function JapanTripPage() {
                 <span className="font-medium">4:00 PM:</span> Taxi to Gion &middot; <MapsLink name="Gion Komori Kyoto" /> (mochi + tea) &middot; <MapsLink name="Momotaro Jeans Higashiyama Kyoto" /> (selvedge denim)
               </DayItem>
               <DayItem icon={Utensils}>
-                Dinner: <MapsLink name="Gion Tanto Kyoto" /> (okonomiyaki, baby-friendly, via Ace concierge)
+                Dinner: <MapsLink name="Gion Tanto Kyoto" /> (okonomiyaki) &mdash; walk-in only, no reservations. Arrive by 5 PM. Backup: <MapsLink name="Okonomiyaki Manmaru no Tsuki Kyoto" />
               </DayItem>
               <DayItem icon={Baby}>Return to Ace by 6:30 PM</DayItem>
             </div>
@@ -428,7 +431,7 @@ export default function JapanTripPage() {
                 <MapsLink name="Kikuo Shoten Kyoto" /> (rare books) &middot; <MapsLink name="Tsujikura Kyoto" /> (oldest umbrella store) &middot; <MapsLink name="Katayama Bunzaburo Shibori Kyoto" />
               </DayItem>
               <DayItem icon={Utensils}>
-                Lunch: <MapsLink name="Awomb Kyoto" /> (make-your-own temari sushi, via Ace concierge)
+                Lunch: Walk-in soba, udon, or ramen in Nakagyo &mdash; all family-friendly, no booking needed
               </DayItem>
               <DayItem icon={MapPin}>
                 <MapsLink name="Nishiki Market Kyoto" /> &mdash; covered food market, 5 min from Ace. Use CARRIER (too narrow for stroller). 45 min.
@@ -456,7 +459,7 @@ export default function JapanTripPage() {
               </DayItem>
               <DayItem icon={MapPin}>Walk <MapsLink name="Philosopher's Path Kyoto" /> south (stone canal, flat, stroller-perfect, 45 min)</DayItem>
               <DayItem icon={Utensils}>
-                Lunch: <MapsLink name="Sushi Ishimatsu Kyoto" /> (affordable omakase, arrive before opening, via Ace concierge)
+                Lunch: <MapsLink name="Sushi Ishimatsu Kyoto" /> (affordable omakase, walk-in only &mdash; arrive before opening)
               </DayItem>
               <DayItem icon={Building}>1:30 PM: Return to Ace, check out, taxi to Kyoto Station</DayItem>
               <DayItem icon={Train}>Shinkansen 3 or 4 PM Kyoto &rarr; Tokyo (Family car)</DayItem>
