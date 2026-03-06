@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/login', '/api/auth', '/api/favicon', '/api/manifest', '/api/dropbox/callback', '/api/dropbox/folders', '/api/dropbox/download', '/api/whoop', '/api/guest-preferences', '/privacy', '/s/', '/_next', '/favicon.ico', '/manifest.json', '/icons'];
+const PUBLIC_PATHS = ['/login', '/api/auth', '/api/favicon', '/api/manifest', '/api/dropbox', '/api/whoop', '/privacy', '/_next', '/favicon.ico', '/manifest.json', '/icons'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const host = request.headers.get('host') ?? '';
 
   // Skip auth for public paths and static assets
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p)) || pathname.includes('.')) {
@@ -14,24 +13,16 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  // Determine mode from host
-  const isFamilyMode = host.includes('home.lookandseen.com') || host.includes('family');
-  const cookieName = isFamilyMode ? 'mc_family_auth' : 'mc_work_auth';
-  const authCookie = request.cookies.get(cookieName);
+  const authCookie = request.cookies.get('mc_work_auth');
 
   if (authCookie?.value === 'authenticated') {
-    // Redirect family users away from work-only root to family home
-    if (isFamilyMode && pathname === '/') {
-      return NextResponse.redirect(new URL('/today', request.url));
-    }
     const response = NextResponse.next();
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
     return response;
   }
 
-  // Redirect to login with mode param
+  // Redirect to login
   const loginUrl = new URL('/login', request.url);
-  loginUrl.searchParams.set('mode', isFamilyMode ? 'family' : 'work');
   loginUrl.searchParams.set('redirect', pathname);
   const redirectResponse = NextResponse.redirect(loginUrl);
   redirectResponse.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');

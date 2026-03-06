@@ -407,6 +407,13 @@ export default defineSchema({
     checkedAt: v.number(),
   }).index("by_checked", ["checkedAt"]),
 
+  deployRequests: defineTable({
+    project: v.string(),   // "look-and-seen" | "mission-control"
+    status: v.union(v.literal("pending"), v.literal("done"), v.literal("failed")),
+    requestedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_status", ["status"]),
+
   polymarket_trades: defineTable({
     question: v.string(),                          // "US recession by end of 2026?"
     position: v.union(v.literal("Yes"), v.literal("No")),

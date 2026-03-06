@@ -6,8 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAppMode } from "@/lib/app-mode";
+
 import {
   CheckCircle2,
   Circle,
@@ -57,8 +56,9 @@ function formatCurrency(v: number) {
 }
 
 function useClock() {
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState<Date | null>(null);
   useEffect(() => {
+    setTime(new Date());
     const id = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
@@ -189,15 +189,7 @@ function WhoopWidget({ data }: WhoopWidgetProps) {
 // ── Dashboard page ─────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const mode = useAppMode();
-  const router = useRouter();
-  useEffect(() => {
-    if (mode === "family") router.replace("/family-home");
-  }, [mode, router]);
-
-  // Don't render anything until mode is resolved — prevents flash on sweeney.family
-  if (mode === null) return null;
-
+  // All hooks must be called before any early returns (Rules of Hooks)
   const tasks           = useQuery(api.tasks.list);
   const upcomingEvents  = useQuery(api.events.listUpcoming, { limit: 5 });
   const actionBatch     = useQuery(api.actionItems.getLatestBatch);
@@ -208,6 +200,7 @@ export default function DashboardPage() {
   const [checkedIds, setCheckedIds]   = useState<Set<string>>(new Set());
   const [submitting, setSubmitting]   = useState(false);
   const [submitted,  setSubmitted]    = useState(false);
+  const now = useClock();
 
   async function submitApprovals() {
     if (!actionBatch?.items) return;
@@ -226,8 +219,6 @@ export default function DashboardPage() {
       setSubmitting(false);
     }
   }
-
-  const now = useClock();
 
   const todoCount       = tasks?.filter((t) => t.status === "todo").length       ?? 0;
   const inProgressCount = tasks?.filter((t) => t.status === "in_progress").length ?? 0;
@@ -257,17 +248,17 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold tracking-tight sm:text-3xl font-[family-name:var(--font-syne)] text-[#E8E4DF]">
-                  {getGreeting()}, Dave
+                  {now ? getGreeting() : "Good morning"}, Dave
                 </h1>
                 <p className="text-sm text-[#6B6560]">
-                  {format(now, "EEEE, MMMM d, yyyy")}
+                  {now ? format(now, "EEEE, MMMM d, yyyy") : ""}
                 </p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-3xl font-mono font-bold tabular-nums text-[#B8956A]">
-                {format(now, "h:mm:ss")}
-                <span className="text-lg text-[#B8956A]/50 ml-1">{format(now, "a")}</span>
+                {now ? format(now, "h:mm:ss") : "--:--:--"}
+                <span className="text-lg text-[#B8956A]/50 ml-1">{now ? format(now, "a") : ""}</span>
               </p>
             </div>
           </div>

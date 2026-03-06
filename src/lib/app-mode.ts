@@ -1,21 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
-export type AppMode = 'work' | 'family';
+// mission-control is always work mode
+export type AppMode = 'work';
 
 export function getAppMode(): AppMode {
-  if (typeof window === 'undefined') return 'work';
-  const host = window.location.hostname;
-  if (host === 'home.lookandseen.com' || host.includes('family')) return 'family';
-  if (window.location.port === '3001') return 'family';
   return 'work';
 }
 
-export function useAppMode(): AppMode | null {
-  const [mode, setMode] = useState<AppMode | null>(null);
-  useEffect(() => {
-    setMode(getAppMode());
-  }, []);
-  return mode;
+export function useAppMode(): AppMode {
+  return 'work';
 }

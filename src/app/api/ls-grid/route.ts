@@ -3,7 +3,24 @@ import { NextResponse } from "next/server";
 const GITHUB_TOKEN = process.env.GITHUB_PAT ?? "";
 const REPO = "MiloBrownAgent/look-and-seen";
 const FILE_PATH = "src/lib/data.ts";
-const WORK_MANIFEST_PATH = "public/work"; // we'll list via GitHub API
+const WORK_MANIFEST_PATH = "public/work";
+
+export interface ProjectCredits {
+  client?: string;
+  clientUrl?: string;
+  agency?: string;
+  agencyUrl?: string;
+  creativeDirector?: string;
+  creativeDirectorUrl?: string;
+  artDirector?: string;
+  artDirectorUrl?: string;
+  photographer?: string;
+  photographerUrl?: string;
+  producer?: string;
+  producerUrl?: string;
+  role?: string;
+  roleUrl?: string;
+}
 
 export interface Project {
   id: string;
@@ -11,6 +28,7 @@ export interface Project {
   aspectRatio: string;
   imageSrc: string;
   alt: string;
+  credits?: ProjectCredits;
 }
 
 async function githubFetch(url: string, opts: RequestInit = {}) {
@@ -44,9 +62,34 @@ async function getWorkFiles(): Promise<string[]> {
   const data = await res.json();
   if (!Array.isArray(data)) return [];
   return data
-    .filter((f: any) => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
+    .filter((f: any) => /\.(jpg|jpeg|png|webp|mp4|webm|mov)$/i.test(f.name))
     .map((f: any) => f.name)
     .sort();
+}
+
+/** Extract individual project object strings from the array body, handling nested braces */
+function extractObjectStrings(arrayBody: string): string[] {
+  const results: string[] = [];
+  let depth = 0;
+  let start = -1;
+  for (let i = 0; i < arrayBody.length; i++) {
+    if (arrayBody[i] === "{") {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (arrayBody[i] === "}") {
+      depth--;
+      if (depth === 0 && start !== -1) {
+        results.push(arrayBody.slice(start, i + 1));
+        start = -1;
+      }
+    }
+  }
+  return results;
+}
+
+function getStringField(obj: string, key: string): string {
+  const m = obj.match(new RegExp(`${key}:\\s*"((?:[^"\\\\]|\\\\.)*)"`, "s"));
+  return m ? m[1].replace(/\\"/g, '"') : "";
 }
 
 function parseProjectsFromSource(source: string): Project[] {
@@ -63,30 +106,74 @@ function parseProjectsFromSource(source: string): Project[] {
     i++;
   }
   const arrayContent = source.slice(arrayStart, i - 1);
+  const objects = extractObjectStrings(arrayContent);
 
-  const projectRegex =
-    /\{\s*id:\s*"([^"]+)",\s*category:\s*"([^"]+)",\s*aspectRatio:\s*"([^"]+)",\s*imageSrc:\s*"([^"]+)",\s*alt:\s*"([^"]+)"\s*\}/g;
+  return objects.map((obj) => {
+    const project: Project = {
+      id: getStringField(obj, "id"),
+      category: getStringField(obj, "category") as Project["category"],
+      aspectRatio: getStringField(obj, "aspectRatio"),
+      imageSrc: getStringField(obj, "imageSrc"),
+      alt: getStringField(obj, "alt"),
+    };
 
-  const projects: Project[] = [];
-  let match;
-  while ((match = projectRegex.exec(arrayContent)) !== null) {
-    projects.push({
-      id: match[1],
-      category: match[2] as Project["category"],
-      aspectRatio: match[3],
-      imageSrc: match[4],
-      alt: match[5],
-    });
-  }
-  return projects;
+    // Parse optional credits block
+    const creditsBlockStart = obj.indexOf("credits:");
+    let creditsBody = "";
+    if (creditsBlockStart !== -1) {
+      const braceOpen = obj.indexOf("{", creditsBlockStart);
+      const braceClose = obj.indexOf("}", braceOpen);
+      if (braceOpen !== -1 && braceClose !== -1) {
+        creditsBody = obj.slice(braceOpen + 1, braceClose);
+      }
+    }
+    const creditsMatch: [string, string] | null = creditsBody ? ["", creditsBody] : null;
+    if (creditsMatch) {
+      const creditsBody = creditsMatch[1];
+      const credits: ProjectCredits = {};
+      const creditsFields: (keyof ProjectCredits)[] = [
+        "client", "clientUrl", "agency", "agencyUrl",
+        "creativeDirector", "creativeDirectorUrl",
+        "artDirector", "artDirectorUrl",
+        "photographer", "photographerUrl",
+        "producer", "producerUrl",
+        "role", "roleUrl",
+      ];
+      for (const field of creditsFields) {
+        const val = getStringField(creditsBody, field);
+        if (val) (credits as any)[field] = val;
+      }
+      if (Object.keys(credits).length > 0) project.credits = credits;
+    }
+
+    return project;
+  }).filter((p) => p.id && p.imageSrc);
 }
 
 function serializeProjectsArray(projects: Project[]): string {
   return projects
-    .map(
-      (p) =>
-        `  { id: ${JSON.stringify(p.id)}, category: ${JSON.stringify(p.category)}, aspectRatio: ${JSON.stringify(p.aspectRatio)}, imageSrc: ${JSON.stringify(p.imageSrc)}, alt: ${JSON.stringify(p.alt)} },`
-    )
+    .map((p) => {
+      let line = `  { id: ${JSON.stringify(p.id)}, category: ${JSON.stringify(p.category)}, aspectRatio: ${JSON.stringify(p.aspectRatio)}, imageSrc: ${JSON.stringify(p.imageSrc)}, alt: ${JSON.stringify(p.alt)}`;
+
+      const c = p.credits;
+      if (c && Object.values(c).some(Boolean)) {
+        const creditsFields: (keyof ProjectCredits)[] = [
+          "client", "clientUrl", "agency", "agencyUrl",
+          "creativeDirector", "creativeDirectorUrl",
+          "artDirector", "artDirectorUrl",
+          "photographer", "photographerUrl",
+          "producer", "producerUrl",
+          "role", "roleUrl",
+        ];
+        const parts = creditsFields
+          .filter((k) => c[k])
+          .map((k) => `${k}: ${JSON.stringify(c[k])}`);
+        line += `, credits: { ${parts.join(", ")} }`;
+      }
+
+      line += " },";
+      return line;
+    })
     .join("\n");
 }
 
@@ -115,7 +202,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "projects must be an array" }, { status: 400 });
     }
 
-    // Get current file to preserve non-projects content
     const { content: source, sha } = await getFileContent();
 
     const startMarker = "export const projects: Project[] = [";
@@ -138,14 +224,13 @@ export async function POST(req: Request) {
     const serialized = "\n" + serializeProjectsArray(newProjects) + "\n";
     const newSource = before + serialized + after;
 
-    // Write back via GitHub API
     const updateRes = await githubFetch(
       `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: "Update image grid order via MC Grid Manager",
+          message: "Update image grid via MC Grid Manager",
           content: Buffer.from(newSource).toString("base64"),
           sha,
         }),

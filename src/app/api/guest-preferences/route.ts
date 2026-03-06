@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     `;
 
     await resend.emails.send({
-      from: "Sweeney Family <hello@ourfable.ai>",
+      from: "Savannah Guide <noreply@ourfable.ai>",
       to: "davesweeney2.8@gmail.com",
       subject: "Savannah Trip — Vienna & Dylan's Preferences",
       html: htmlBody,

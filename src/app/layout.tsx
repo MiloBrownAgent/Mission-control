@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Cormorant_Garamond, Syne } from "next/font/google";
-import { headers } from "next/headers";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import { AppShell } from "@/components/app-shell";
@@ -28,65 +27,46 @@ const syne = Syne({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const headersList = await headers();
-  const host =
-    headersList.get("host") ||
-    headersList.get("x-forwarded-host") ||
-    "";
-  const isFamily =
-    host.includes("home.lookandseen") || host.includes("family");
-  const mode = isFamily ? "hd" : "mc";
-
-  return {
-    title: isFamily ? "The Sweeney Family" : "Mission Control",
-    description: isFamily ? "The Sweeney Family" : "Look & Seen work dashboard",
-    manifest: `/api/manifest`,
-    appleWebApp: {
-      capable: true,
-      statusBarStyle: "black-translucent",
-      title: isFamily ? "HD" : "MC",
-      startupImage: `/api/favicon?mode=${mode}&size=512`,
-    },
-    robots: {
+export const metadata: Metadata = {
+  title: "Mission Control",
+  description: "Look & Seen work dashboard",
+  manifest: `/api/manifest`,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "MC",
+    startupImage: `/api/favicon?mode=mc&size=512`,
+  },
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
       index: false,
       follow: false,
-      googleBot: {
-        index: false,
-        follow: false,
-      },
     },
-    icons: {
-      icon: `/api/favicon?mode=${mode}`,
-      apple: `/api/favicon?mode=${mode}&size=192`,
-    },
-    other: {
-      "mobile-web-app-capable": "yes",
-    },
-  };
-}
+  },
+  icons: {
+    icon: `/api/favicon?mode=mc`,
+    apple: `/api/favicon?mode=mc&size=192`,
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
+};
 
 export const viewport: Viewport = {
   themeColor: "#060606",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = await headers();
-  const host =
-    headersList.get("host") ||
-    headersList.get("x-forwarded-host") ||
-    "";
-  const isFamily =
-    host.includes("home.lookandseen") || host.includes("family");
-
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} ${syne.variable} font-sans antialiased${isFamily ? " family-mode" : ""}`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} ${syne.variable} font-sans antialiased`}
       >
         <ConvexClientProvider>
           <CommandPalette />
