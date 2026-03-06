@@ -7,6 +7,7 @@ import {
   Shield,
   MapPin,
   Zap,
+  Flame,
   Trash2,
   Copy,
   Wrench,
@@ -266,9 +267,45 @@ export default function HomeManualPage() {
 
           <section>
             <SectionHeader>Utilities</SectionHeader>
-            <div className="rounded-2xl border border-dashed border-[#E8E4DD] bg-[#F7F4EF] p-8 text-center">
-              <Zap className="h-6 w-6 text-[#5C6B5E]/30 mx-auto mb-2" />
-              <p className="text-sm text-[#5C6B5E]/60">Utility info coming soon</p>
+            <div className="rounded-2xl border border-[#E8E4DD] bg-[#FDFCFA] p-5 space-y-3">
+              <div className="rounded-xl border border-[#E8E4DD] bg-[#F7F4EF] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#B8965A]/10 shrink-0">
+                    <Zap className="h-4 w-4 text-[#B8965A]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-[#2C2C2C]">Xcel Energy (Electric)</p>
+                    <p className="text-xs text-[#5C6B5E] mt-0.5">Acct: XX-14335984-XX · Auto Pay enrolled</p>
+                    <p className="text-xs text-[#8A7E72] mt-1">Latest statement email seen Feb 13, 2026 (usage ending 2/12/2026)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-[#E8E4DD] bg-[#F7F4EF] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#5C6B5E]/10 shrink-0">
+                    <Flame className="h-4 w-4 text-[#5C6B5E]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-[#2C2C2C]">CenterPoint Energy (Gas)</p>
+                    <p className="text-xs text-[#5C6B5E] mt-0.5">Acct: 6403150385-3 · Service: 3740 48TH AVE S</p>
+                    <p className="text-xs text-[#8A7E72] mt-1">Latest payment alert: $258.13 due 3/9/2026 (Auto Pay on file)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-[#E8E4DD] bg-[#F7F4EF] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#B8965A]/10 shrink-0">
+                    <Trash2 className="h-4 w-4 text-[#B8965A]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-[#2C2C2C]">City of Minneapolis Solid Waste</p>
+                    <p className="text-xs text-[#5C6B5E] mt-0.5">Regular collection day: Friday (set out by 6:00 AM)</p>
+                    <p className="text-xs text-[#8A7E72] mt-1">Source: City recycling reminder emails</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
