@@ -131,62 +131,159 @@ async function refreshAccessToken() {
   });
 }
 
-// ─── Dropbox streaming ───────────────────────────────────────────────────────
+// ─── Dropbox helpers ─────────────────────────────────────────────────────────
 
-function streamDropboxZip(token, dropboxPath, clientRes, retried) {
-  const apiArg = JSON.stringify({ path: dropboxPath });
-  const req    = https.request(
-    {
-      hostname: "content.dropboxapi.com",
-      path:     "/2/files/download_zip",
-      method:   "POST",
-      headers:  { Authorization: `Bearer ${token}`, "Dropbox-API-Arg": apiArg },
-    },
-    (dbRes) => {
-      console.log("[dropbox] Status:", dbRes.statusCode, "for", dropboxPath);
-
-      if (dbRes.statusCode === 401 && !retried) {
-        dbRes.resume();
-        refreshAccessToken()
-          .then((t) => streamDropboxZip(t, dropboxPath, clientRes, true))
-          .catch((e) => {
-            if (!clientRes.headersSent) clientRes.writeHead(502);
-            clientRes.end(JSON.stringify({ error: "Token refresh failed" }));
-          });
-        return;
-      }
-
-      if (dbRes.statusCode !== 200) {
-        if (!clientRes.headersSent) clientRes.writeHead(dbRes.statusCode ?? 502);
-        dbRes.pipe(clientRes);
-        return;
-      }
-
-      // Stream the ZIP directly to the client — no buffering
-      const zipName = dropboxPath.split("/").pop().replace(/[^a-zA-Z0-9._-]/g, "_") + ".zip";
-      clientRes.writeHead(200, {
-        "Content-Type":        "application/zip",
-        "Content-Disposition": `attachment; filename="${zipName}"`,
-        "Transfer-Encoding":   "chunked",
-        "Cache-Control":       "no-store",
+function dropboxPost(path, bodyObj, token) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(bodyObj);
+    const req  = https.request({
+      hostname: "api.dropboxapi.com",
+      path,
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let d = "";
+      res.on("data", c => d += c);
+      res.on("end", () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(d) }); }
+        catch { resolve({ status: res.statusCode, body: d }); }
       });
-      dbRes.pipe(clientRes);
-
-      let bytes = 0;
-      dbRes.on("data", (chunk) => {
-        bytes += chunk.length;
-        if (bytes % (50 * 1024 * 1024) < chunk.length)
-          console.log(`[dropbox] Streamed ${(bytes / 1024 / 1024).toFixed(0)} MB`);
-      });
-      dbRes.on("end", () => console.log(`[dropbox] Done — ${(bytes / 1024 / 1024).toFixed(1)} MB total`));
-    }
-  );
-  req.on("error", (e) => {
-    console.error("[dropbox] Request error:", e.message);
-    if (!clientRes.headersSent) clientRes.writeHead(502);
-    clientRes.end(JSON.stringify({ error: e.message }));
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
   });
-  req.end();
+}
+
+// List all files recursively under a Dropbox path
+async function listAllFiles(token, folderPath) {
+  const files = [];
+  let cursor = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    let res;
+    if (!cursor) {
+      res = await dropboxPost("/2/files/list_folder", { path: folderPath, recursive: true, limit: 500 }, token);
+    } else {
+      res = await dropboxPost("/2/files/list_folder/continue", { cursor }, token);
+    }
+
+    if (res.status === 401) throw new Error("401");
+
+    const entries = res.body.entries || [];
+    for (const e of entries) {
+      if (e[".tag"] === "file") files.push(e);
+    }
+    hasMore = res.body.has_more;
+    cursor  = res.body.cursor;
+  }
+
+  return files;
+}
+
+// Stream a single file from Dropbox and return its readable stream
+function downloadDropboxFile(token, dropboxPath) {
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: "content.dropboxapi.com",
+      path:     "/2/files/download",
+      method:   "POST",
+      headers:  {
+        Authorization:    `Bearer ${token}`,
+        "Dropbox-API-Arg": JSON.stringify({ path: dropboxPath }),
+        "Content-Length": "0",
+      },
+    }, (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        reject(new Error(`Dropbox download failed: ${res.statusCode} for ${dropboxPath}`));
+        return;
+      }
+      resolve(res);
+    });
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+// Build and stream a ZIP to clientRes using archiver — starts immediately
+async function streamCustomZip(token, dropboxPath, clientRes) {
+  const archiver = require("/Users/milo/Projects/mission-control/node_modules/archiver");
+
+  const zipName = dropboxPath.split("/").filter(Boolean).pop().replace(/[^a-zA-Z0-9._-]/g, "_") + ".zip";
+
+  // Send headers immediately so browser starts download right away
+  clientRes.writeHead(200, {
+    "Content-Type":        "application/zip",
+    "Content-Disposition": `attachment; filename="${zipName}"`,
+    "Transfer-Encoding":   "chunked",
+    "Cache-Control":       "no-store",
+  });
+
+  const archive = archiver("zip", { zlib: { level: 1 } }); // level 1 = fast, minimal CPU
+  archive.pipe(clientRes);
+
+  archive.on("error", (err) => {
+    console.error("[archiver] Error:", err.message);
+    clientRes.end();
+  });
+
+  console.log("[zip] Listing files in", dropboxPath);
+  const files = await listAllFiles(token, dropboxPath);
+  console.log(`[zip] Found ${files.length} files — starting ZIP stream`);
+
+  // Strip the root folder path prefix for clean relative paths inside the ZIP
+  const prefix = dropboxPath.toLowerCase();
+
+  for (const file of files) {
+    const relativePath = file.path_lower.startsWith(prefix)
+      ? file.path_lower.slice(prefix.length).replace(/^\//, "")
+      : file.name;
+
+    try {
+      const stream = await downloadDropboxFile(token, file.path_lower);
+      archive.append(stream, { name: relativePath });
+    } catch (e) {
+      console.warn(`[zip] Skipping ${file.name}:`, e.message);
+    }
+  }
+
+  await archive.finalize();
+  let bytes = 0;
+  archive.on("data", chunk => {
+    bytes += chunk.length;
+    if (bytes % (50 * 1024 * 1024) < chunk.length)
+      console.log(`[zip] Streamed ${(bytes / 1024 / 1024).toFixed(0)} MB`);
+  });
+  archive.on("end", () => console.log(`[zip] Done — ${(bytes / 1024 / 1024).toFixed(1)} MB total`));
+}
+
+// ─── Main streaming entry point ───────────────────────────────────────────────
+
+async function streamDropboxZip(token, dropboxPath, clientRes, retried) {
+  try {
+    await streamCustomZip(token, dropboxPath, clientRes);
+  } catch (e) {
+    if (e.message === "401" && !retried) {
+      console.log("[token] Refreshing...");
+      try {
+        const newToken = await refreshAccessToken();
+        await streamDropboxZip(newToken, dropboxPath, clientRes, true);
+      } catch (e2) {
+        if (!clientRes.headersSent) clientRes.writeHead(502);
+        clientRes.end(JSON.stringify({ error: "Token refresh failed" }));
+      }
+    } else {
+      console.error("[dropbox] Error:", e.message);
+      if (!clientRes.headersSent) clientRes.writeHead(500);
+      clientRes.end(JSON.stringify({ error: e.message }));
+    }
+  }
 }
 
 // ─── HTTP Server ─────────────────────────────────────────────────────────────
