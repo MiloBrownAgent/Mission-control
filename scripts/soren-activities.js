@@ -110,13 +110,23 @@ async function detectLocation() {
       return d >= new Date(today) && d <= new Date(endDate);
     });
 
-    // Look for travel/flight events
+    // The weekend we're planning for
+    const upcomingSat = new Date(getWeekOf());
+    const upcomingSun = new Date(upcomingSat); upcomingSun.setDate(upcomingSat.getDate() + 1);
+
+    // Look for travel/flight events that depart BEFORE the upcoming Saturday
+    // meaning they'll be at the destination ON that weekend
     const travelKeywords = /flight|travel|savannah|chicago|new york|austin|nashville|portland|denver|miami|san diego|tokyo|kyoto|japan|vacation|trip/i;
     for (const ev of evList) {
-      const title = (ev.summary || ev.title || "").toLowerCase();
-      const desc  = (ev.description || "").toLowerCase();
-      if (travelKeywords.test(title) || travelKeywords.test(desc)) {
-        // Detect destination
+      const title    = (ev.summary || ev.title || "").toLowerCase();
+      const desc     = (ev.description || "").toLowerCase();
+      const evStart  = ev.start ? new Date(ev.start) : null;
+
+      if (!travelKeywords.test(title + desc)) continue;
+
+      // Only counts if departure is on or before the upcoming Saturday
+      // (meaning they'll be away that weekend)
+      if (evStart && evStart <= upcomingSun) {
         if (/savannah|sav|georgia|richmond hill/i.test(title + desc)) return { city: "Savannah", state: "GA", label: "Savannah, GA" };
         if (/japan|tokyo|kyoto/i.test(title + desc))                  return { city: "Tokyo", state: null, label: "Tokyo, Japan" };
         if (/chicago/i.test(title + desc))                            return { city: "Chicago", state: "IL", label: "Chicago, IL" };
@@ -173,12 +183,20 @@ function getRecentEmails(query, account) {
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
 function getWeekOf() {
-  // Next Saturday from today
+  // The upcoming Saturday this list covers:
+  // - If today is Thu (4): Sat = +2 days
+  // - If today is Fri (5): Sat = +1 day
+  // - If today is Sat (6): Sat = today
+  // - If today is Sun (0): Sat = yesterday (-1) — already in the weekend
+  // - Any earlier weekday: next Saturday
   const now = new Date();
   const day = now.getDay();
-  const daysUntilSat = day === 6 ? 7 : (6 - day);
+  let daysToSat;
+  if (day === 6) daysToSat = 0;       // today IS Saturday
+  else if (day === 0) daysToSat = -1; // Sunday, Saturday was yesterday
+  else daysToSat = 6 - day;           // Mon-Fri: days until next Saturday
   const sat = new Date(now);
-  sat.setDate(now.getDate() + daysUntilSat);
+  sat.setDate(now.getDate() + daysToSat);
   return sat.toISOString().split("T")[0];
 }
 
