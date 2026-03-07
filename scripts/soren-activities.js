@@ -275,10 +275,21 @@ async function run() {
       const body = readEmailBody(e.id || e.ID, "boxerfarmer1941@gmail.com");
       if (body) { emailContent += `\nMN PARENT (${e.subject || ""}):\n${body}\n`; sources.push("MN Parent"); }
     }
+    // Longfellow Whatever: grab latest general email + the monthly "Whenever Wherever" calendar email
     const lfEmails = getRecentEmails("from:longfellowwhatever@ghost.io", "boxerfarmer1941@gmail.com");
     for (const e of lfEmails.slice(0, 1)) {
       const body = readEmailBody(e.id || e.ID, "boxerfarmer1941@gmail.com");
       if (body) { emailContent += `\nLONGFELLOW WHATEVER (${e.subject || ""}):\n${body}\n`; sources.push("Longfellow Whatever"); }
+    }
+    // Monthly events calendar — "Whenever Wherever" — search last 60 days so we always have the current month's
+    const lfCalEmails = getRecentEmails("from:longfellowwhatever@ghost.io subject:Whenever", "boxerfarmer1941@gmail.com");
+    for (const e of lfCalEmails.slice(0, 2)) {
+      const id = e.id || e.ID;
+      // Don't double-read if already grabbed above
+      if (!lfEmails.slice(0,1).some(x => (x.id||x.ID) === id)) {
+        const body = readEmailBody(id, "boxerfarmer1941@gmail.com");
+        if (body) { emailContent += `\nLONGFELLOW MONTHLY CALENDAR (${e.subject || ""}):\n${body}\n`; sources.push("Longfellow Monthly Calendar"); }
+      }
     }
   }
 
