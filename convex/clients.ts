@@ -8,7 +8,9 @@ const clientStatus = v.union(
 
 const clientCategory = v.union(
   v.literal("DTC/CPG"), v.literal("Agency"), v.literal("E-commerce"),
-  v.literal("Fashion"), v.literal("AI Opportunity")
+  v.literal("Fashion"), v.literal("AI Opportunity"),
+  v.literal("Production House"), v.literal("Retail"),
+  v.literal("Healthcare"), v.literal("Tech")
 );
 
 export const list = query({
@@ -71,18 +73,17 @@ export const dashboardStats = query({
   args: {},
   handler: async (ctx) => {
     const clients = await ctx.db.query("clients").collect();
-    const pipeline = await ctx.db.query("pipeline").collect();
+    const contacts = await ctx.db.query("contacts").collect();
     const outreach = await ctx.db.query("outreach").collect();
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
     return {
       totalProspects: clients.filter(c => c.status === "prospect").length,
       contacted: clients.filter(c => c.status === "contacted").length,
-      responded: clients.filter(c => c.status === "responded").length,
       activeClients: clients.filter(c => c.status === "active").length,
-      totalClients: clients.length,
-      pipelineValue: pipeline.reduce((sum, p) => sum + (p.value || 0), 0),
-      pipelineCount: pipeline.length,
+      productionHouses: clients.filter(c => c.category === "Production House").length,
+      totalContacts: contacts.length,
+      outreachQueue: contacts.filter(c => c.tags.includes("outreach-queue") && !c.tags.includes("contacted")).length,
       outreachSentThisWeek: outreach.filter(o => o.sentAt && o.sentAt > weekAgo).length,
       responseRate: outreach.length > 0
         ? Math.round((outreach.filter(o => o.status === "replied").length / outreach.filter(o => o.status !== "draft").length) * 100) || 0

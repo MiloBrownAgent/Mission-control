@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 
+export const maxDuration = 300; // Vercel Pro — large Dropbox folders with many thumbnails
+
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 const CORS = {
@@ -67,74 +69,92 @@ export async function GET(request: NextRequest) {
 
     let token = config.accessToken;
 
-    // List folder (with auto-refresh on 401)
-    let listRes = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ path: path || "", limit: 200 }),
+    // --- Paginate list_folder to get ALL entries ---
+    type DropboxEntry = { ".tag": string; name: string; path_lower: string; size?: number };
+    const allEntries: DropboxEntry[] = [];
+
+    const doList = async (tkn: string): Promise<{ entries: DropboxEntry[]; has_more: boolean; cursor: string }> => {
+      const r = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${tkn}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ path: path || "", limit: 1000 }),
+      });
+      if (!r.ok) throw new Error(`list_folder ${r.status}`);
+      return r.json();
+    };
+
+    let page = await doList(token).catch(async (e) => {
+      if (String(e).includes("401") && config.refreshToken) {
+        const newToken = await refreshDropboxToken(config.refreshToken);
+        if (newToken) { token = newToken; return doList(newToken); }
+      }
+      throw e;
     });
 
-    if (listRes.status === 401 && config.refreshToken) {
-      const newToken = await refreshDropboxToken(config.refreshToken);
-      if (newToken) {
-        token = newToken;
-        listRes = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ path: path || "", limit: 200 }),
-        });
-      }
+    allEntries.push(...page.entries);
+
+    while (page.has_more) {
+      const cont = await fetch("https://api.dropboxapi.com/2/files/list_folder/continue", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ cursor: page.cursor }),
+      });
+      if (!cont.ok) break;
+      page = await cont.json();
+      allEntries.push(...page.entries);
     }
 
-    if (!listRes.ok) {
-      console.error("Dropbox list_folder error:", await listRes.text());
-      return NextResponse.json({ error: "Failed to list folder" }, { status: 502, headers: CORS });
-    }
+    const folders = allEntries
+      .filter((e) => e[".tag"] === "folder")
+      .map((e) => ({ name: e.name, path: e.path_lower }))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
-    const data = await listRes.json();
+    const rawFiles = allEntries.filter((e) => e[".tag"] === "file");
 
-    const folders = data.entries
-      .filter((e: { ".tag": string }) => e[".tag"] === "folder")
-      .map((e: { name: string; path_lower: string }) => ({ name: e.name, path: e.path_lower }))
-      .sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name));
-
-    const rawFiles = data.entries.filter((e: { ".tag": string }) => e[".tag"] === "file");
-
-    // Batch-fetch thumbnails for image files (max 25 per batch)
-    const imageFiles = rawFiles.filter((e: { name: string }) => isImageFile(e.name));
+    // --- Batch-fetch thumbnails: max 25/batch, 5 concurrent to avoid rate limits ---
+    const imageFiles = rawFiles.filter((e) => isImageFile(e.name));
     const thumbnailMap: Record<string, string> = {};
+    const THUMB_BATCH = 25;
+    const CONCURRENCY  = 5;
 
-    if (imageFiles.length > 0) {
-      const entries = imageFiles.slice(0, 25).map((e: { path_lower: string }) => ({
-        path: e.path_lower,
-        format: { ".tag": "jpeg" },
-        size: { ".tag": "w640h480" },
-        mode: { ".tag": "fitone_bestfit" },
-      }));
+    const thumbChunks: DropboxEntry[][] = [];
+    for (let i = 0; i < imageFiles.length; i += THUMB_BATCH) {
+      thumbChunks.push(imageFiles.slice(i, i + THUMB_BATCH));
+    }
 
-      try {
-        const thumbRes = await fetch("https://content.dropboxapi.com/2/files/get_thumbnail_batch", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ entries }),
-        });
-
-        if (thumbRes.ok) {
-          const thumbData = await thumbRes.json();
-          for (const entry of thumbData.entries) {
-            if (entry[".tag"] === "success") {
-              const path = entry.metadata.path_lower;
-              thumbnailMap[path] = `data:image/jpeg;base64,${entry.thumbnail}`;
+    // Process in windows of CONCURRENCY batches at a time
+    for (let i = 0; i < thumbChunks.length; i += CONCURRENCY) {
+      await Promise.all(
+        thumbChunks.slice(i, i + CONCURRENCY).map(async (chunk) => {
+          const entries = chunk.map((e) => ({
+            path: e.path_lower,
+            format: { ".tag": "jpeg" },
+            size: { ".tag": "w128h128" },   // smaller = faster for large folders
+            mode: { ".tag": "fitone_bestfit" },
+          }));
+          try {
+            const r = await fetch("https://content.dropboxapi.com/2/files/get_thumbnail_batch", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ entries }),
+            });
+            if (r.ok) {
+              const d = await r.json();
+              for (const entry of d.entries) {
+                if (entry[".tag"] === "success") {
+                  thumbnailMap[entry.metadata.path_lower] = `data:image/jpeg;base64,${entry.thumbnail}`;
+                }
+              }
             }
+          } catch (e) {
+            console.warn("Thumbnail batch failed:", e);
           }
-        }
-      } catch (e) {
-        console.warn("Thumbnail batch failed:", e);
-      }
+        })
+      );
     }
 
     const files = rawFiles
-      .map((e: { name: string; path_lower: string; size: number }) => ({
+      .map((e: DropboxEntry) => ({
         name: e.name,
         path: e.path_lower,
         size: e.size,

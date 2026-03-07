@@ -37,6 +37,14 @@ export const saveConfig = mutation({
   },
 });
 
+export const setProxyUrl = mutation({
+  args: { proxyUrl: v.string() },
+  handler: async (ctx, args) => {
+    const config = await ctx.db.query("dropboxConfig").order("desc").first();
+    if (config) await ctx.db.patch(config._id, { proxyUrl: args.proxyUrl });
+  },
+});
+
 export const clearConfig = mutation({
   args: {},
   handler: async (ctx) => {

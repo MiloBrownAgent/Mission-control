@@ -88,7 +88,11 @@ export default defineSchema({
       v.literal("Agency"),
       v.literal("E-commerce"),
       v.literal("Fashion"),
-      v.literal("AI Opportunity")
+      v.literal("AI Opportunity"),
+      v.literal("Production House"),
+      v.literal("Retail"),
+      v.literal("Healthcare"),
+      v.literal("Tech")
     ),
     location: v.optional(v.string()),
     estimatedRevenue: v.optional(v.string()),
@@ -166,6 +170,29 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_client", ["clientId"])
     .index("by_stage", ["stage"]),
+
+  prospectEmails: defineTable({
+    prospectName: v.string(),
+    company: v.string(),
+    role: v.string(),
+    email: v.string(),
+    subject: v.string(),
+    body: v.string(),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("approved"),
+      v.literal("sent"),
+      v.literal("bounced"),
+      v.literal("replied"),
+      v.literal("skipped")
+    ),
+    category: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    approvedAt: v.optional(v.number()),
+    sentAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_status", ["status"]),
 
   activityLog: defineTable({
     message: v.string(),
@@ -293,6 +320,7 @@ export default defineSchema({
     accessToken: v.string(),
     refreshToken: v.optional(v.string()),
     connectedAt: v.number(),
+    proxyUrl: v.optional(v.string()),
   }),
 
   actionItems: defineTable({
@@ -413,6 +441,19 @@ export default defineSchema({
     requestedAt: v.number(),
     completedAt: v.optional(v.number()),
   }).index("by_status", ["status"]),
+
+  vault_documents: defineTable({
+    name: v.string(),
+    category: v.string(),
+    fileType: v.string(),
+    storageId: v.string(),
+    iv: v.string(),
+    authTag: v.string(),
+    dateAdded: v.string(),
+    addedBy: v.string(),
+    fileSize: v.number(),
+    originalName: v.optional(v.string()),
+  }).index("by_category", ["category"]),
 
   polymarket_trades: defineTable({
     question: v.string(),                          // "US recession by end of 2026?"

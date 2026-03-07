@@ -3,33 +3,24 @@ import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
+// Single reliable font source used for both modes
+const FONT_URL = 'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff'
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const mode  = searchParams.get('mode') ?? 'mc'
-  const size  = parseInt(searchParams.get('size') ?? '32', 10)
+  const mode = searchParams.get('mode') ?? 'mc'
+  const size = parseInt(searchParams.get('size') ?? '32', 10)
   const isFamily = mode === 'hd'
 
-  // Cormorant Garamond Light for the family S mark
-  // Inter Bold for MC work mode
-  const fontUrl = isFamily
-    ? 'https://fonts.gstatic.com/s/cormorantgaramond/v22/BXRlvF3Pi-DLmFGEW_lbbkZi1g.woff'
-    : 'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff'
-
-  let fontData: ArrayBuffer
-  try {
-    const fontRes = await fetch(fontUrl)
-    fontData = await fontRes.arrayBuffer()
-  } catch {
-    // fallback to Inter if Cormorant fails
-    const fallback = await fetch('https://og-playground.vercel.app/inter-latin-ext-700-normal.woff')
-    fontData = await fallback.arrayBuffer()
-  }
+  const fontRes = await fetch(FONT_URL)
+  const fontData = await fontRes.arrayBuffer()
 
   if (isFamily) {
-    // Family mode: cream background, gold circle, serif "S"
-    const circleSize   = Math.round(size * 0.82)
-    const borderWidth  = Math.max(1, Math.round(size * 0.04))
-    const fontSize     = Math.round(size * 0.44)
+    // Family: cream bg, gold circle, gold "S"
+    const pad         = Math.round(size * 0.09)
+    const circleSize  = size - pad * 2
+    const borderWidth = Math.max(1, Math.round(size * 0.045))
+    const fontSize    = Math.round(size * 0.46)
 
     return new ImageResponse(
       (
@@ -48,7 +39,7 @@ export async function GET(req: NextRequest) {
               width: circleSize,
               height: circleSize,
               borderRadius: '50%',
-              border: `${borderWidth}px solid rgba(184,150,90,0.45)`,
+              border: `${borderWidth}px solid #B8965A`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -58,10 +49,10 @@ export async function GET(req: NextRequest) {
               style={{
                 color: '#B8965A',
                 fontSize,
-                fontFamily: 'Cormorant',
-                fontWeight: 300,
+                fontFamily: 'Inter',
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
                 lineHeight: 1,
-                marginTop: Math.round(size * 0.02),
               }}
             >
               S
@@ -72,12 +63,12 @@ export async function GET(req: NextRequest) {
       {
         width: size,
         height: size,
-        fonts: [{ name: 'Cormorant', data: fontData, weight: 300, style: 'normal' }],
+        fonts: [{ name: 'Inter', data: fontData, weight: 700, style: 'normal' }],
       }
     )
   }
 
-  // Work mode: dark background, gold "MC"
+  // Work mode: dark bg, gold "MC"
   const fontSize = size <= 32 ? 14 : Math.round(size * 0.38)
 
   return new ImageResponse(

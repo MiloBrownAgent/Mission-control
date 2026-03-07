@@ -13,7 +13,7 @@ import { CreateClientDialog } from "./create-client-dialog";
 import { Id } from "../../../convex/_generated/dataModel";
 
 const statusOptions = ["all", "prospect", "contacted", "responded", "meeting", "proposal", "active", "inactive"] as const;
-const categoryOptions = ["all", "DTC/CPG", "Agency", "E-commerce", "Fashion", "AI Opportunity"] as const;
+const categoryOptions = ["all", "DTC/CPG", "Agency", "E-commerce", "Fashion", "AI Opportunity", "Production House", "Retail", "Healthcare", "Tech"] as const;
 
 const statusColors: Record<string, string> = {
   prospect: "bg-slate-500/20 text-slate-400",

@@ -29,9 +29,11 @@ import type * as memories from "../memories.js";
 import type * as outreach from "../outreach.js";
 import type * as pipeline from "../pipeline.js";
 import type * as polymarket from "../polymarket.js";
+import type * as prospectEmails from "../prospectEmails.js";
 import type * as seed from "../seed.js";
 import type * as seedCrm from "../seedCrm.js";
 import type * as tasks from "../tasks.js";
+import type * as vault from "../vault.js";
 import type * as weekendActivities from "../weekendActivities.js";
 import type * as whoop from "../whoop.js";
 
@@ -63,9 +65,11 @@ declare const fullApi: ApiFromModules<{
   outreach: typeof outreach;
   pipeline: typeof pipeline;
   polymarket: typeof polymarket;
+  prospectEmails: typeof prospectEmails;
   seed: typeof seed;
   seedCrm: typeof seedCrm;
   tasks: typeof tasks;
+  vault: typeof vault;
   weekendActivities: typeof weekendActivities;
   whoop: typeof whoop;
 }>;

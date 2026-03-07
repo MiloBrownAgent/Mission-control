@@ -54,3 +54,40 @@ export const remove = mutation({
     await ctx.db.delete(args.id);
   },
 });
+
+export const listByTag = query({
+  args: { tag: v.string() },
+  handler: async (ctx, args) => {
+    const all = await ctx.db.query("contacts").order("desc").collect();
+    return all.filter(c => c.tags.includes(args.tag));
+  },
+});
+
+export const listOutreachQueue = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("contacts").order("desc").collect();
+    return all
+      .filter(c => c.tags.includes("outreach-queue"))
+      .sort((a, b) => {
+        const priority = { high: 0, medium: 1, low: 2 };
+        const pa = a.tags.includes("priority-high") ? 0 : a.tags.includes("priority-medium") ? 1 : 2;
+        const pb = b.tags.includes("priority-high") ? 0 : b.tags.includes("priority-medium") ? 1 : 2;
+        return pa - pb;
+      });
+  },
+});
+
+export const search = query({
+  args: { q: v.string() },
+  handler: async (ctx, args) => {
+    const all = await ctx.db.query("contacts").order("desc").collect();
+    const q = args.q.toLowerCase();
+    return all.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.company.toLowerCase().includes(q) ||
+      c.role.toLowerCase().includes(q) ||
+      (c.email || "").toLowerCase().includes(q)
+    ).slice(0, 20);
+  },
+});
