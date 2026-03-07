@@ -12,7 +12,9 @@ const PORT               = 3031;
 const CONVEX_URL         = "https://proper-rat-443.convex.cloud";
 const DROPBOX_CLIENT_ID  = "u9cs93z05ropowr";
 const DROPBOX_CLIENT_SECRET = "pn081t23liomqkf";
-const ALLOWED_ORIGINS    = ["https://lookandseen.com", "https://mc.lookandseen.com"];
+const ALLOWED_ORIGINS    = ["https://lookandseen.com", "https://mc.lookandseen.com", "null", ""];
+// Shared secret — Vercel embeds this in short-lived signed tokens
+const PROXY_SECRET       = process.env.PROXY_SECRET || "ls-proxy-9b384beb06bad182de84e8c1ebacbfcd";
 
 // ─── Convex helpers ──────────────────────────────────────────────────────────
 
@@ -206,10 +208,34 @@ const server = http.createServer(async (req, clientRes) => {
     clientRes.writeHead(404); clientRes.end(JSON.stringify({ error: "Not found" })); return;
   }
 
+  // Validate signed token: format = "<ts>.<hmac-sha256>"
+  const reqToken = url.searchParams.get("token");
+  if (!reqToken) {
+    clientRes.writeHead(401); clientRes.end(JSON.stringify({ error: "Missing token" })); return;
+  }
+  try {
+    const [tsStr, sig] = reqToken.split(".");
+    const ts = parseInt(tsStr, 10);
+    if (isNaN(ts) || Date.now() - ts > 10 * 60 * 1000) {
+      clientRes.writeHead(401); clientRes.end(JSON.stringify({ error: "Token expired" })); return;
+    }
+    const crypto = require("crypto");
+    const expected = crypto.createHmac("sha256", PROXY_SECRET).update(tsStr).digest("hex");
+    if (expected !== sig) {
+      clientRes.writeHead(401); clientRes.end(JSON.stringify({ error: "Invalid token" })); return;
+    }
+  } catch {
+    clientRes.writeHead(401); clientRes.end(JSON.stringify({ error: "Bad token" })); return;
+  }
+
   const dropboxPath = url.searchParams.get("path");
   if (!dropboxPath) {
     clientRes.writeHead(400); clientRes.end(JSON.stringify({ error: "Missing path" })); return;
   }
+
+  // Set CORS headers for direct browser access
+  clientRes.setHeader("Access-Control-Allow-Origin", "*");
+  clientRes.setHeader("Content-Disposition", `attachment; filename="${dropboxPath.split("/").pop()}.zip"`);
 
   console.log("[request] Download:", dropboxPath);
 
