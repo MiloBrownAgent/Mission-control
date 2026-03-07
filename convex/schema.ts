@@ -455,6 +455,20 @@ export default defineSchema({
     originalName: v.optional(v.string()),
   }).index("by_category", ["category"]),
 
+  soren_activities: defineTable({
+    weekOf: v.string(),           // "2026-03-08" (start of week, Saturday)
+    items: v.array(v.object({
+      title: v.string(),
+      description: v.string(),
+      location: v.optional(v.string()),
+      url: v.optional(v.string()),
+      type: v.union(v.literal("event"), v.literal("idea")),
+      date: v.optional(v.string()),  // specific date if known e.g. "March 9"
+    })),
+    generatedAt: v.number(),
+    sources: v.optional(v.array(v.string())),
+  }).index("by_week", ["weekOf"]),
+
   polymarket_trades: defineTable({
     question: v.string(),                          // "US recession by end of 2026?"
     position: v.union(v.literal("Yes"), v.literal("No")),
