@@ -289,6 +289,24 @@ export const markOpportunityEmailed = internalMutation({
   },
 });
 
+// Public version for backfill/manual fixes
+export const patchOpportunity = mutation({
+  args: {
+    id: v.id("investmentOpportunities"),
+    priceAtRecommendation: v.optional(v.number()),
+    currentPrice: v.optional(v.number()),
+    returnPct: v.optional(v.number()),
+    priceUpdatedAt: v.optional(v.number()),
+    status: v.optional(v.union(v.literal("active"), v.literal("hit_target"), v.literal("stopped_out"), v.literal("expired"))),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...updates } = args;
+    const clean = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
+    if (Object.keys(clean).length === 0) return;
+    await ctx.db.patch(id, clean);
+  },
+});
+
 export const updateOpportunityTracking = internalMutation({
   args: {
     id: v.id("investmentOpportunities"),
