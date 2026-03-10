@@ -221,6 +221,31 @@ export const createAlert = internalMutation({
   },
 });
 
+// Public version for monitor script
+export const createAlertPublic = mutation({
+  args: {
+    positionId: v.optional(v.id("investmentPositions")),
+    ticker: v.string(),
+    alertType: v.union(
+      v.literal("thesis_risk"),
+      v.literal("thesis_evolution"),
+      v.literal("opportunity"),
+      v.literal("price_alert")
+    ),
+    severity: v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical")),
+    title: v.string(),
+    summary: v.string(),
+    sources: v.optional(v.array(v.object({ title: v.string(), url: v.string() }))),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db.insert("investmentAlerts", {
+      ...args,
+      acknowledged: false,
+      createdAt: Date.now(),
+    });
+  },
+});
+
 export const acknowledgeAlert = mutation({
   args: { id: v.id("investmentAlerts") },
   handler: async (ctx, args) => {
