@@ -469,6 +469,104 @@ export default defineSchema({
     sources: v.optional(v.array(v.string())),
   }).index("by_week", ["weekOf"]),
 
+  investmentPositions: defineTable({
+    ticker: v.string(),
+    name: v.string(),
+    portfolioType: v.union(v.literal("high_risk"), v.literal("low_risk")),
+    shares: v.optional(v.number()),
+    entryPrice: v.optional(v.number()),
+    entryDate: v.optional(v.string()),
+    thesis: v.optional(v.string()),
+    thesisSources: v.optional(v.array(v.object({
+      title: v.string(),
+      url: v.string(),
+      publisher: v.optional(v.string()),
+      publishedAt: v.optional(v.string()),
+      quality: v.optional(v.number()),
+      trustworthiness: v.optional(v.number()),
+      relevance: v.optional(v.number()),
+      compositeScore: v.optional(v.number()),
+    }))),
+    thesisGeneratedAt: v.optional(v.number()),
+    timeHorizon: v.optional(v.union(v.literal("short"), v.literal("medium"), v.literal("long"))),
+    status: v.union(v.literal("active"), v.literal("watching"), v.literal("exited")),
+    addedAt: v.number(),
+  })
+    .index("by_ticker", ["ticker"])
+    .index("by_type", ["portfolioType"])
+    .index("by_status", ["status"]),
+
+  investmentAlerts: defineTable({
+    positionId: v.optional(v.id("investmentPositions")),
+    ticker: v.string(),
+    alertType: v.union(
+      v.literal("thesis_risk"),
+      v.literal("thesis_evolution"),
+      v.literal("opportunity"),
+      v.literal("price_alert")
+    ),
+    severity: v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical")),
+    title: v.string(),
+    summary: v.string(),
+    sources: v.optional(v.array(v.object({
+      title: v.string(),
+      url: v.string(),
+    }))),
+    acknowledged: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_ticker", ["ticker"])
+    .index("by_severity", ["severity"])
+    .index("by_acknowledged", ["acknowledged"])
+    .index("by_created", ["createdAt"]),
+
+  investmentOpportunities: defineTable({
+    ticker: v.string(),
+    name: v.string(),
+    opportunityType: v.string(),
+    thesis: v.string(),
+    sources: v.array(v.object({
+      title: v.string(),
+      url: v.string(),
+    })),
+    expectedUpside: v.optional(v.string()),
+    catalysts: v.optional(v.array(v.string())),
+    risks: v.optional(v.array(v.string())),
+    timeHorizon: v.optional(v.string()),
+    moralScreenPass: v.boolean(),
+    emailedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    // Tracking fields
+    priceAtRecommendation: v.optional(v.number()),
+    currentPrice: v.optional(v.number()),
+    priceUpdatedAt: v.optional(v.number()),
+    returnPct: v.optional(v.number()),
+    status: v.optional(v.union(v.literal("active"), v.literal("hit_target"), v.literal("stopped_out"), v.literal("expired"))),
+    weeklyNotes: v.optional(v.array(v.object({
+      date: v.string(),
+      price: v.number(),
+      note: v.string(),
+    }))),
+  })
+    .index("by_ticker", ["ticker"])
+    .index("by_created", ["createdAt"]),
+
+  investmentWeeklySummaries: defineTable({
+    weekOf: v.string(),
+    summary: v.string(),
+    totalPicks: v.number(),
+    winnersCount: v.number(),
+    losersCount: v.number(),
+    bestPicker: v.optional(v.object({ ticker: v.string(), returnPct: v.number() })),
+    worstPicker: v.optional(v.object({ ticker: v.string(), returnPct: v.number() })),
+    avgReturn: v.optional(v.number()),
+    positionUpdates: v.optional(v.string()),
+    emailedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_week", ["weekOf"])
+    .index("by_created", ["createdAt"]),
+
   polymarket_trades: defineTable({
     question: v.string(),                          // "US recession by end of 2026?"
     position: v.union(v.literal("Yes"), v.literal("No")),

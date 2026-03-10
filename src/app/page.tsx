@@ -145,7 +145,14 @@ function WhoopWidget({ data }: WhoopWidgetProps) {
           </div>
           <div>
             <p className="text-sm font-medium text-[#E8E4DF]">WHOOP Recovery</p>
-            <p className="text-xs text-[#6B6560]">{data.date ?? "Today"} · {scoreLabel}</p>
+            <p className="text-xs text-[#6B6560]">
+              {data.date ?? "Today"} · {scoreLabel}
+              {data.storedAt && (
+                <span className="ml-1 opacity-60">
+                  · synced {formatDistanceToNow(data.storedAt, { addSuffix: true })}
+                </span>
+              )}
+            </p>
           </div>
         </div>
 

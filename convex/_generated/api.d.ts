@@ -18,12 +18,16 @@ import type * as clients from "../clients.js";
 import type * as contacts from "../contacts.js";
 import type * as content from "../content.js";
 import type * as crmContacts from "../crmContacts.js";
+import type * as crons from "../crons.js";
 import type * as daycareReports from "../daycareReports.js";
+import type * as daycareSync from "../daycareSync.js";
 import type * as dropboxConfig from "../dropboxConfig.js";
 import type * as events from "../events.js";
 import type * as flightDeals from "../flightDeals.js";
 import type * as groceryItems from "../groceryItems.js";
 import type * as himsSentiment from "../himsSentiment.js";
+import type * as http from "../http.js";
+import type * as investments from "../investments.js";
 import type * as meals from "../meals.js";
 import type * as memories from "../memories.js";
 import type * as outreach from "../outreach.js";
@@ -37,6 +41,7 @@ import type * as tasks from "../tasks.js";
 import type * as vault from "../vault.js";
 import type * as weekendActivities from "../weekendActivities.js";
 import type * as whoop from "../whoop.js";
+import type * as whoopSync from "../whoopSync.js";
 
 import type {
   ApiFromModules,
@@ -55,12 +60,16 @@ declare const fullApi: ApiFromModules<{
   contacts: typeof contacts;
   content: typeof content;
   crmContacts: typeof crmContacts;
+  crons: typeof crons;
   daycareReports: typeof daycareReports;
+  daycareSync: typeof daycareSync;
   dropboxConfig: typeof dropboxConfig;
   events: typeof events;
   flightDeals: typeof flightDeals;
   groceryItems: typeof groceryItems;
   himsSentiment: typeof himsSentiment;
+  http: typeof http;
+  investments: typeof investments;
   meals: typeof meals;
   memories: typeof memories;
   outreach: typeof outreach;
@@ -74,6 +83,7 @@ declare const fullApi: ApiFromModules<{
   vault: typeof vault;
   weekendActivities: typeof weekendActivities;
   whoop: typeof whoop;
+  whoopSync: typeof whoopSync;
 }>;
 
 /**

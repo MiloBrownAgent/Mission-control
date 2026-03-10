@@ -18,6 +18,7 @@ import {
   Link2,
   TrendingUp,
   LayoutGrid,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -34,6 +35,7 @@ const workNavigation = [
   { name: "Office", href: "/office", icon: Building2 },
   { name: "Client Links", href: "/office/links", icon: Link2 },
   { name: "Quant", href: "/quant", icon: TrendingUp },
+  { name: "Investments", href: "/investments", icon: Wallet },
 ];
 
 export function Sidebar() {
