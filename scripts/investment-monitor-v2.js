@@ -369,8 +369,6 @@ async function main() {
             title: alert.title,
             summary: alert.summary,
             sources: [],
-            acknowledged: false,
-            createdAt: Date.now(),
           });
         } catch (e) {
           console.log(`    ❌ Failed to save alert: ${e.message}`);
