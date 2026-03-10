@@ -75,6 +75,15 @@ export const addPosition = mutation({
         entryPrice: args.entryPrice,
         timeHorizon: args.timeHorizon,
       });
+      // Notify agent via Telegram
+      await ctx.scheduler.runAfter(0, internal.investments.notifyNewPosition, {
+        ticker: args.ticker.toUpperCase(),
+        name: args.name,
+        portfolioType: args.portfolioType,
+        shares: args.shares,
+        entryPrice: args.entryPrice,
+        timeHorizon: args.timeHorizon,
+      });
       return existing._id;
     }
     
@@ -94,6 +103,15 @@ export const addPosition = mutation({
     // Trigger thesis generation
     await ctx.scheduler.runAfter(0, internal.investments.triggerThesisGeneration, {
       positionId: id,
+      ticker: args.ticker.toUpperCase(),
+      name: args.name,
+      portfolioType: args.portfolioType,
+      shares: args.shares,
+      entryPrice: args.entryPrice,
+      timeHorizon: args.timeHorizon,
+    });
+    // Notify agent via Telegram
+    await ctx.scheduler.runAfter(0, internal.investments.notifyNewPosition, {
       ticker: args.ticker.toUpperCase(),
       name: args.name,
       portfolioType: args.portfolioType,
@@ -377,6 +395,61 @@ export const updateOpportunityTracking = internalMutation({
 });
 
 // ─── Thesis Generation (Event-Driven) ────────────────────────────────────────
+
+// ─── Notify agent via Telegram when position is added ────────────────────────
+
+export const notifyNewPosition = internalAction({
+  args: {
+    ticker: v.string(),
+    name: v.string(),
+    portfolioType: v.string(),
+    shares: v.optional(v.number()),
+    entryPrice: v.optional(v.number()),
+    timeHorizon: v.optional(v.string()),
+  },
+  handler: async (_ctx, args) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+    if (!botToken || !chatId) {
+      console.log("Telegram notification skipped: missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID");
+      return;
+    }
+
+    const emoji = args.portfolioType === "high_risk" ? "🔴" : "🟢";
+    const shares = args.shares ? `${args.shares} shares` : "unknown shares";
+    const entry = args.entryPrice ? `$${args.entryPrice}` : "unknown entry";
+    const horizon = args.timeHorizon || "unset";
+    
+    const message = [
+      `${emoji} **New Position Added: ${args.ticker}**`,
+      ``,
+      `Name: ${args.name}`,
+      `Portfolio: ${args.portfolioType}`,
+      `Shares: ${shares} @ ${entry}`,
+      `Horizon: ${horizon}`,
+      ``,
+      `Generate thesis for ${args.ticker} now.`,
+    ].join("\n");
+
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          message_thread_id: 6,
+          parse_mode: "Markdown",
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) console.error("Telegram notification failed:", data.description);
+      else console.log(`Telegram notification sent for ${args.ticker}`);
+    } catch (e: any) {
+      console.error("Telegram notification error:", e.message);
+    }
+  },
+});
 
 export const triggerThesisGeneration = internalAction({
   args: {
