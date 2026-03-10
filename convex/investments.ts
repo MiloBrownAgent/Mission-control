@@ -1,5 +1,6 @@
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation, internalAction, action } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 // ── Positions ──────────────────────────────────────
 
@@ -64,12 +65,22 @@ export const addPosition = mutation({
         thesisGeneratedAt: undefined,
         addedAt: Date.now(),
       });
+      // Trigger thesis generation
+      await ctx.scheduler.runAfter(0, internal.investments.triggerThesisGeneration, {
+        positionId: existing._id,
+        ticker: args.ticker.toUpperCase(),
+        name: args.name,
+        portfolioType: args.portfolioType,
+        shares: args.shares,
+        entryPrice: args.entryPrice,
+        timeHorizon: args.timeHorizon,
+      });
       return existing._id;
     }
     
     if (existing) throw new Error(`Position ${args.ticker} already exists`);
 
-    return ctx.db.insert("investmentPositions", {
+    const id = await ctx.db.insert("investmentPositions", {
       ticker: args.ticker.toUpperCase(),
       name: args.name,
       portfolioType: args.portfolioType,
@@ -80,6 +91,17 @@ export const addPosition = mutation({
       status: "active",
       addedAt: Date.now(),
     });
+    // Trigger thesis generation
+    await ctx.scheduler.runAfter(0, internal.investments.triggerThesisGeneration, {
+      positionId: id,
+      ticker: args.ticker.toUpperCase(),
+      name: args.name,
+      portfolioType: args.portfolioType,
+      shares: args.shares,
+      entryPrice: args.entryPrice,
+      timeHorizon: args.timeHorizon,
+    });
+    return id;
   },
 });
 
@@ -326,5 +348,90 @@ export const updateOpportunityTracking = internalMutation({
     const clean = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
     if (Object.keys(clean).length === 0) return;
     await ctx.db.patch(id, clean);
+  },
+});
+
+// ─── Thesis Generation (Event-Driven) ────────────────────────────────────────
+
+export const triggerThesisGeneration = internalAction({
+  args: {
+    positionId: v.id("investmentPositions"),
+    ticker: v.string(),
+    name: v.string(),
+    portfolioType: v.optional(v.union(v.literal("high_risk"), v.literal("low_risk"))),
+    shares: v.optional(v.number()),
+    entryPrice: v.optional(v.number()),
+    timeHorizon: v.optional(v.union(v.literal("short"), v.literal("medium"), v.literal("long"))),
+  },
+  handler: async (_ctx, args) => {
+    const siteUrl = process.env.SITE_URL || "https://mc.lookandseen.com";
+    try {
+      const res = await fetch(`${siteUrl}/api/investments/generate-thesis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker: args.ticker,
+          name: args.name,
+          positionId: args.positionId,
+          portfolioType: args.portfolioType,
+          shares: args.shares,
+          entryPrice: args.entryPrice,
+          timeHorizon: args.timeHorizon,
+        }),
+      });
+      const data = await res.json();
+      console.log(`Thesis generation for ${args.ticker}:`, data.status || "unknown");
+    } catch (e: any) {
+      console.error(`Thesis generation failed for ${args.ticker}:`, e.message);
+      // Convex will retry this action on failure
+      throw e;
+    }
+  },
+});
+
+// ─── Sweep: Catch any positions without thesis ───────────────────────────────
+
+export const sweepMissingTheses = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    // Query all positions
+    const siteUrl = process.env.SITE_URL || "https://mc.lookandseen.com";
+    const queryRes = await fetch(`https://proper-rat-443.convex.cloud/api/query`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: "investments:listPositions", args: {} }),
+    });
+    const positions = (await queryRes.json()).value || [];
+    
+    const missing = positions.filter(
+      (p: any) => p.status === "active" && !p.thesis && 
+      // Don't retry if it was just added (give the event-driven trigger 2 minutes)
+      (Date.now() - p.addedAt > 2 * 60 * 1000)
+    );
+
+    for (const pos of missing) {
+      console.log(`Sweep: generating thesis for ${pos.ticker} (added ${Math.round((Date.now() - pos.addedAt) / 60000)}m ago)`);
+      try {
+        await fetch(`${siteUrl}/api/investments/generate-thesis`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ticker: pos.ticker,
+            name: pos.name,
+            positionId: pos._id,
+            portfolioType: pos.portfolioType,
+            shares: pos.shares,
+            entryPrice: pos.entryPrice,
+            timeHorizon: pos.timeHorizon,
+          }),
+        });
+      } catch (e: any) {
+        console.error(`Sweep failed for ${pos.ticker}:`, e.message);
+      }
+    }
+
+    if (missing.length === 0) {
+      console.log("Sweep: all positions have theses ✓");
+    }
   },
 });
