@@ -15,8 +15,6 @@ crons.cron(
 // Keeps the dashboard current even if webhooks stop firing
 crons.interval("whoop-sync", { hours: 2 }, internal.whoopSync.syncAll);
 
-// Investment thesis sweep: catch any positions missing theses (backup for event-driven trigger)
-// Runs every 30 minutes
-crons.interval("investment-thesis-sweep", { minutes: 30 }, internal.investments.sweepMissingTheses);
+// Investment thesis sweep is handled by OpenClaw cron (local Mac) — see scripts/auto-thesis.js
 
 export default crons;

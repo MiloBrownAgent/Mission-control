@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 const CONVEX_URL = "https://proper-rat-443.convex.cloud";
-const OPENCLAW_GATEWAY = "http://127.0.0.1:4440";
+// When running on Vercel, use Anthropic/OpenAI APIs directly
+// When running locally (dev), can also use OpenClaw gateway
+const OPENCLAW_GATEWAY = process.env.OPENCLAW_GATEWAY_URL || "http://127.0.0.1:18789";
+const IS_VERCEL = !!process.env.VERCEL;
 
 // Publisher credibility tiers
 const PUBLISHER_TIERS: Record<number, string[]> = {
@@ -236,23 +239,9 @@ function scoreArticle(article: any, ticker: string, companyName: string) {
   return { ...article, quality, trustworthiness, relevance, compositeScore };
 }
 
-// ─── LLM Thesis Generation ──────────────────────────────────────────────────
+// ─── LLM Thesis Generation (Cascading Models) ───────────────────────────────
 
-async function generateThesisWithLLM(context: string): Promise<string | null> {
-  // Try OpenClaw gateway first (local Claude)
-  try {
-    const res = await fetch(`${OPENCLAW_GATEWAY}/v1/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENCLAW_GATEWAY_TOKEN || ""}`,
-      },
-      body: JSON.stringify({
-        model: "anthropic/claude-sonnet-4-6",
-        messages: [
-          {
-            role: "system",
-            content: `You are a senior equity research analyst writing investment theses for the Pitzy Model — a retail-edge, event-driven value investing framework.
+const SYSTEM_PROMPT = `You are a senior equity research analyst writing investment theses for the Pitzy Model — a retail-edge, event-driven value investing framework.
 
 The Pitzy Model's core principles:
 - Retail investors have a structural nimbleness advantage over institutions
@@ -262,47 +251,176 @@ The Pitzy Model's core principles:
 - Track institutional flows, but bet against them when they're forced sellers
 - Sentiment + Valuation + Event Catalyst + Certainty = Buy Signal
 
-Write thorough, honest, number-dense theses. Call out risks bluntly — never sugarcoat. Include specific data points, price targets, and a clear framework for when to hold, add, or exit. Reference the source articles by name when citing data.`,
-          },
-          { role: "user", content: context },
-        ],
-        max_tokens: 4000,
-        temperature: 0.3,
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return data.choices?.[0]?.message?.content || null;
-    }
-  } catch {}
+Write thorough, honest, number-dense theses. Call out risks bluntly — never sugarcoat. Include specific data points, price targets, and a clear framework for when to hold, add, or exit. Reference the source articles by name when citing data.`;
 
-  // Fallback: try direct Anthropic API
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (anthropicKey) {
+// Model cascade: Sonnet → Opus → GPT-5.4 → LMStudio (local)
+// On Vercel: uses direct Anthropic/OpenAI APIs
+// Locally: can use OpenClaw gateway + LMStudio
+const MODEL_CASCADE = [
+  {
+    name: "Claude Sonnet 4.6",
+    type: "anthropic" as const,
+    model: "claude-sonnet-4-20250514",
+    gatewayModel: "anthropic/claude-sonnet-4-6",
+  },
+  {
+    name: "Claude Opus 4.6",
+    type: "anthropic" as const,
+    model: "claude-opus-4-20250514",
+    gatewayModel: "anthropic/claude-opus-4-6",
+  },
+  {
+    name: "GPT-5.4",
+    type: "openai" as const,
+    model: "gpt-5.4",
+    gatewayModel: "openai/gpt-5.4",
+  },
+  {
+    name: "LMStudio (local)",
+    type: "lmstudio" as const,
+    model: "qwen3.5-9b-mlx",
+    gatewayModel: "custom-127-0-0-1-1234/qwen3.5-9b-mlx",
+  },
+];
+
+async function callAnthropicDirect(model: string, context: string): Promise<string | null> {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 4000,
+      temperature: 0.3,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: context }],
+    }),
+  });
+  if (!res.ok) {
+    console.log(`  ✗ Anthropic ${model}: ${res.status}`);
+    return null;
+  }
+  const data = await res.json();
+  return data.content?.[0]?.text || null;
+}
+
+async function callOpenAIDirect(model: string, context: string): Promise<string | null> {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return null;
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: context },
+      ],
+      max_tokens: 4000,
+      temperature: 0.3,
+    }),
+  });
+  if (!res.ok) {
+    console.log(`  ✗ OpenAI ${model}: ${res.status}`);
+    return null;
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || null;
+}
+
+async function callOpenClawGateway(model: string, context: string): Promise<string | null> {
+  const gatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN || "";
+  const res = await fetch(`${OPENCLAW_GATEWAY}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${gatewayToken}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: context },
+      ],
+      max_tokens: 4000,
+      temperature: 0.3,
+    }),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    console.log(`  ✗ Gateway ${model}: ${res.status} ${errText.substring(0, 100)}`);
+    return null;
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || null;
+}
+
+async function callLMStudio(model: string, context: string): Promise<string | null> {
+  const res = await fetch("http://127.0.0.1:1234/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: context },
+      ],
+      max_tokens: 4000,
+      temperature: 0.3,
+    }),
+  });
+  if (!res.ok) {
+    console.log(`  ✗ LMStudio ${model}: ${res.status}`);
+    return null;
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || null;
+}
+
+async function generateThesisWithLLM(context: string): Promise<{ text: string | null; model: string | null }> {
+  for (const entry of MODEL_CASCADE) {
+    console.log(`  → Trying ${entry.name} (${entry.model})...`);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": anthropicKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 4000,
-          temperature: 0.3,
-          system: `You are a senior equity research analyst for the Pitzy Model — a retail-edge, event-driven value investing framework. Write thorough, honest, number-dense theses. Call out risks bluntly. Include specific data points and price targets.`,
-          messages: [{ role: "user", content: context }],
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return data.content?.[0]?.text || null;
+      let result: string | null = null;
+
+      if (IS_VERCEL) {
+        // On Vercel: use direct API calls (can't reach localhost)
+        if (entry.type === "anthropic") {
+          result = await callAnthropicDirect(entry.model, context);
+        } else if (entry.type === "openai") {
+          result = await callOpenAIDirect(entry.model, context);
+        } else if (entry.type === "lmstudio") {
+          console.log(`  ⊘ Skipping ${entry.name} (not available on Vercel)`);
+          continue;
+        }
+      } else {
+        // Locally: use OpenClaw gateway (routes to all providers)
+        if (entry.type === "lmstudio") {
+          result = await callLMStudio(entry.model, context);
+        } else {
+          result = await callOpenClawGateway(entry.gatewayModel, context);
+        }
       }
-    } catch {}
+
+      if (result && result.length > 100) {
+        console.log(`  ✓ ${entry.name} succeeded (${result.length} chars)`);
+        return { text: result, model: entry.name };
+      }
+    } catch (e: any) {
+      console.log(`  ✗ ${entry.name} error: ${e.message}`);
+    }
   }
 
-  return null;
+  console.log("  ✗ ALL MODELS FAILED — will retry on next sweep");
+  return { text: null, model: null };
 }
 
 // ─── Main Handler ────────────────────────────────────────────────────────────
@@ -417,8 +535,9 @@ Write a thorough investment thesis structured as:
 
 Reference source articles by name. Use actual numbers from the data above. Do not make up data points.`;
 
-  // Generate thesis
-  const thesis = await generateThesisWithLLM(context);
+  // Generate thesis (cascading models)
+  const { text: thesis, model: usedModel } = await generateThesisWithLLM(context);
+  console.log(`  Model used: ${usedModel || "none"}`);
 
   if (!thesis) {
     console.log(`  ⚠️ LLM generation failed — saving research data without synthesis`);
@@ -460,6 +579,7 @@ Reference source articles by name. Use actual numbers from the data above. Do no
   return NextResponse.json({
     status: "ok",
     ticker,
+    model: usedModel,
     sourcesCount: sources.length,
     thesisLength: thesis.length,
   });
