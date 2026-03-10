@@ -34,8 +34,7 @@ const workNavigation = [
   { name: "Team", href: "/team", icon: Users },
   { name: "Office", href: "/office", icon: Building2 },
   { name: "Client Links", href: "/office/links", icon: Link2 },
-  { name: "Quant", href: "/quant", icon: TrendingUp },
-  { name: "Investments", href: "/investments", icon: Wallet },
+  { name: "Pitzy Model", href: "/investments", icon: TrendingUp },
 ];
 
 export function Sidebar() {

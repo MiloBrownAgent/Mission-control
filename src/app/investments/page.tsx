@@ -17,13 +17,23 @@ import {
   Flame,
   Search,
   Lightbulb,
+  Activity,
+  Gauge,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 
-type TabType = "portfolios" | "alerts" | "opportunities" | "track_record";
+const MonteCarloTab = dynamic(() => import("@/components/quant/MonteCarloTab"), { ssr: false });
+const PaperTradesTab = dynamic(() => import("@/components/quant/PaperTradesTab"), { ssr: false });
+const SentimentTab = dynamic(() => import("@/components/quant/SentimentTab"), { ssr: false });
+
+type TopTab = "pitzy" | "monte_carlo" | "paper_trades" | "sentiment";
+type PitzySubTab = "portfolios" | "alerts" | "opportunities" | "track_record";
 
 export default function InvestmentsPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("portfolios");
+  const [activeTab, setActiveTab] = useState<TopTab>("pitzy");
+  const [pitzySubTab, setPitzySubTab] = useState<PitzySubTab>("portfolios");
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
 
@@ -33,55 +43,87 @@ export default function InvestmentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
-            Investments
+            Pitzy Model
           </h1>
           <p className="mt-1 text-sm text-[#6B6560]">
-            Portfolio monitoring · Thesis tracking · Opportunity scanner
+            Investment thesis engine · Portfolio monitoring · Quant tools
           </p>
         </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2 rounded-lg bg-[#B8956A] px-4 py-2 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Add Position
-        </button>
+        {activeTab === "pitzy" && (
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 rounded-lg bg-[#B8956A] px-4 py-2 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Add Position
+          </button>
+        )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 rounded-lg bg-[#0D0C0A] p-1 border border-[#1A1816]">
+      {/* Top-level Tabs */}
+      <div className="flex items-center gap-1 rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-1 w-fit">
         {[
-          { key: "portfolios" as TabType, label: "Portfolios", icon: TrendingUp },
-          { key: "alerts" as TabType, label: "Alerts", icon: Bell },
-          { key: "opportunities" as TabType, label: "Opportunities", icon: Lightbulb },
-          { key: "track_record" as TabType, label: "Track Record", icon: TrendingUp },
+          { key: "pitzy" as TopTab, label: "Pitzy Model", icon: Brain },
+          { key: "monte_carlo" as TopTab, label: "Monte Carlo", icon: TrendingUp },
+          { key: "paper_trades" as TopTab, label: "Paper Trades", icon: Activity },
+          { key: "sentiment" as TopTab, label: "Sentiment", icon: Gauge },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "flex items-center gap-2 rounded-md px-4 py-2 text-sm transition-all flex-1 justify-center",
+              "flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all",
               activeTab === tab.key
-                ? "bg-[#1A1816] text-[#E8E4DF]"
+                ? "bg-[#B8956A] text-[#060606] shadow-sm"
                 : "text-[#6B6560] hover:text-[#E8E4DF]"
             )}
           >
-            <tab.icon className="h-4 w-4" />
+            <tab.icon className="h-3.5 w-3.5" />
             {tab.label}
           </button>
         ))}
       </div>
 
       {/* Content */}
-      {activeTab === "portfolios" && (
-        <PortfolioView
-          selectedPosition={selectedPosition}
-          setSelectedPosition={setSelectedPosition}
-        />
+      {activeTab === "pitzy" && (
+        <div className="space-y-4">
+          {/* Sub-nav */}
+          <div className="flex items-center gap-1 border-b border-[#1A1816] pb-3">
+            {[
+              { key: "portfolios" as PitzySubTab, label: "Portfolios" },
+              { key: "alerts" as PitzySubTab, label: "Alerts" },
+              { key: "opportunities" as PitzySubTab, label: "Opportunities" },
+              { key: "track_record" as PitzySubTab, label: "Track Record" },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setPitzySubTab(tab.key)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                  pitzySubTab === tab.key
+                    ? "text-[#E8E4DF] bg-[#1A1816]"
+                    : "text-[#6B6560] hover:text-[#E8E4DF]"
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {pitzySubTab === "portfolios" && (
+            <PortfolioView
+              selectedPosition={selectedPosition}
+              setSelectedPosition={setSelectedPosition}
+            />
+          )}
+          {pitzySubTab === "alerts" && <AlertsView />}
+          {pitzySubTab === "opportunities" && <OpportunitiesView />}
+          {pitzySubTab === "track_record" && <TrackRecordView />}
+        </div>
       )}
-      {activeTab === "alerts" && <AlertsView />}
-      {activeTab === "opportunities" && <OpportunitiesView />}
-      {activeTab === "track_record" && <TrackRecordView />}
+      {activeTab === "monte_carlo" && <MonteCarloTab />}
+      {activeTab === "paper_trades" && <PaperTradesTab />}
+      {activeTab === "sentiment" && <SentimentTab />}
 
       {/* Add Position Modal */}
       {showAddForm && <AddPositionModal onClose={() => setShowAddForm(false)} />}
