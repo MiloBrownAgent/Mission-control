@@ -582,4 +582,89 @@ export default defineSchema({
     notes: v.string(),
     created_at: v.number(),
   }).index("by_resolved", ["resolved"]).index("by_created", ["created_at"]),
+
+  // ── Investment Hub: Signal Engine ──────────────────────
+
+  signalBriefings: defineTable({
+    date: v.string(),
+    marketStatus: v.string(),
+    sections: v.array(v.object({
+      type: v.string(),
+      title: v.string(),
+      summary: v.string(),
+      ticker: v.optional(v.string()),
+      importance: v.union(v.literal("high"), v.literal("medium"), v.literal("low")),
+    })),
+    generatedAt: v.number(),
+  }).index("by_date", ["date"]),
+
+  eventScans: defineTable({
+    ticker: v.string(),
+    eventType: v.string(),
+    title: v.string(),
+    summary: v.string(),
+    pitzyScore: v.number(),
+    sector: v.optional(v.string()),
+    sources: v.optional(v.array(v.object({ title: v.string(), url: v.string() }))),
+    status: v.union(v.literal("active"), v.literal("expired"), v.literal("acted_on")),
+    detectedAt: v.number(),
+  }).index("by_type", ["eventType"]).index("by_detected", ["detectedAt"]).index("by_status", ["status"]),
+
+  macroSnapshots: defineTable({
+    date: v.string(),
+    fedFundsRate: v.optional(v.number()),
+    fedNextMeeting: v.optional(v.string()),
+    fedChangeProb: v.optional(v.number()),
+    vix: v.optional(v.number()),
+    vixTrend: v.optional(v.string()),
+    yieldCurveStatus: v.optional(v.string()),
+    yield2y10ySpread: v.optional(v.number()),
+    dxy: v.optional(v.number()),
+    dxyTrend: v.optional(v.string()),
+    sectorRotation: v.optional(v.any()),
+    earningsCalendar: v.optional(v.array(v.object({ ticker: v.string(), date: v.string(), estimate: v.optional(v.string()) }))),
+    generatedAt: v.number(),
+  }).index("by_date", ["date"]),
+
+  // ── Investment Hub: Trade System ──────────────────────
+
+  tradeRules: defineTable({
+    positionId: v.id("investmentPositions"),
+    ticker: v.string(),
+    entryZone: v.optional(v.object({ low: v.number(), high: v.number() })),
+    addZone: v.optional(v.object({ low: v.number(), high: v.number() })),
+    trimZone: v.optional(v.object({ low: v.number(), high: v.number() })),
+    stopZone: v.optional(v.object({ low: v.number(), high: v.number() })),
+    notes: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_position", ["positionId"]).index("by_ticker", ["ticker"]),
+
+  tradeDecisions: defineTable({
+    positionId: v.optional(v.id("investmentPositions")),
+    ticker: v.string(),
+    action: v.union(v.literal("buy"), v.literal("sell"), v.literal("add"), v.literal("trim"), v.literal("hold")),
+    price: v.number(),
+    shares: v.optional(v.number()),
+    followedSystem: v.optional(v.boolean()),
+    systemSaid: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    decidedAt: v.number(),
+  }).index("by_ticker", ["ticker"]).index("by_decided", ["decidedAt"]),
+
+  closedTrades: defineTable({
+    ticker: v.string(),
+    name: v.string(),
+    portfolioType: v.string(),
+    entryPrice: v.number(),
+    exitPrice: v.number(),
+    shares: v.number(),
+    entryDate: v.string(),
+    exitDate: v.string(),
+    returnPct: v.number(),
+    returnDollars: v.number(),
+    holdDays: v.number(),
+    thesis: v.optional(v.string()),
+    exitReason: v.optional(v.string()),
+    closedAt: v.number(),
+  }).index("by_closed", ["closedAt"]).index("by_ticker", ["ticker"]),
 });

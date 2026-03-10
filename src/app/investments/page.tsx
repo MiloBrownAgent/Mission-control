@@ -3,7 +3,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -15,11 +15,28 @@ import {
   Check,
   Shield,
   Flame,
-  Search,
   Lightbulb,
   Activity,
   Gauge,
   Brain,
+  Home,
+  Target,
+  Radio,
+  BarChart3,
+  Trophy,
+  Clock,
+  Search,
+  Filter,
+  Calendar,
+  DollarSign,
+  ArrowUp,
+  ArrowDown,
+  Minus,
+  Eye,
+  BookOpen,
+  Zap,
+  Globe,
+  LineChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -28,14 +45,11 @@ const MonteCarloTab = dynamic(() => import("@/components/quant/MonteCarloTab"), 
 const PaperTradesTab = dynamic(() => import("@/components/quant/PaperTradesTab"), { ssr: false });
 const SentimentTab = dynamic(() => import("@/components/quant/SentimentTab"), { ssr: false });
 
-type TopTab = "pitzy" | "monte_carlo" | "paper_trades" | "sentiment";
-type PitzySubTab = "portfolios" | "alerts" | "opportunities" | "track_record";
+type MainTab = "home" | "positions" | "signal_engine" | "trade_system" | "track_record";
 
 export default function InvestmentsPage() {
-  const [activeTab, setActiveTab] = useState<TopTab>("pitzy");
-  const [pitzySubTab, setPitzySubTab] = useState<PitzySubTab>("portfolios");
+  const [activeTab, setActiveTab] = useState<MainTab>("home");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -43,13 +57,13 @@ export default function InvestmentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
-            Pitzy Model
+            Investment Hub
           </h1>
           <p className="mt-1 text-sm text-[#6B6560]">
-            Investment thesis engine · Portfolio monitoring · Quant tools
+            Portfolio pulse · Signals · Trade system · Track record
           </p>
         </div>
-        {activeTab === "pitzy" && (
+        {activeTab === "positions" && (
           <button
             onClick={() => setShowAddForm(true)}
             className="flex items-center gap-2 rounded-lg bg-[#B8956A] px-4 py-2 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] transition-colors"
@@ -60,13 +74,14 @@ export default function InvestmentsPage() {
         )}
       </div>
 
-      {/* Top-level Tabs */}
+      {/* Main Navigation Tabs */}
       <div className="flex items-center gap-1 rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-1 w-fit">
         {[
-          { key: "pitzy" as TopTab, label: "Pitzy Model", icon: Brain },
-          { key: "monte_carlo" as TopTab, label: "Monte Carlo", icon: TrendingUp },
-          { key: "paper_trades" as TopTab, label: "Paper Trades", icon: Activity },
-          { key: "sentiment" as TopTab, label: "Sentiment", icon: Gauge },
+          { key: "home" as MainTab, label: "Home", icon: Home },
+          { key: "positions" as MainTab, label: "Positions", icon: Target },
+          { key: "signal_engine" as MainTab, label: "Signal Engine", icon: Radio },
+          { key: "trade_system" as MainTab, label: "Trade System", icon: BarChart3 },
+          { key: "track_record" as MainTab, label: "Track Record", icon: Trophy },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -84,52 +99,879 @@ export default function InvestmentsPage() {
         ))}
       </div>
 
-      {/* Content */}
-      {activeTab === "pitzy" && (
-        <div className="space-y-4">
-          {/* Sub-nav */}
-          <div className="flex items-center gap-1 border-b border-[#1A1816] pb-3">
-            {[
-              { key: "portfolios" as PitzySubTab, label: "Portfolios" },
-              { key: "alerts" as PitzySubTab, label: "Alerts" },
-              { key: "opportunities" as PitzySubTab, label: "Opportunities" },
-              { key: "track_record" as PitzySubTab, label: "Track Record" },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setPitzySubTab(tab.key)}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
-                  pitzySubTab === tab.key
-                    ? "text-[#E8E4DF] bg-[#1A1816]"
-                    : "text-[#6B6560] hover:text-[#E8E4DF]"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {pitzySubTab === "portfolios" && (
-            <PortfolioView
-              selectedPosition={selectedPosition}
-              setSelectedPosition={setSelectedPosition}
-            />
-          )}
-          {pitzySubTab === "alerts" && <AlertsView />}
-          {pitzySubTab === "opportunities" && <OpportunitiesView />}
-          {pitzySubTab === "track_record" && <TrackRecordView />}
-        </div>
-      )}
-      {activeTab === "monte_carlo" && <MonteCarloTab />}
-      {activeTab === "paper_trades" && <PaperTradesTab />}
-      {activeTab === "sentiment" && <SentimentTab />}
+      {/* Tab Content */}
+      {activeTab === "home" && <HomeTab />}
+      {activeTab === "positions" && <PositionsTab />}
+      {activeTab === "signal_engine" && <SignalEngineTab />}
+      {activeTab === "trade_system" && <TradeSystemTab />}
+      {activeTab === "track_record" && <TrackRecordTab />}
 
       {/* Add Position Modal */}
       {showAddForm && <AddPositionModal onClose={() => setShowAddForm(false)} />}
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 1: HOME — Portfolio Pulse
+   ═══════════════════════════════════════════════════════════ */
+
+function HomeTab() {
+  const allPositions = useQuery(api.investments.listPositions, {});
+  const alerts = useQuery(api.investments.listAlerts, { acknowledged: false, limit: 5 });
+  const latestBriefing = useQuery(api.signals.getLatestBriefing);
+
+  const activePositions = useMemo(
+    () => allPositions?.filter((p) => p.status === "active") ?? [],
+    [allPositions]
+  );
+  const highRisk = activePositions.filter((p) => p.portfolioType === "high_risk");
+  const lowRisk = activePositions.filter((p) => p.portfolioType === "low_risk");
+
+  const totalValue = useMemo(() => {
+    return activePositions.reduce((sum, p) => {
+      if (p.shares && p.entryPrice) return sum + p.shares * p.entryPrice;
+      return sum;
+    }, 0);
+  }, [activePositions]);
+
+  const criticalAlerts = alerts?.filter((a) => a.severity === "high" || a.severity === "critical") ?? [];
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Bar */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <StatCard label="Portfolio Value" value={`$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 0 })}`} />
+        <StatCard label="Today's P&L" value="—" muted />
+        <StatCard label="Unrealized P&L" value="—" muted />
+        <StatCard label="Positions" value={String(activePositions.length)} />
+        <StatCard
+          label="Risk Budget"
+          value={`${highRisk.length}H / ${lowRisk.length}L`}
+          sub={`${activePositions.length} total`}
+        />
+      </div>
+
+      {/* Quick Alerts */}
+      {criticalAlerts.length > 0 && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="h-4 w-4 text-red-400" />
+            <span className="text-sm font-semibold text-red-400">Active Alerts</span>
+          </div>
+          <div className="space-y-2">
+            {criticalAlerts.map((alert) => (
+              <div key={alert._id} className="flex items-start gap-3 text-sm">
+                <span className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 mt-0.5",
+                  alert.severity === "critical" ? "bg-red-500/20 text-red-400" : "bg-orange-500/20 text-orange-400"
+                )}>
+                  {alert.severity}
+                </span>
+                <div>
+                  <span className="text-[#B8956A] font-medium mr-2">{alert.ticker}</span>
+                  <span className="text-[#E8E4DF]">{alert.title}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Portfolio Columns */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <PortfolioColumn
+          title="High Risk"
+          icon={<Flame className="h-5 w-5 text-red-400" />}
+          positions={highRisk}
+          color="red"
+        />
+        <PortfolioColumn
+          title="Low Risk"
+          icon={<Shield className="h-5 w-5 text-blue-400" />}
+          positions={lowRisk}
+          color="blue"
+        />
+      </div>
+
+      {/* Latest Signal */}
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Radio className="h-4 w-4 text-[#B8956A]" />
+          <span className="text-sm font-semibold text-[#E8E4DF]">Latest Signal</span>
+        </div>
+        {latestBriefing ? (
+          <div>
+            <p className="text-xs text-[#6B6560] mb-1">{latestBriefing.date} · {latestBriefing.marketStatus}</p>
+            {latestBriefing.sections.slice(0, 2).map((s, i) => (
+              <p key={i} className="text-sm text-[#E8E4DF]/80">
+                {s.ticker && <span className="text-[#B8956A] mr-1">{s.ticker}</span>}
+                {s.title}: {s.summary.slice(0, 120)}{s.summary.length > 120 ? "..." : ""}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-[#6B6560]">No signals yet. Morning briefing generates at 6:00 AM CT.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, sub, muted }: { label: string; value: string; sub?: string; muted?: boolean }) {
+  return (
+    <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-4">
+      <p className="text-xs text-[#6B6560] mb-1">{label}</p>
+      <p className={cn("text-xl font-bold", muted ? "text-[#6B6560]" : "text-[#E8E4DF]")}>{value}</p>
+      {sub && <p className="text-[10px] text-[#6B6560] mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+function PortfolioColumn({
+  title,
+  icon,
+  positions,
+  color,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  positions: any[];
+  color: "red" | "blue";
+}) {
+  return (
+    <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+      <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
+        {icon}
+        <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">{title}</h2>
+        <span className={cn(
+          "ml-auto rounded-full px-2.5 py-0.5 text-xs",
+          color === "red" ? "bg-red-500/10 text-red-400" : "bg-blue-500/10 text-blue-400"
+        )}>
+          {positions.length} active
+        </span>
+      </div>
+      <div className="divide-y divide-[#1A1816]">
+        {positions.length === 0 ? (
+          <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
+            No {title.toLowerCase()} positions yet.
+          </div>
+        ) : (
+          positions.map((pos) => (
+            <div key={pos._id} className="px-5 py-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-[#E8E4DF]">{pos.ticker}</span>
+                <span className="text-xs text-[#6B6560]">{pos.name}</span>
+                {pos.shares && pos.entryPrice && (
+                  <span className="ml-auto text-xs text-[#6B6560]">
+                    {pos.shares} @ ${pos.entryPrice}
+                  </span>
+                )}
+              </div>
+              {pos.thesis && (
+                <p className="mt-1 text-xs text-[#6B6560] line-clamp-1">{pos.thesis}</p>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 2: POSITIONS — Full Pitzy Model (preserved)
+   ═══════════════════════════════════════════════════════════ */
+
+type PositionsSubTab = "portfolios" | "alerts" | "opportunities" | "track_record" | "monte_carlo" | "paper_trades" | "sentiment";
+
+function PositionsTab() {
+  const [subTab, setSubTab] = useState<PositionsSubTab>("portfolios");
+  const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-4">
+      {/* Sub-nav */}
+      <div className="flex items-center gap-1 border-b border-[#1A1816] pb-3 flex-wrap">
+        {[
+          { key: "portfolios" as PositionsSubTab, label: "Portfolios" },
+          { key: "alerts" as PositionsSubTab, label: "Alerts" },
+          { key: "opportunities" as PositionsSubTab, label: "Opportunities" },
+          { key: "track_record" as PositionsSubTab, label: "Track Record" },
+          { key: "monte_carlo" as PositionsSubTab, label: "Monte Carlo" },
+          { key: "paper_trades" as PositionsSubTab, label: "Paper Trades" },
+          { key: "sentiment" as PositionsSubTab, label: "Sentiment" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setSubTab(tab.key)}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+              subTab === tab.key
+                ? "text-[#E8E4DF] bg-[#1A1816]"
+                : "text-[#6B6560] hover:text-[#E8E4DF]"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {subTab === "portfolios" && (
+        <PortfolioView
+          selectedPosition={selectedPosition}
+          setSelectedPosition={setSelectedPosition}
+        />
+      )}
+      {subTab === "alerts" && <AlertsView />}
+      {subTab === "opportunities" && <OpportunitiesView />}
+      {subTab === "track_record" && <OpportunityTrackRecordView />}
+      {subTab === "monte_carlo" && <MonteCarloTab />}
+      {subTab === "paper_trades" && <PaperTradesTab />}
+      {subTab === "sentiment" && <SentimentTab />}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 3: SIGNAL ENGINE
+   ═══════════════════════════════════════════════════════════ */
+
+type SignalSubTab = "briefing" | "events" | "macro";
+
+function SignalEngineTab() {
+  const [subTab, setSubTab] = useState<SignalSubTab>("briefing");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-1 border-b border-[#1A1816] pb-3">
+        {[
+          { key: "briefing" as SignalSubTab, label: "Morning Briefing" },
+          { key: "events" as SignalSubTab, label: "Event Scanner" },
+          { key: "macro" as SignalSubTab, label: "Macro Context" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setSubTab(tab.key)}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+              subTab === tab.key
+                ? "text-[#E8E4DF] bg-[#1A1816]"
+                : "text-[#6B6560] hover:text-[#E8E4DF]"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {subTab === "briefing" && <MorningBriefing />}
+      {subTab === "events" && <EventScanner />}
+      {subTab === "macro" && <MacroContext />}
+    </div>
+  );
+}
+
+function MorningBriefing() {
+  const today = new Date().toISOString().split("T")[0];
+  const briefing = useQuery(api.signals.getBriefingByDate, { date: today });
+  const latestBriefing = useQuery(api.signals.getLatestBriefing);
+  const data = briefing ?? latestBriefing;
+
+  const sectionTypes = ["Overnight Developments", "SEC Filings", "Insider Transactions", "Unusual Activity", "Macro Events"];
+
+  if (!data) {
+    return (
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-16 text-center">
+        <Clock className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
+        <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Morning Briefing</p>
+        <p className="text-sm text-[#6B6560] mt-2">Generates at 6:00 AM CT</p>
+        <p className="text-xs text-[#6B6560] mt-1">Market intelligence, SEC filings, insider activity, and macro events</p>
+      </div>
+    );
+  }
+
+  const getMarketStatusColor = (status: string) => {
+    if (status.toLowerCase().includes("open")) return "text-green-400 bg-green-500/10";
+    if (status.toLowerCase().includes("pre")) return "text-yellow-400 bg-yellow-500/10";
+    if (status.toLowerCase().includes("after")) return "text-blue-400 bg-blue-500/10";
+    return "text-[#6B6560] bg-[#1A1816]";
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">{data.date}</p>
+        </div>
+        <span className={cn("rounded-full px-3 py-1 text-xs font-medium", getMarketStatusColor(data.marketStatus))}>
+          {data.marketStatus}
+        </span>
+      </div>
+
+      {/* Sections */}
+      {sectionTypes.map((sType) => {
+        const items = data.sections.filter((s) => s.type === sType);
+        if (items.length === 0) return null;
+        return (
+          <div key={sType} className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+            <div className="border-b border-[#1A1816] px-5 py-3">
+              <h3 className="text-sm font-semibold text-[#E8E4DF]">{sType}</h3>
+            </div>
+            <div className="divide-y divide-[#1A1816]">
+              {items.map((item, i) => (
+                <div key={i} className="px-5 py-3 flex items-start gap-3">
+                  <ImportanceBadge importance={item.importance} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      {item.ticker && <span className="text-xs font-semibold text-[#B8956A]">{item.ticker}</span>}
+                      <span className="text-sm font-medium text-[#E8E4DF]">{item.title}</span>
+                    </div>
+                    <p className="mt-0.5 text-sm text-[#6B6560]">{item.summary}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ImportanceBadge({ importance }: { importance: string }) {
+  return (
+    <span className={cn(
+      "rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 mt-0.5",
+      importance === "high" ? "bg-red-500/10 text-red-400" :
+      importance === "medium" ? "bg-yellow-500/10 text-yellow-400" :
+      "bg-[#1A1816] text-[#6B6560]"
+    )}>
+      {importance}
+    </span>
+  );
+}
+
+function EventScanner() {
+  const events = useQuery(api.signals.listEventScans, { status: "active", limit: 50 });
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [sectorFilter, setSectorFilter] = useState<string>("all");
+
+  const eventTypes = ["Insider Cluster", "Activist 13D", "Merger Arb", "FDA Calendar", "Earnings Whisper"];
+
+  const filtered = useMemo(() => {
+    if (!events) return [];
+    let result = events;
+    if (typeFilter !== "all") result = result.filter((e) => e.eventType === typeFilter);
+    if (sectorFilter !== "all") result = result.filter((e) => e.sector === sectorFilter);
+    return result;
+  }, [events, typeFilter, sectorFilter]);
+
+  const sectors = useMemo(() => {
+    if (!events) return [];
+    return [...new Set(events.map((e) => e.sector).filter(Boolean))];
+  }, [events]);
+
+  if (!events || events.length === 0) {
+    return (
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-16 text-center">
+        <Search className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
+        <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Event Scanner</p>
+        <p className="text-sm text-[#6B6560] mt-2">Runs continuously during market hours</p>
+        <p className="text-xs text-[#6B6560] mt-1">Tracks insider clusters, activist filings, merger arb, FDA calendar, earnings whispers</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Filter Bar */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1">
+          <Filter className="h-3.5 w-3.5 text-[#6B6560]" />
+          <span className="text-xs text-[#6B6560]">Filter:</span>
+        </div>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="rounded-lg border border-[#1A1816] bg-[#0D0C0A] px-3 py-1.5 text-xs text-[#E8E4DF] focus:border-[#B8956A] focus:outline-none"
+        >
+          <option value="all">All Types</option>
+          {eventTypes.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+        {sectors.length > 0 && (
+          <select
+            value={sectorFilter}
+            onChange={(e) => setSectorFilter(e.target.value)}
+            className="rounded-lg border border-[#1A1816] bg-[#0D0C0A] px-3 py-1.5 text-xs text-[#E8E4DF] focus:border-[#B8956A] focus:outline-none"
+          >
+            <option value="all">All Sectors</option>
+            {sectors.map((s) => (
+              <option key={s} value={s!}>{s}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Event Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filtered.map((event) => (
+          <div key={event._id} className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="rounded-full bg-[#B8956A]/10 px-2.5 py-0.5 text-[10px] font-medium text-[#B8956A]">
+                {event.eventType}
+              </span>
+              {event.sector && (
+                <span className="rounded-full bg-[#1A1816] px-2 py-0.5 text-[10px] text-[#6B6560]">
+                  {event.sector}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-base font-bold text-[#E8E4DF]">{event.ticker}</span>
+              <span className="text-sm text-[#E8E4DF]">{event.title}</span>
+            </div>
+            <p className="text-sm text-[#6B6560] mb-3">{event.summary}</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-[#6B6560]">Pitzy Score:</span>
+                <span className={cn(
+                  "text-sm font-bold",
+                  event.pitzyScore >= 7 ? "text-green-400" :
+                  event.pitzyScore >= 4 ? "text-yellow-400" :
+                  "text-red-400"
+                )}>
+                  {event.pitzyScore}/10
+                </span>
+              </div>
+              <span className="text-[10px] text-[#6B6560]">
+                {new Date(event.detectedAt).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MacroContext() {
+  const macro = useQuery(api.signals.getLatestMacro);
+  const positions = useQuery(api.investments.listPositions, {});
+  const activePositions = positions?.filter((p) => p.status === "active") ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Fed Funds Rate */}
+        <MacroCard title="Fed Funds Rate" icon={<DollarSign className="h-4 w-4" />}>
+          {macro?.fedFundsRate != null ? (
+            <div>
+              <p className="text-2xl font-bold text-[#E8E4DF]">{macro.fedFundsRate}%</p>
+              {macro.fedNextMeeting && <p className="text-xs text-[#6B6560] mt-1">Next meeting: {macro.fedNextMeeting}</p>}
+              {macro.fedChangeProb != null && <p className="text-xs text-[#6B6560]">Change prob: {macro.fedChangeProb}%</p>}
+            </div>
+          ) : (
+            <MacroEmpty text="Fed rate data pending" />
+          )}
+        </MacroCard>
+
+        {/* VIX */}
+        <MacroCard title="VIX" icon={<Activity className="h-4 w-4" />}>
+          {macro?.vix != null ? (
+            <div>
+              <p className={cn(
+                "text-2xl font-bold",
+                macro.vix < 15 ? "text-green-400" :
+                macro.vix <= 25 ? "text-yellow-400" :
+                "text-red-400"
+              )}>
+                {macro.vix}
+              </p>
+              {macro.vixTrend && (
+                <div className="flex items-center gap-1 mt-1">
+                  {macro.vixTrend === "up" && <ArrowUp className="h-3 w-3 text-red-400" />}
+                  {macro.vixTrend === "down" && <ArrowDown className="h-3 w-3 text-green-400" />}
+                  {macro.vixTrend === "flat" && <Minus className="h-3 w-3 text-[#6B6560]" />}
+                  <span className="text-xs text-[#6B6560] capitalize">{macro.vixTrend}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <MacroEmpty text="VIX data pending" />
+          )}
+        </MacroCard>
+
+        {/* Yield Curve */}
+        <MacroCard title="Yield Curve" icon={<LineChart className="h-4 w-4" />}>
+          {macro?.yieldCurveStatus ? (
+            <div>
+              <span className={cn(
+                "rounded-full px-3 py-1 text-sm font-semibold",
+                macro.yieldCurveStatus === "Normal" ? "bg-green-500/10 text-green-400" :
+                macro.yieldCurveStatus === "Flat" ? "bg-yellow-500/10 text-yellow-400" :
+                "bg-red-500/10 text-red-400"
+              )}>
+                {macro.yieldCurveStatus}
+              </span>
+              {macro.yield2y10ySpread != null && (
+                <p className="text-xs text-[#6B6560] mt-2">2Y-10Y Spread: {macro.yield2y10ySpread}bps</p>
+              )}
+            </div>
+          ) : (
+            <MacroEmpty text="Yield curve data pending" />
+          )}
+        </MacroCard>
+
+        {/* Dollar Index */}
+        <MacroCard title="Dollar Index (DXY)" icon={<Globe className="h-4 w-4" />}>
+          {macro?.dxy != null ? (
+            <div>
+              <p className="text-2xl font-bold text-[#E8E4DF]">{macro.dxy}</p>
+              {macro.dxyTrend && (
+                <div className="flex items-center gap-1 mt-1">
+                  {macro.dxyTrend === "up" && <ArrowUp className="h-3 w-3 text-green-400" />}
+                  {macro.dxyTrend === "down" && <ArrowDown className="h-3 w-3 text-red-400" />}
+                  {macro.dxyTrend === "flat" && <Minus className="h-3 w-3 text-[#6B6560]" />}
+                  <span className="text-xs text-[#6B6560] capitalize">{macro.dxyTrend}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <MacroEmpty text="DXY data pending" />
+          )}
+        </MacroCard>
+
+        {/* Sector Rotation */}
+        <MacroCard title="Sector Rotation" icon={<BarChart3 className="h-4 w-4" />}>
+          {macro?.sectorRotation ? (
+            <div className="grid grid-cols-3 gap-1">
+              {Object.entries(macro.sectorRotation as Record<string, number>).map(([sector, value]) => (
+                <div
+                  key={sector}
+                  className={cn(
+                    "rounded px-2 py-1 text-center text-[10px]",
+                    (value as number) >= 0 ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                  )}
+                >
+                  {sector}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <MacroEmpty text="Sector data pending" />
+          )}
+        </MacroCard>
+
+        {/* Earnings Calendar */}
+        <MacroCard title="Earnings Calendar" icon={<Calendar className="h-4 w-4" />}>
+          {macro?.earningsCalendar && macro.earningsCalendar.length > 0 ? (
+            <div className="space-y-1.5">
+              {macro.earningsCalendar.slice(0, 5).map((e, i) => (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[#E8E4DF]">{e.ticker}</span>
+                  <span className="text-[#6B6560]">{e.date}</span>
+                  {e.estimate && <span className="text-[#6B6560]">Est: {e.estimate}</span>}
+                </div>
+              ))}
+            </div>
+          ) : activePositions.length > 0 ? (
+            <MacroEmpty text="No upcoming earnings for your positions" />
+          ) : (
+            <MacroEmpty text="Add positions to track earnings" />
+          )}
+        </MacroCard>
+      </div>
+    </div>
+  );
+}
+
+function MacroCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5">
+      <div className="flex items-center gap-2 mb-3 text-[#B8956A]">
+        {icon}
+        <span className="text-sm font-semibold">{title}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function MacroEmpty({ text }: { text: string }) {
+  return <p className="text-sm text-[#6B6560]">{text}</p>;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 4: TRADE SYSTEM
+   ═══════════════════════════════════════════════════════════ */
+
+function TradeSystemTab() {
+  const positions = useQuery(api.investments.listPositions, {});
+  const tradeRules = useQuery(api.trades.listTradeRules);
+  const decisions = useQuery(api.trades.listTradeDecisions, { limit: 30 });
+
+  const activePositions = positions?.filter((p) => p.status === "active") ?? [];
+
+  const rulesMap = useMemo(() => {
+    const map = new Map<string, any>();
+    tradeRules?.forEach((r) => map.set(r.positionId, r));
+    return map;
+  }, [tradeRules]);
+
+  return (
+    <div className="space-y-6">
+      {/* Position Trade Zones */}
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+        <div className="border-b border-[#1A1816] px-5 py-4">
+          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Trade Zones</h2>
+          <p className="text-xs text-[#6B6560] mt-1">Entry, add, trim, and stop zones for each position</p>
+        </div>
+        <div className="divide-y divide-[#1A1816]">
+          {activePositions.length === 0 ? (
+            <div className="px-5 py-12 text-center">
+              <Target className="mx-auto h-8 w-8 text-[#6B6560] mb-3" />
+              <p className="text-sm text-[#6B6560]">Add active positions to define trade zones</p>
+            </div>
+          ) : (
+            activePositions.map((pos) => {
+              const rule = rulesMap.get(pos._id);
+              return (
+                <div key={pos._id} className="px-5 py-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-sm font-bold text-[#E8E4DF]">{pos.ticker}</span>
+                    <span className="text-xs text-[#6B6560]">{pos.name}</span>
+                    {pos.entryPrice && (
+                      <span className="ml-auto text-xs text-[#6B6560]">Entry: ${pos.entryPrice}</span>
+                    )}
+                  </div>
+                  {rule ? (
+                    <PriceRuler rule={rule} currentEntry={pos.entryPrice} />
+                  ) : (
+                    <p className="text-xs text-[#6B6560] italic">No trade zones defined yet. Use Milo to set zones for {pos.ticker}.</p>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Decision Log */}
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+        <div className="border-b border-[#1A1816] px-5 py-4">
+          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Decision Log</h2>
+          <p className="text-xs text-[#6B6560] mt-1">Trade decisions and system compliance</p>
+        </div>
+        <div className="divide-y divide-[#1A1816] max-h-[400px] overflow-y-auto">
+          {(!decisions || decisions.length === 0) ? (
+            <div className="px-5 py-12 text-center">
+              <BookOpen className="mx-auto h-8 w-8 text-[#6B6560] mb-3" />
+              <p className="text-sm text-[#6B6560]">Decision log builds as you make trades</p>
+              <p className="text-xs text-[#6B6560] mt-1">Every buy, sell, add, and trim gets logged here</p>
+            </div>
+          ) : (
+            decisions.map((d) => (
+              <div key={d._id} className="px-5 py-3 flex items-center gap-3">
+                <span className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                  d.action === "buy" ? "bg-green-500/10 text-green-400" :
+                  d.action === "sell" ? "bg-red-500/10 text-red-400" :
+                  d.action === "add" ? "bg-blue-500/10 text-blue-400" :
+                  d.action === "trim" ? "bg-yellow-500/10 text-yellow-400" :
+                  "bg-[#1A1816] text-[#6B6560]"
+                )}>
+                  {d.action}
+                </span>
+                <span className="text-sm font-semibold text-[#E8E4DF]">{d.ticker}</span>
+                <span className="text-xs text-[#6B6560]">${d.price}</span>
+                {d.shares && <span className="text-xs text-[#6B6560]">{d.shares} shares</span>}
+                {d.followedSystem != null && (
+                  <span className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px]",
+                    d.followedSystem ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                  )}>
+                    {d.followedSystem ? "✓ System" : "✗ Override"}
+                  </span>
+                )}
+                {d.notes && <span className="text-xs text-[#6B6560] truncate max-w-[200px]">{d.notes}</span>}
+                <span className="ml-auto text-[10px] text-[#6B6560]">
+                  {new Date(d.decidedAt).toLocaleDateString()}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PriceRuler({ rule, currentEntry }: { rule: any; currentEntry?: number }) {
+  const zones = [
+    { key: "stopZone", label: "Stop", color: "bg-red-500", textColor: "text-red-400", zone: rule.stopZone },
+    { key: "entryZone", label: "Entry", color: "bg-green-500", textColor: "text-green-400", zone: rule.entryZone },
+    { key: "addZone", label: "Add", color: "bg-blue-500", textColor: "text-blue-400", zone: rule.addZone },
+    { key: "trimZone", label: "Trim", color: "bg-yellow-500", textColor: "text-yellow-400", zone: rule.trimZone },
+  ].filter((z) => z.zone);
+
+  if (zones.length === 0) {
+    return <p className="text-xs text-[#6B6560] italic">No zones set</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {zones.map((z) => (
+        <div key={z.key} className="flex items-center gap-3">
+          <span className={cn("text-xs w-12 text-right", z.textColor)}>{z.label}</span>
+          <div className="flex-1 relative h-4 rounded-full bg-[#1A1816] overflow-hidden">
+            <div className={cn("absolute inset-y-0 rounded-full opacity-30", z.color)} style={{ left: "20%", right: "20%" }} />
+          </div>
+          <span className="text-xs text-[#6B6560] w-32 text-right">
+            ${z.zone.low} – ${z.zone.high}
+          </span>
+        </div>
+      ))}
+      {rule.notes && <p className="text-xs text-[#6B6560] mt-2">{rule.notes}</p>}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 5: TRACK RECORD
+   ═══════════════════════════════════════════════════════════ */
+
+function TrackRecordTab() {
+  const closedTrades = useQuery(api.trades.listClosedTrades, { limit: 100 });
+  const exitedPositions = useQuery(api.investments.listPositions, {});
+
+  const exited = exitedPositions?.filter((p) => p.status === "exited") ?? [];
+
+  const stats = useMemo(() => {
+    if (!closedTrades || closedTrades.length === 0) return null;
+    const wins = closedTrades.filter((t) => t.returnPct > 0);
+    const losses = closedTrades.filter((t) => t.returnPct <= 0);
+    const winRate = (wins.length / closedTrades.length) * 100;
+    const avgGain = wins.length > 0 ? wins.reduce((s, t) => s + t.returnPct, 0) / wins.length : 0;
+    const avgLoss = losses.length > 0 ? losses.reduce((s, t) => s + Math.abs(t.returnPct), 0) / losses.length : 0;
+    const profitFactor = avgLoss > 0 ? (avgGain * wins.length) / (avgLoss * losses.length) : 0;
+    const totalReturn = closedTrades.reduce((s, t) => s + t.returnDollars, 0);
+    const avgWinDays = wins.length > 0 ? wins.reduce((s, t) => s + t.holdDays, 0) / wins.length : 0;
+    const avgLossDays = losses.length > 0 ? losses.reduce((s, t) => s + t.holdDays, 0) / losses.length : 0;
+
+    return { winRate, avgGain, avgLoss, profitFactor, totalReturn, totalTrades: closedTrades.length, wins: wins.length, losses: losses.length, avgWinDays, avgLossDays };
+  }, [closedTrades]);
+
+  if (!closedTrades || (closedTrades.length === 0 && exited.length === 0)) {
+    return (
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-16 text-center">
+        <Trophy className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
+        <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Track Record</p>
+        <p className="text-sm text-[#6B6560] mt-2">Track record builds as you close positions</p>
+        <p className="text-xs text-[#6B6560] mt-1">Every exit gets logged with return, hold days, and thesis outcome</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Dashboard */}
+      {stats && (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <StatCard label="Win Rate" value={`${stats.winRate.toFixed(0)}%`} />
+          <StatCard label="Avg Gain" value={`+${stats.avgGain.toFixed(1)}%`} />
+          <StatCard label="Avg Loss" value={`-${stats.avgLoss.toFixed(1)}%`} />
+          <StatCard label="Profit Factor" value={stats.profitFactor.toFixed(2)} />
+          <StatCard
+            label="Total Return"
+            value={`$${stats.totalReturn.toLocaleString("en-US", { minimumFractionDigits: 0 })}`}
+          />
+        </div>
+      )}
+
+      {/* Behavioral Insight */}
+      {stats && stats.avgWinDays > 0 && stats.avgLossDays > 0 && (
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <Brain className="h-4 w-4 text-[#B8956A]" />
+            <span className="text-sm font-semibold text-[#E8E4DF]">Behavioral Insight</span>
+          </div>
+          <p className="text-sm text-[#6B6560]">
+            {stats.avgLossDays > stats.avgWinDays
+              ? `You hold losers ${Math.round(stats.avgLossDays - stats.avgWinDays)} days longer than winners (avg ${Math.round(stats.avgLossDays)}d vs ${Math.round(stats.avgWinDays)}d). Consider tighter stop discipline.`
+              : `You cut losers ${Math.round(stats.avgWinDays - stats.avgLossDays)} days faster than winners (avg ${Math.round(stats.avgLossDays)}d vs ${Math.round(stats.avgWinDays)}d). Good discipline.`
+            }
+          </p>
+        </div>
+      )}
+
+      {/* Closed Trades Table */}
+      {closedTrades && closedTrades.length > 0 && (
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+          <div className="border-b border-[#1A1816] px-5 py-4">
+            <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Closed Trades</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#1A1816] text-[#6B6560] text-xs">
+                  <th className="px-5 py-3 text-left font-medium">Ticker</th>
+                  <th className="px-3 py-3 text-left font-medium">Entry</th>
+                  <th className="px-3 py-3 text-left font-medium">Exit</th>
+                  <th className="px-3 py-3 text-right font-medium">Entry $</th>
+                  <th className="px-3 py-3 text-right font-medium">Exit $</th>
+                  <th className="px-3 py-3 text-right font-medium">Return</th>
+                  <th className="px-3 py-3 text-right font-medium">Days</th>
+                  <th className="px-3 py-3 text-left font-medium">Reason</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1A1816]">
+                {closedTrades.map((t) => (
+                  <tr key={t._id} className="hover:bg-[#1A1816]/30">
+                    <td className="px-5 py-3 font-semibold text-[#E8E4DF]">{t.ticker}</td>
+                    <td className="px-3 py-3 text-[#6B6560]">{t.entryDate}</td>
+                    <td className="px-3 py-3 text-[#6B6560]">{t.exitDate}</td>
+                    <td className="px-3 py-3 text-right text-[#6B6560]">${t.entryPrice.toFixed(2)}</td>
+                    <td className="px-3 py-3 text-right text-[#6B6560]">${t.exitPrice.toFixed(2)}</td>
+                    <td className={cn(
+                      "px-3 py-3 text-right font-medium",
+                      t.returnPct >= 0 ? "text-green-400" : "text-red-400"
+                    )}>
+                      {t.returnPct >= 0 ? "+" : ""}{t.returnPct.toFixed(1)}%
+                    </td>
+                    <td className="px-3 py-3 text-right text-[#6B6560]">{t.holdDays}</td>
+                    <td className="px-3 py-3 text-[#6B6560] text-xs">{t.exitReason ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* SPY Comparison Placeholder */}
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="h-4 w-4 text-[#B8956A]" />
+          <span className="text-sm font-semibold text-[#E8E4DF]">vs SPY Benchmark</span>
+        </div>
+        <p className="text-sm text-[#6B6560]">
+          {stats
+            ? `Your ${stats.totalTrades} closed trades returned $${stats.totalReturn.toLocaleString()}. SPY comparison coming soon.`
+            : "SPY comparison will show once you have closed trades."
+          }
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PRESERVED COMPONENTS from original page
+   ═══════════════════════════════════════════════════════════ */
 
 function PortfolioView({
   selectedPosition,
@@ -343,7 +1185,7 @@ function PositionDetail({
         </h3>
         {position.thesis ? (
           <>
-            <div className="prose prose-invert prose-sm max-w-none text-[#E8E4DF]/80 whitespace-pre-wrap">
+            <div className="text-sm text-[#E8E4DF]/80 whitespace-pre-wrap">
               {position.thesis}
             </div>
             {position.thesisSources && position.thesisSources.length > 0 && (
@@ -729,7 +1571,7 @@ function OpportunitiesView() {
   );
 }
 
-function TrackRecordView() {
+function OpportunityTrackRecordView() {
   const allOpps = useQuery(api.investments.listAllOpportunitiesTracked);
   const weeklySummaries = useQuery(api.investments.listWeeklySummaries, { limit: 52 });
 
@@ -973,7 +1815,7 @@ function AddPositionModal({ onClose }: { onClose: () => void }) {
                     : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560]"
                 )}
               >
-                🔥 High Risk
+                High Risk
               </button>
               <button
                 type="button"
@@ -985,7 +1827,7 @@ function AddPositionModal({ onClose }: { onClose: () => void }) {
                     : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560]"
                 )}
               >
-                🛡 Low Risk
+                Low Risk
               </button>
             </div>
           </div>
@@ -1030,7 +1872,7 @@ function AddPositionModal({ onClose }: { onClose: () => void }) {
                       : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560]"
                   )}
                 >
-                  {h === "short" ? "Days–Weeks" : h === "medium" ? "Months" : "Years"}
+                  {h === "short" ? "Days-Weeks" : h === "medium" ? "Months" : "Years"}
                 </button>
               ))}
             </div>
