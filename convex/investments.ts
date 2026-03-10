@@ -48,6 +48,25 @@ export const addPosition = mutation({
       .query("investmentPositions")
       .withIndex("by_ticker", (q) => q.eq("ticker", args.ticker.toUpperCase()))
       .first();
+    
+    // If position exists but was exited, reactivate it with new data
+    if (existing && existing.status === "exited") {
+      await ctx.db.patch(existing._id, {
+        name: args.name,
+        portfolioType: args.portfolioType,
+        shares: args.shares,
+        entryPrice: args.entryPrice,
+        entryDate: args.entryDate,
+        timeHorizon: args.timeHorizon,
+        status: "active",
+        thesis: undefined,
+        thesisSources: undefined,
+        thesisGeneratedAt: undefined,
+        addedAt: Date.now(),
+      });
+      return existing._id;
+    }
+    
     if (existing) throw new Error(`Position ${args.ticker} already exists`);
 
     return ctx.db.insert("investmentPositions", {
