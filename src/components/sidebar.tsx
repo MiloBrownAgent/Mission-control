@@ -25,6 +25,7 @@ import { useState } from "react";
 
 const workNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Investments", href: "/investments", icon: TrendingUp },
   { name: "Tasks", href: "/tasks", icon: ListTodo },
   { name: "Calendar", href: "/calendar", icon: CalendarDays },
   { name: "CRM", href: "/crm", icon: Target },
@@ -34,7 +35,6 @@ const workNavigation = [
   { name: "Team", href: "/team", icon: Users },
   { name: "Office", href: "/office", icon: Building2 },
   { name: "Client Links", href: "/office/links", icon: Link2 },
-  { name: "Pitzy Model", href: "/investments", icon: TrendingUp },
 ];
 
 export function Sidebar() {
