@@ -421,7 +421,7 @@ export const notifyNewPosition = internalAction({
     const horizon = args.timeHorizon || "unset";
     
     const message = [
-      `${emoji} **New Position Added: ${args.ticker}**`,
+      `${emoji} New Position Added: ${args.ticker}`,
       ``,
       `Name: ${args.name}`,
       `Portfolio: ${args.portfolioType}`,
@@ -439,7 +439,6 @@ export const notifyNewPosition = internalAction({
           chat_id: chatId,
           text: message,
           message_thread_id: 6,
-          parse_mode: "Markdown",
         }),
       });
       const data = await res.json();
