@@ -5,15 +5,27 @@ import { internal } from "./_generated/api";
 // ── Positions ──────────────────────────────────────
 
 export const listPositions = query({
-  args: { portfolioType: v.optional(v.union(v.literal("high_risk"), v.literal("low_risk"))) },
+  args: {
+    portfolioType: v.optional(v.union(v.literal("high_risk"), v.literal("low_risk"))),
+    stage: v.optional(v.union(v.literal("research"), v.literal("portfolio"))),
+  },
   handler: async (ctx, args) => {
+    let results;
     if (args.portfolioType) {
-      return ctx.db
+      results = await ctx.db
         .query("investmentPositions")
         .withIndex("by_type", (q) => q.eq("portfolioType", args.portfolioType!))
         .collect();
+    } else {
+      results = await ctx.db.query("investmentPositions").collect();
     }
-    return ctx.db.query("investmentPositions").collect();
+    if (args.stage) {
+      results = results.filter((p) => {
+        const effectiveStage = p.stage ?? ((p.shares && p.shares > 0 && p.entryPrice && p.entryPrice > 0) ? "portfolio" : "research");
+        return effectiveStage === args.stage;
+      });
+    }
+    return results;
   },
 });
 
@@ -43,8 +55,10 @@ export const addPosition = mutation({
     entryPrice: v.optional(v.number()),
     entryDate: v.optional(v.string()),
     timeHorizon: v.optional(v.union(v.literal("short"), v.literal("medium"), v.literal("long"))),
+    stage: v.optional(v.union(v.literal("research"), v.literal("portfolio"))),
   },
   handler: async (ctx, args) => {
+    const stage = args.stage ?? "research";
     const existing = await ctx.db
       .query("investmentPositions")
       .withIndex("by_ticker", (q) => q.eq("ticker", args.ticker.toUpperCase()))
@@ -59,6 +73,7 @@ export const addPosition = mutation({
         entryPrice: args.entryPrice,
         entryDate: args.entryDate,
         timeHorizon: args.timeHorizon,
+        stage,
         status: "active",
         thesis: undefined,
         thesisSources: undefined,
@@ -97,6 +112,7 @@ export const addPosition = mutation({
       entryPrice: args.entryPrice,
       entryDate: args.entryDate,
       timeHorizon: args.timeHorizon,
+      stage,
       status: "active",
       addedAt: Date.now(),
     });
@@ -172,6 +188,49 @@ export const updateThesisInternal = internalMutation({
       thesis: args.thesis,
       thesisSources: args.thesisSources,
       thesisGeneratedAt: args.thesisGeneratedAt,
+    });
+  },
+});
+
+export const promoteToPortfolio = mutation({
+  args: {
+    positionId: v.id("investmentPositions"),
+    shares: v.number(),
+    entryPrice: v.number(),
+    entryDate: v.optional(v.string()),
+    portfolioType: v.union(v.literal("high_risk"), v.literal("low_risk")),
+    timeHorizon: v.optional(v.union(v.literal("short"), v.literal("medium"), v.literal("long"))),
+  },
+  handler: async (ctx, args) => {
+    const position = await ctx.db.get(args.positionId);
+    if (!position) throw new Error("Position not found");
+    await ctx.db.patch(args.positionId, {
+      stage: "portfolio",
+      shares: args.shares,
+      entryPrice: args.entryPrice,
+      entryDate: args.entryDate,
+      portfolioType: args.portfolioType,
+      timeHorizon: args.timeHorizon,
+    });
+    // Notify agent via Telegram
+    await ctx.scheduler.runAfter(0, internal.investments.notifyNewPosition, {
+      ticker: position.ticker,
+      name: position.name,
+      portfolioType: args.portfolioType,
+      shares: args.shares,
+      entryPrice: args.entryPrice,
+      timeHorizon: args.timeHorizon,
+    });
+  },
+});
+
+export const demoteToResearch = mutation({
+  args: { positionId: v.id("investmentPositions") },
+  handler: async (ctx, args) => {
+    const position = await ctx.db.get(args.positionId);
+    if (!position) throw new Error("Position not found");
+    await ctx.db.patch(args.positionId, {
+      stage: "research",
     });
   },
 });

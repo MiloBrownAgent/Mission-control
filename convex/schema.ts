@@ -476,6 +476,7 @@ export default defineSchema({
     shares: v.optional(v.number()),
     entryPrice: v.optional(v.number()),
     entryDate: v.optional(v.string()),
+    stage: v.optional(v.union(v.literal("research"), v.literal("portfolio"))),
     thesis: v.optional(v.string()),
     thesisSources: v.optional(v.array(v.object({
       title: v.string(),

@@ -50,6 +50,7 @@ type MainTab = "home" | "positions" | "signal_engine" | "trade_system" | "track_
 export default function InvestmentsPage() {
   const [activeTab, setActiveTab] = useState<MainTab>("home");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [addFormStage, setAddFormStage] = useState<"research" | "portfolio">("research");
 
   return (
     <div className="space-y-6">
@@ -65,7 +66,7 @@ export default function InvestmentsPage() {
         </div>
         {activeTab === "positions" && (
           <button
-            onClick={() => setShowAddForm(true)}
+            onClick={() => { setAddFormStage("research"); setShowAddForm(true); }}
             className="flex items-center gap-2 rounded-lg bg-[#B8956A] px-4 py-2 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] transition-colors"
           >
             <Plus className="h-4 w-4" />
@@ -107,7 +108,7 @@ export default function InvestmentsPage() {
       {activeTab === "track_record" && <TrackRecordTab />}
 
       {/* Add Position Modal */}
-      {showAddForm && <AddPositionModal onClose={() => setShowAddForm(false)} />}
+      {showAddForm && <AddPositionModal onClose={() => setShowAddForm(false)} initialStage={addFormStage} />}
     </div>
   );
 }
@@ -121,19 +122,29 @@ function HomeTab() {
   const alerts = useQuery(api.investments.listAlerts, { acknowledged: false, limit: 5 });
   const latestBriefing = useQuery(api.signals.getLatestBriefing);
 
+  // Helper: determine effective stage for backward compatibility
+  const getEffectiveStage = (p: any) =>
+    p.stage ?? ((p.shares && p.shares > 0 && p.entryPrice && p.entryPrice > 0) ? "portfolio" : "research");
+
   const activePositions = useMemo(
     () => allPositions?.filter((p) => p.status === "active") ?? [],
     [allPositions]
   );
-  const highRisk = activePositions.filter((p) => p.portfolioType === "high_risk");
-  const lowRisk = activePositions.filter((p) => p.portfolioType === "low_risk");
+
+  // Only portfolio-stage positions count toward portfolio value and stats
+  const portfolioPositions = useMemo(
+    () => activePositions.filter((p) => getEffectiveStage(p) === "portfolio"),
+    [activePositions]
+  );
+  const highRisk = portfolioPositions.filter((p) => p.portfolioType === "high_risk");
+  const lowRisk = portfolioPositions.filter((p) => p.portfolioType === "low_risk");
 
   const totalValue = useMemo(() => {
-    return activePositions.reduce((sum, p) => {
+    return portfolioPositions.reduce((sum, p) => {
       if (p.shares && p.entryPrice) return sum + p.shares * p.entryPrice;
       return sum;
     }, 0);
-  }, [activePositions]);
+  }, [portfolioPositions]);
 
   const criticalAlerts = alerts?.filter((a) => a.severity === "high" || a.severity === "critical") ?? [];
 
@@ -144,11 +155,11 @@ function HomeTab() {
         <StatCard label="Portfolio Value" value={`$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 0 })}`} />
         <StatCard label="Today's P&L" value="—" muted />
         <StatCard label="Unrealized P&L" value="—" muted />
-        <StatCard label="Positions" value={String(activePositions.length)} />
+        <StatCard label="Positions" value={String(portfolioPositions.length)} sub={`${activePositions.length - portfolioPositions.length} in research`} />
         <StatCard
           label="Risk Budget"
           value={`${highRisk.length}H / ${lowRisk.length}L`}
-          sub={`${activePositions.length} total`}
+          sub={`${portfolioPositions.length} portfolio`}
         />
       </div>
 
@@ -294,7 +305,7 @@ function PositionsTab() {
       {/* Sub-nav */}
       <div className="flex items-center gap-1 border-b border-[#1A1816] pb-3 flex-wrap">
         {[
-          { key: "portfolios" as PositionsSubTab, label: "Portfolios" },
+          { key: "portfolios" as PositionsSubTab, label: "Positions" },
           { key: "alerts" as PositionsSubTab, label: "Alerts" },
           { key: "opportunities" as PositionsSubTab, label: "Opportunities" },
           { key: "track_record" as PositionsSubTab, label: "Track Record" },
@@ -973,6 +984,8 @@ function TrackRecordTab() {
    PRESERVED COMPONENTS from original page
    ═══════════════════════════════════════════════════════════ */
 
+type StageView = "research" | "portfolio";
+
 function PortfolioView({
   selectedPosition,
   setSelectedPosition,
@@ -980,8 +993,28 @@ function PortfolioView({
   selectedPosition: string | null;
   setSelectedPosition: (id: string | null) => void;
 }) {
-  const highRisk = useQuery(api.investments.listPositions, { portfolioType: "high_risk" });
-  const lowRisk = useQuery(api.investments.listPositions, { portfolioType: "low_risk" });
+  const [stageView, setStageView] = useState<StageView>("research");
+  const [promoteTarget, setPromoteTarget] = useState<string | null>(null);
+  const allPositions = useQuery(api.investments.listPositions, {});
+  const demoteToResearch = useMutation(api.investments.demoteToResearch);
+
+  const getEffectiveStage = (p: any) =>
+    p.stage ?? ((p.shares && p.shares > 0 && p.entryPrice && p.entryPrice > 0) ? "portfolio" : "research");
+
+  const activePositions = useMemo(
+    () => allPositions?.filter((p) => p.status !== "exited") ?? [],
+    [allPositions]
+  );
+
+  const researchPositions = useMemo(
+    () => activePositions.filter((p) => getEffectiveStage(p) === "research"),
+    [activePositions]
+  );
+
+  const portfolioPositions = useMemo(
+    () => activePositions.filter((p) => getEffectiveStage(p) === "portfolio"),
+    [activePositions]
+  );
 
   if (selectedPosition) {
     return (
@@ -992,66 +1025,321 @@ function PortfolioView({
     );
   }
 
+  if (promoteTarget) {
+    const pos = activePositions.find((p) => p._id === promoteTarget);
+    if (pos) {
+      return (
+        <PromoteToPortfolioForm
+          position={pos}
+          onClose={() => setPromoteTarget(null)}
+        />
+      );
+    }
+  }
+
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {/* High Risk */}
-      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
-        <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
-          <Flame className="h-5 w-5 text-red-400" />
-          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
-            High Risk
-          </h2>
-          <span className="ml-auto rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs text-red-400">
-            {highRisk?.filter((p) => p.status === "active").length ?? 0} active
-          </span>
-        </div>
-        <div className="divide-y divide-[#1A1816]">
-          {(!highRisk || highRisk.filter((p) => p.status !== "exited").length === 0) ? (
-            <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
-              No high risk positions yet. Add one to get started.
-            </div>
-          ) : (
-            highRisk
-              .filter((p) => p.status !== "exited")
-              .map((pos) => (
-                <PositionRow
-                  key={pos._id}
-                  position={pos}
-                  onClick={() => setSelectedPosition(pos._id)}
-                />
-              ))
+    <div className="space-y-4">
+      {/* Research / Portfolio toggle */}
+      <div className="flex items-center gap-1 rounded-lg border border-[#1A1816] bg-[#0D0C0A] p-1 w-fit">
+        <button
+          onClick={() => setStageView("research")}
+          className={cn(
+            "flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-all",
+            stageView === "research"
+              ? "bg-[#1A1816] text-[#E8E4DF]"
+              : "text-[#6B6560] hover:text-[#E8E4DF]"
           )}
-        </div>
+        >
+          <Search className="h-3.5 w-3.5" />
+          Research
+          <span className="rounded-full bg-[#1A1816] px-1.5 py-0.5 text-[10px] text-[#6B6560]">{researchPositions.length}</span>
+        </button>
+        <button
+          onClick={() => setStageView("portfolio")}
+          className={cn(
+            "flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-all",
+            stageView === "portfolio"
+              ? "bg-[#1A1816] text-[#E8E4DF]"
+              : "text-[#6B6560] hover:text-[#E8E4DF]"
+          )}
+        >
+          <DollarSign className="h-3.5 w-3.5" />
+          Portfolio
+          <span className="rounded-full bg-[#1A1816] px-1.5 py-0.5 text-[10px] text-[#6B6560]">{portfolioPositions.length}</span>
+        </button>
       </div>
 
-      {/* Low Risk */}
-      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
-        <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
-          <Shield className="h-5 w-5 text-blue-400" />
-          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
-            Low Risk
-          </h2>
-          <span className="ml-auto rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs text-blue-400">
-            {lowRisk?.filter((p) => p.status === "active").length ?? 0} active
-          </span>
-        </div>
-        <div className="divide-y divide-[#1A1816]">
-          {(!lowRisk || lowRisk.filter((p) => p.status !== "exited").length === 0) ? (
-            <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
-              No low risk positions yet. Add one to get started.
+      {/* Research View */}
+      {stageView === "research" && (
+        <div className="space-y-3">
+          {researchPositions.length === 0 ? (
+            <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-12 text-center">
+              <Search className="mx-auto h-8 w-8 text-[#6B6560] mb-3" />
+              <p className="text-sm font-medium text-[#E8E4DF]">No tickers in research</p>
+              <p className="text-xs text-[#6B6560] mt-1">Add a ticker to start studying it before committing capital</p>
             </div>
           ) : (
-            lowRisk
-              .filter((p) => p.status !== "exited")
-              .map((pos) => (
-                <PositionRow
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {researchPositions.map((pos) => (
+                <div
                   key={pos._id}
-                  position={pos}
-                  onClick={() => setSelectedPosition(pos._id)}
-                />
-              ))
+                  className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-4 hover:border-[#B8956A]/30 transition-colors group"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-base font-semibold text-[#E8E4DF]">{pos.ticker}</span>
+                    <span className="text-xs text-[#6B6560] truncate">{pos.name}</span>
+                  </div>
+                  {pos.thesis ? (
+                    <p className="text-xs text-[#6B6560] line-clamp-2 mb-3">{pos.thesis}</p>
+                  ) : (
+                    <button
+                      onClick={() => setSelectedPosition(pos._id)}
+                      className="text-xs text-[#B8956A] hover:text-[#CDAA7E] mb-3 flex items-center gap-1"
+                    >
+                      <Brain className="h-3 w-3" />
+                      Generate Thesis
+                    </button>
+                  )}
+                  <div className="flex items-center gap-2 pt-2 border-t border-[#1A1816]">
+                    <button
+                      onClick={() => setSelectedPosition(pos._id)}
+                      className="text-[10px] text-[#6B6560] hover:text-[#E8E4DF] transition-colors"
+                    >
+                      View Details
+                    </button>
+                    <button
+                      onClick={() => setPromoteTarget(pos._id)}
+                      className="ml-auto flex items-center gap-1 rounded-md bg-[#B8956A]/10 px-2.5 py-1 text-[10px] font-medium text-[#B8956A] hover:bg-[#B8956A]/20 transition-colors"
+                    >
+                      <ArrowUp className="h-3 w-3" />
+                      Promote to Portfolio
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
+      )}
+
+      {/* Portfolio View */}
+      {stageView === "portfolio" && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* High Risk */}
+          <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+            <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
+              <Flame className="h-5 w-5 text-red-400" />
+              <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
+                High Risk
+              </h2>
+              <span className="ml-auto rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs text-red-400">
+                {portfolioPositions.filter((p) => p.portfolioType === "high_risk").length} active
+              </span>
+            </div>
+            <div className="divide-y divide-[#1A1816]">
+              {portfolioPositions.filter((p) => p.portfolioType === "high_risk").length === 0 ? (
+                <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
+                  No high risk positions in portfolio.
+                </div>
+              ) : (
+                portfolioPositions
+                  .filter((p) => p.portfolioType === "high_risk")
+                  .map((pos) => (
+                    <PositionRow
+                      key={pos._id}
+                      position={pos}
+                      onClick={() => setSelectedPosition(pos._id)}
+                      onDemote={() => demoteToResearch({ positionId: pos._id as Id<"investmentPositions"> })}
+                    />
+                  ))
+              )}
+            </div>
+          </div>
+
+          {/* Low Risk */}
+          <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+            <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
+              <Shield className="h-5 w-5 text-blue-400" />
+              <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
+                Low Risk
+              </h2>
+              <span className="ml-auto rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs text-blue-400">
+                {portfolioPositions.filter((p) => p.portfolioType === "low_risk").length} active
+              </span>
+            </div>
+            <div className="divide-y divide-[#1A1816]">
+              {portfolioPositions.filter((p) => p.portfolioType === "low_risk").length === 0 ? (
+                <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
+                  No low risk positions in portfolio.
+                </div>
+              ) : (
+                portfolioPositions
+                  .filter((p) => p.portfolioType === "low_risk")
+                  .map((pos) => (
+                    <PositionRow
+                      key={pos._id}
+                      position={pos}
+                      onClick={() => setSelectedPosition(pos._id)}
+                      onDemote={() => demoteToResearch({ positionId: pos._id as Id<"investmentPositions"> })}
+                    />
+                  ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Promote to Portfolio Form ── */
+function PromoteToPortfolioForm({ position, onClose }: { position: any; onClose: () => void }) {
+  const promote = useMutation(api.investments.promoteToPortfolio);
+  const [shares, setShares] = useState("");
+  const [entryPrice, setEntryPrice] = useState("");
+  const [entryDate, setEntryDate] = useState("");
+  const [portfolioType, setPortfolioType] = useState<"high_risk" | "low_risk">(position.portfolioType ?? "high_risk");
+  const [timeHorizon, setTimeHorizon] = useState<"short" | "medium" | "long">("medium");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!shares || !entryPrice) return;
+    setSubmitting(true);
+    try {
+      await promote({
+        positionId: position._id,
+        shares: parseFloat(shares),
+        entryPrice: parseFloat(entryPrice),
+        entryDate: entryDate || undefined,
+        portfolioType,
+        timeHorizon,
+      });
+      onClose();
+    } catch (err: any) {
+      alert(err.message || "Failed to promote");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="max-w-lg mx-auto">
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
+              Promote to Portfolio
+            </h3>
+            <p className="text-sm text-[#6B6560] mt-1">
+              {position.ticker} - {position.name}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 text-[#6B6560] hover:bg-[#1A1816] hover:text-[#E8E4DF] transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-[#6B6560] mb-1.5">Shares</label>
+              <input
+                type="number"
+                value={shares}
+                onChange={(e) => setShares(e.target.value)}
+                placeholder="100"
+                step="any"
+                required
+                className="w-full rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2 text-sm text-[#E8E4DF] placeholder-[#6B6560]/50 focus:border-[#B8956A] focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-[#6B6560] mb-1.5">Entry Price</label>
+              <input
+                type="number"
+                value={entryPrice}
+                onChange={(e) => setEntryPrice(e.target.value)}
+                placeholder="150.00"
+                step="any"
+                required
+                className="w-full rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2 text-sm text-[#E8E4DF] placeholder-[#6B6560]/50 focus:border-[#B8956A] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-[#6B6560] mb-1.5">Entry Date (optional)</label>
+            <input
+              type="date"
+              value={entryDate}
+              onChange={(e) => setEntryDate(e.target.value)}
+              className="w-full rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2 text-sm text-[#E8E4DF] focus:border-[#B8956A] focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs text-[#6B6560] mb-1.5">Portfolio Type</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPortfolioType("high_risk")}
+                className={cn(
+                  "rounded-lg border px-3 py-2 text-sm transition-colors",
+                  portfolioType === "high_risk"
+                    ? "border-red-500/50 bg-red-500/10 text-red-400"
+                    : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560]"
+                )}
+              >
+                High Risk
+              </button>
+              <button
+                type="button"
+                onClick={() => setPortfolioType("low_risk")}
+                className={cn(
+                  "rounded-lg border px-3 py-2 text-sm transition-colors",
+                  portfolioType === "low_risk"
+                    ? "border-blue-500/50 bg-blue-500/10 text-blue-400"
+                    : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560]"
+                )}
+              >
+                Low Risk
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-[#6B6560] mb-1.5">Time Horizon (optional)</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["short", "medium", "long"] as const).map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={() => setTimeHorizon(h)}
+                  className={cn(
+                    "rounded-lg border px-3 py-2 text-xs capitalize transition-colors",
+                    timeHorizon === h
+                      ? "border-[#B8956A]/50 bg-[#B8956A]/10 text-[#B8956A]"
+                      : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560]"
+                  )}
+                >
+                  {h === "short" ? "Days-Weeks" : h === "medium" ? "Months" : "Years"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting || !shares || !entryPrice}
+            className="w-full rounded-lg bg-[#B8956A] px-4 py-2.5 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] disabled:opacity-50 transition-colors"
+          >
+            {submitting ? "Promoting..." : "Promote to Portfolio"}
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -1060,9 +1348,11 @@ function PortfolioView({
 function PositionRow({
   position,
   onClick,
+  onDemote,
 }: {
   position: any;
   onClick: () => void;
+  onDemote?: () => void;
 }) {
   const alerts = useQuery(api.investments.listAlerts, {
     ticker: position.ticker,
@@ -1074,11 +1364,11 @@ function PositionRow({
   const latestAlert = hasUnacked ? alerts[0] : null;
 
   return (
-    <button
-      onClick={onClick}
-      className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-[#1A1816]/40 transition-colors"
-    >
-      <div className="flex-1 min-w-0">
+    <div className="flex w-full items-center gap-4 px-5 py-4 hover:bg-[#1A1816]/40 transition-colors group">
+      <button
+        onClick={onClick}
+        className="flex-1 min-w-0 text-left"
+      >
         <div className="flex items-center gap-2">
           <span className="text-base font-semibold text-[#E8E4DF]">{position.ticker}</span>
           <span className="text-sm text-[#6B6560]">{position.name}</span>
@@ -1088,16 +1378,32 @@ function PositionRow({
             </span>
           )}
         </div>
-        {position.thesis ? (
-          <p className="mt-1 text-sm text-[#6B6560] line-clamp-1">{position.thesis}</p>
-        ) : (
-          <p className="mt-1 text-sm text-[#B8956A] italic">Generating thesis...</p>
-        )}
-      </div>
+        <div className="flex items-center gap-3 mt-1">
+          {position.shares && position.entryPrice && (
+            <span className="text-xs text-[#6B6560]">
+              {position.shares} shares @ ${position.entryPrice}
+            </span>
+          )}
+          {position.thesis ? (
+            <p className="text-xs text-[#6B6560] line-clamp-1 flex-1">{position.thesis}</p>
+          ) : (
+            <p className="text-xs text-[#B8956A] italic">Generating thesis...</p>
+          )}
+        </div>
+      </button>
+      {onDemote && (
+        <button
+          onClick={onDemote}
+          className="opacity-0 group-hover:opacity-100 text-[10px] text-[#6B6560] hover:text-[#E8E4DF] transition-all shrink-0"
+          title="Move to Research"
+        >
+          <ArrowDown className="h-3.5 w-3.5" />
+        </button>
+      )}
       {hasUnacked && latestAlert && (
         <div
           className={cn(
-            "flex items-center gap-1 rounded-full px-2 py-1 text-xs",
+            "flex items-center gap-1 rounded-full px-2 py-1 text-xs shrink-0",
             latestAlert.severity === "critical"
               ? "bg-red-500/10 text-red-400"
               : latestAlert.severity === "high"
@@ -1109,8 +1415,10 @@ function PositionRow({
           {latestAlert.severity}
         </div>
       )}
-      <ChevronRight className="h-4 w-4 text-[#6B6560]" />
-    </button>
+      <button onClick={onClick} className="shrink-0">
+        <ChevronRight className="h-4 w-4 text-[#6B6560]" />
+      </button>
+    </div>
   );
 }
 
@@ -1730,19 +2038,22 @@ function WeeklySummaryRow({ summary }: { summary: any }) {
   );
 }
 
-function AddPositionModal({ onClose }: { onClose: () => void }) {
+function AddPositionModal({ onClose, initialStage = "research" }: { onClose: () => void; initialStage?: "research" | "portfolio" }) {
   const addPosition = useMutation(api.investments.addPosition);
+  const [stage, setStage] = useState<"research" | "portfolio">(initialStage);
   const [ticker, setTicker] = useState("");
   const [name, setName] = useState("");
   const [portfolioType, setPortfolioType] = useState<"high_risk" | "low_risk">("high_risk");
   const [shares, setShares] = useState("");
   const [entryPrice, setEntryPrice] = useState("");
+  const [entryDate, setEntryDate] = useState("");
   const [timeHorizon, setTimeHorizon] = useState<"short" | "medium" | "long">("medium");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ticker.trim() || !name.trim()) return;
+    if (stage === "portfolio" && (!shares || !entryPrice)) return;
     setSubmitting(true);
     try {
       await addPosition({
@@ -1751,7 +2062,9 @@ function AddPositionModal({ onClose }: { onClose: () => void }) {
         portfolioType,
         shares: shares ? parseFloat(shares) : undefined,
         entryPrice: entryPrice ? parseFloat(entryPrice) : undefined,
-        timeHorizon,
+        entryDate: entryDate || undefined,
+        timeHorizon: stage === "portfolio" ? timeHorizon : undefined,
+        stage,
       });
       onClose();
     } catch (err: any) {
@@ -1777,6 +2090,39 @@ function AddPositionModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Stage Selection */}
+          <div>
+            <label className="block text-xs text-[#6B6560] mb-1.5">Stage</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setStage("research")}
+                className={cn(
+                  "rounded-lg border px-3 py-2 text-sm transition-colors flex items-center justify-center gap-2",
+                  stage === "research"
+                    ? "border-[#B8956A]/50 bg-[#B8956A]/10 text-[#B8956A]"
+                    : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560]"
+                )}
+              >
+                <Search className="h-3.5 w-3.5" />
+                Research
+              </button>
+              <button
+                type="button"
+                onClick={() => setStage("portfolio")}
+                className={cn(
+                  "rounded-lg border px-3 py-2 text-sm transition-colors flex items-center justify-center gap-2",
+                  stage === "portfolio"
+                    ? "border-[#B8956A]/50 bg-[#B8956A]/10 text-[#B8956A]"
+                    : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560]"
+                )}
+              >
+                <DollarSign className="h-3.5 w-3.5" />
+                Portfolio
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-[#6B6560] mb-1.5">Ticker</label>
@@ -1803,7 +2149,7 @@ function AddPositionModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-xs text-[#6B6560] mb-1.5">Portfolio</label>
+            <label className="block text-xs text-[#6B6560] mb-1.5">Portfolio Type</label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -1832,58 +2178,75 @@ function AddPositionModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs text-[#6B6560] mb-1.5">Shares (optional)</label>
-              <input
-                type="number"
-                value={shares}
-                onChange={(e) => setShares(e.target.value)}
-                placeholder="100"
-                step="any"
-                className="w-full rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2 text-sm text-[#E8E4DF] placeholder-[#6B6560]/50 focus:border-[#B8956A] focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-[#6B6560] mb-1.5">Entry Price (optional)</label>
-              <input
-                type="number"
-                value={entryPrice}
-                onChange={(e) => setEntryPrice(e.target.value)}
-                placeholder="150.00"
-                step="any"
-                className="w-full rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2 text-sm text-[#E8E4DF] placeholder-[#6B6560]/50 focus:border-[#B8956A] focus:outline-none"
-              />
-            </div>
-          </div>
+          {/* Portfolio-only fields */}
+          {stage === "portfolio" && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-[#6B6560] mb-1.5">Shares</label>
+                  <input
+                    type="number"
+                    value={shares}
+                    onChange={(e) => setShares(e.target.value)}
+                    placeholder="100"
+                    step="any"
+                    required
+                    className="w-full rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2 text-sm text-[#E8E4DF] placeholder-[#6B6560]/50 focus:border-[#B8956A] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-[#6B6560] mb-1.5">Entry Price</label>
+                  <input
+                    type="number"
+                    value={entryPrice}
+                    onChange={(e) => setEntryPrice(e.target.value)}
+                    placeholder="150.00"
+                    step="any"
+                    required
+                    className="w-full rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2 text-sm text-[#E8E4DF] placeholder-[#6B6560]/50 focus:border-[#B8956A] focus:outline-none"
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label className="block text-xs text-[#6B6560] mb-1.5">Time Horizon</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["short", "medium", "long"] as const).map((h) => (
-                <button
-                  key={h}
-                  type="button"
-                  onClick={() => setTimeHorizon(h)}
-                  className={cn(
-                    "rounded-lg border px-3 py-2 text-xs capitalize transition-colors",
-                    timeHorizon === h
-                      ? "border-[#B8956A]/50 bg-[#B8956A]/10 text-[#B8956A]"
-                      : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560]"
-                  )}
-                >
-                  {h === "short" ? "Days-Weeks" : h === "medium" ? "Months" : "Years"}
-                </button>
-              ))}
-            </div>
-          </div>
+              <div>
+                <label className="block text-xs text-[#6B6560] mb-1.5">Entry Date (optional)</label>
+                <input
+                  type="date"
+                  value={entryDate}
+                  onChange={(e) => setEntryDate(e.target.value)}
+                  className="w-full rounded-lg border border-[#1A1816] bg-[#060606] px-3 py-2 text-sm text-[#E8E4DF] focus:border-[#B8956A] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-[#6B6560] mb-1.5">Time Horizon</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["short", "medium", "long"] as const).map((h) => (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => setTimeHorizon(h)}
+                      className={cn(
+                        "rounded-lg border px-3 py-2 text-xs capitalize transition-colors",
+                        timeHorizon === h
+                          ? "border-[#B8956A]/50 bg-[#B8956A]/10 text-[#B8956A]"
+                          : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560]"
+                      )}
+                    >
+                      {h === "short" ? "Days-Weeks" : h === "medium" ? "Months" : "Years"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           <button
             type="submit"
-            disabled={submitting || !ticker.trim() || !name.trim()}
+            disabled={submitting || !ticker.trim() || !name.trim() || (stage === "portfolio" && (!shares || !entryPrice))}
             className="w-full rounded-lg bg-[#B8956A] px-4 py-2.5 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] disabled:opacity-50 transition-colors"
           >
-            {submitting ? "Adding..." : "Add Position"}
+            {submitting ? "Adding..." : stage === "research" ? "Add to Research" : "Add to Portfolio"}
           </button>
         </form>
       </div>
