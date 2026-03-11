@@ -527,20 +527,12 @@ function MorningBriefing() {
   const today = new Date().toISOString().split("T")[0];
   const briefing = useQuery(api.signals.getBriefingByDate, { date: today });
   const latestBriefing = useQuery(api.signals.getLatestBriefing);
+  const macro = useQuery(api.signals.getLatestMacro);
+  const opportunities = useQuery(api.investments.listOpportunities, { limit: 3 });
+  const alerts = useQuery(api.investments.listAlerts, { limit: 5 });
   const data = briefing ?? latestBriefing;
 
   const sectionTypes = ["Overnight Developments", "SEC Filings", "Insider Transactions", "Unusual Activity", "Macro Events"];
-
-  if (!data) {
-    return (
-      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-16 text-center">
-        <Clock className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
-        <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Morning Briefing</p>
-        <p className="text-sm text-[#6B6560] mt-2">Generates at 6:00 AM CT</p>
-        <p className="text-xs text-[#6B6560] mt-1">Market intelligence, SEC filings, insider activity, and macro events</p>
-      </div>
-    );
-  }
 
   const getMarketStatusColor = (status: string) => {
     if (status.toLowerCase().includes("open")) return "text-green-400 bg-green-500/10";
@@ -548,6 +540,77 @@ function MorningBriefing() {
     if (status.toLowerCase().includes("after")) return "text-blue-400 bg-blue-500/10";
     return "text-[#6B6560] bg-[#1A1816]";
   };
+
+  if (!data) {
+    const fallbackItems = [
+      ...(alerts ?? []).slice(0, 2).map((alert) => ({
+        label: alert.alertType === "thesis_risk" ? "Thesis risk" : "Alert",
+        title: alert.title,
+        summary: alert.summary,
+        importance: alert.severity === "critical" || alert.severity === "high" ? "high" : alert.severity === "medium" ? "medium" : "low",
+      })),
+      ...(opportunities ?? []).slice(0, 2).map((opp) => ({
+        label: "Opportunity",
+        title: `${opp.ticker} — ${opp.name}`,
+        summary: opp.expectedUpside ? `${opp.expectedUpside} upside · ${opp.opportunityType.replace(/_/g, " ")}` : opp.opportunityType.replace(/_/g, " "),
+        importance: "medium" as const,
+      })),
+    ].slice(0, 4);
+
+    const macroNotes = [
+      macro?.vix != null ? `VIX ${macro.vix}${macro.vixTrend ? ` · ${macro.vixTrend}` : ""}` : null,
+      macro?.dxy != null ? `DXY ${macro.dxy}${macro.dxyTrend ? ` · ${macro.dxyTrend}` : ""}` : null,
+      macro?.yieldCurveStatus ? `Yield curve ${macro.yieldCurveStatus}${macro.yield2y10ySpread != null ? ` · ${macro.yield2y10ySpread}bps` : ""}` : null,
+    ].filter(Boolean) as string[];
+
+    if (fallbackItems.length === 0 && macroNotes.length === 0) {
+      return (
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-16 text-center">
+          <Clock className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
+          <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Morning Briefing</p>
+          <p className="text-sm text-[#6B6560] mt-2">Generates at 6:00 AM CT</p>
+          <p className="text-xs text-[#6B6560] mt-1">If the saved briefing is late, this card now falls back to live opportunities and alerts automatically.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+        <div className="border-b border-[#1A1816] px-5 py-3 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Live fallback</p>
+            <p className="text-xs text-[#6B6560] mt-1">No saved morning briefing yet — showing current signals instead.</p>
+          </div>
+          <span className="rounded-full px-3 py-1 text-xs font-medium text-yellow-400 bg-yellow-500/10">Fallback</span>
+        </div>
+
+        <div className="divide-y divide-[#1A1816]">
+          {fallbackItems.map((item, i) => (
+            <div key={i} className="px-5 py-3 flex items-start gap-3">
+              <ImportanceBadge importance={item.importance} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-[#B8956A]">{item.label}</span>
+                  <span className="text-sm font-medium text-[#E8E4DF]">{item.title}</span>
+                </div>
+                <p className="mt-0.5 text-sm text-[#6B6560]">{item.summary}</p>
+              </div>
+            </div>
+          ))}
+          {macroNotes.length > 0 && (
+            <div className="px-5 py-3">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#B8956A] mb-2">Macro pulse</p>
+              <div className="flex flex-wrap gap-2">
+                {macroNotes.map((note) => (
+                  <span key={note} className="rounded-full bg-[#1A1816] px-3 py-1 text-xs text-[#E8E4DF]">{note}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -606,6 +669,8 @@ function ImportanceBadge({ importance }: { importance: string }) {
 
 function EventScanner() {
   const events = useQuery(api.signals.listEventScans, { status: "active", limit: 50 });
+  const fallbackOpportunities = useQuery(api.investments.listOpportunities, { limit: 3 });
+  const fallbackAlerts = useQuery(api.investments.listAlerts, { limit: 3 });
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sectorFilter, setSectorFilter] = useState<string>("all");
 
@@ -625,12 +690,62 @@ function EventScanner() {
   }, [events]);
 
   if (!events || events.length === 0) {
+    const fallbackSignals = [
+      ...(fallbackAlerts ?? []).slice(0, 3).map((alert) => ({
+        key: alert._id,
+        kind: "Alert",
+        title: alert.title,
+        summary: alert.summary,
+        meta: alert.ticker,
+      })),
+      ...(fallbackOpportunities ?? []).slice(0, 3).map((opp) => ({
+        key: opp._id,
+        kind: "Opportunity",
+        title: `${opp.ticker} — ${opp.name}`,
+        summary: opp.expectedUpside ? `${opp.expectedUpside} upside · ${opp.opportunityType.replace(/_/g, " ")}` : opp.opportunityType.replace(/_/g, " "),
+        meta: opp.timeHorizon ?? undefined,
+      })),
+    ].slice(0, 6);
+
+    if (fallbackSignals.length === 0) {
+      return (
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-16 text-center">
+          <Search className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
+          <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Event Scanner</p>
+          <p className="text-sm text-[#6B6560] mt-2">Runs continuously during market hours</p>
+          <p className="text-xs text-[#6B6560] mt-1">Tracks insider clusters, activist filings, merger arb, FDA calendar, earnings whispers</p>
+        </div>
+      );
+    }
+
     return (
-      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-16 text-center">
-        <Search className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
-        <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Event Scanner</p>
-        <p className="text-sm text-[#6B6560] mt-2">Runs continuously during market hours</p>
-        <p className="text-xs text-[#6B6560] mt-1">Tracks insider clusters, activist filings, merger arb, FDA calendar, earnings whispers</p>
+      <div className="space-y-4">
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-3 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-[#E8E4DF]">Live fallback</p>
+            <p className="text-xs text-[#6B6560] mt-1">Dedicated event feed is empty — showing current alerts and opportunities.</p>
+          </div>
+          <span className="rounded-full px-3 py-1 text-xs font-medium text-yellow-400 bg-yellow-500/10">Fallback</span>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {fallbackSignals.map((signal) => (
+            <div key={signal.key} className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="rounded-full bg-[#B8956A]/10 px-2.5 py-0.5 text-[10px] font-medium text-[#B8956A]">
+                  {signal.kind}
+                </span>
+                {signal.meta && (
+                  <span className="rounded-full bg-[#1A1816] px-2 py-0.5 text-[10px] text-[#6B6560]">
+                    {signal.meta}
+                  </span>
+                )}
+              </div>
+              <div className="text-sm font-medium text-[#E8E4DF]">{signal.title}</div>
+              <p className="mt-2 text-sm text-[#6B6560]">{signal.summary}</p>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -1806,7 +1921,7 @@ function OpportunitiesView() {
         <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-12 text-center">
           <Lightbulb className="mx-auto h-8 w-8 text-[#6B6560] mb-3" />
           <p className="text-sm text-[#6B6560]">
-            No opportunities yet. The daily scanner runs at 8 AM CST.
+            No opportunities yet. The daily scanner runs at 8 AM CT.
           </p>
         </div>
       ) : (
