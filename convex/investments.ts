@@ -362,12 +362,77 @@ export const createOpportunity = internalMutation({
     risks: v.optional(v.array(v.string())),
     timeHorizon: v.optional(v.string()),
     moralScreenPass: v.boolean(),
+    priceAtRecommendation: v.optional(v.number()),
+    currentPrice: v.optional(v.number()),
+    priceUpdatedAt: v.optional(v.number()),
+    returnPct: v.optional(v.number()),
+    status: v.optional(v.union(v.literal("active"), v.literal("hit_target"), v.literal("stopped_out"), v.literal("expired"))),
   },
   handler: async (ctx, args) => {
     return ctx.db.insert("investmentOpportunities", {
       ...args,
       createdAt: Date.now(),
     });
+  },
+});
+
+export const createOpportunityPublic = mutation({
+  args: {
+    ticker: v.string(),
+    name: v.string(),
+    opportunityType: v.string(),
+    thesis: v.string(),
+    sources: v.array(v.object({ title: v.string(), url: v.string() })),
+    expectedUpside: v.optional(v.string()),
+    catalysts: v.optional(v.array(v.string())),
+    risks: v.optional(v.array(v.string())),
+    timeHorizon: v.optional(v.string()),
+    moralScreenPass: v.boolean(),
+    createdAt: v.optional(v.number()),
+    priceAtRecommendation: v.optional(v.number()),
+    currentPrice: v.optional(v.number()),
+    priceUpdatedAt: v.optional(v.number()),
+    returnPct: v.optional(v.number()),
+    status: v.optional(v.union(v.literal("active"), v.literal("hit_target"), v.literal("stopped_out"), v.literal("expired"))),
+  },
+  handler: async (ctx, args) => {
+    const createdAt = args.createdAt ?? Date.now();
+    const startOfDay = new Date(createdAt);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(createdAt);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existing = (await ctx.db
+      .query("investmentOpportunities")
+      .withIndex("by_ticker", (q) => q.eq("ticker", args.ticker))
+      .collect())
+      .find((opp) => opp.createdAt >= startOfDay.getTime() && opp.createdAt <= endOfDay.getTime());
+
+    const payload = {
+      ticker: args.ticker,
+      name: args.name,
+      opportunityType: args.opportunityType,
+      thesis: args.thesis,
+      sources: args.sources,
+      expectedUpside: args.expectedUpside,
+      catalysts: args.catalysts,
+      risks: args.risks,
+      timeHorizon: args.timeHorizon,
+      moralScreenPass: args.moralScreenPass,
+      createdAt,
+      priceAtRecommendation: args.priceAtRecommendation,
+      currentPrice: args.currentPrice,
+      priceUpdatedAt: args.priceUpdatedAt,
+      returnPct: args.returnPct,
+      status: args.status,
+    };
+
+    if (existing) {
+      await ctx.db.patch(existing._id, payload);
+      return existing._id;
+    }
+
+    return ctx.db.insert("investmentOpportunities", payload);
   },
 });
 
