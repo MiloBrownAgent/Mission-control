@@ -1,4 +1,4 @@
-# Investment Models & Methodology
+# The Playbook
 
 A complete reference for every model, theory, and system powering the Investment Hub.
 
