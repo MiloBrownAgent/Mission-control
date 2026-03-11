@@ -14,6 +14,23 @@ const CONVEX_URL = "https://proper-rat-443.convex.cloud";
 const OPENCLAW_GATEWAY = `http://127.0.0.1:18789`;
 const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN || "61018ccb22da89d788ca0c8df6549b6199888759a870d400";
 
+// ─── Yahoo Auth (crumb + cookie required for v10 API) ────────────────────────
+let _yahooCrumb = null;
+let _yahooCookie = null;
+
+async function getYahooAuth() {
+  if (_yahooCrumb && _yahooCookie) return { crumb: _yahooCrumb, cookie: _yahooCookie };
+  try {
+    const cookieRes = await fetch("https://fc.yahoo.com", { redirect: "manual" });
+    _yahooCookie = cookieRes.headers.get("set-cookie") || "";
+    const crumbRes = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", {
+      headers: { "User-Agent": "Mozilla/5.0", Cookie: _yahooCookie },
+    });
+    if (crumbRes.ok) _yahooCrumb = await crumbRes.text();
+  } catch {}
+  return { crumb: _yahooCrumb, cookie: _yahooCookie };
+}
+
 // ─── Model Cascade ───────────────────────────────────────────────────────────
 const MODEL_CASCADE = [
   { name: "Claude Sonnet 4.6", model: "anthropic/claude-sonnet-4-6" },
@@ -107,12 +124,15 @@ const PEER_MAP = {
 async function fetchPeerComps(ticker, profileData) {
   const peers = PEER_MAP[ticker] || [];
   if (peers.length === 0) return [];
+  const { crumb, cookie } = await getYahooAuth();
+  const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : "";
+  const headers = { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) };
   const comps = [];
   for (const peer of peers.slice(0, 5)) {
     try {
       const [priceRes, profRes] = await Promise.all([
         fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${peer}?interval=1d&range=1mo`, { headers: { "User-Agent": "Mozilla/5.0" } }),
-        fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${peer}?modules=financialData,defaultKeyStatistics`, { headers: { "User-Agent": "Mozilla/5.0" } }),
+        fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${peer}?modules=financialData,defaultKeyStatistics${crumbParam}`, { headers }),
       ]);
       const priceMeta = priceRes.ok ? (await priceRes.json()).chart?.result?.[0]?.meta : null;
       const profResult = profRes.ok ? (await profRes.json()).quoteSummary?.result?.[0] : null;
@@ -141,9 +161,11 @@ async function fetchPeerComps(ticker, profileData) {
 
 async function fetchEarningsData(ticker) {
   try {
+    const { crumb, cookie } = await getYahooAuth();
+    const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : "";
     const res = await fetch(
-      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=earningsTrend,earningsHistory,incomeStatementHistory`,
-      { headers: { "User-Agent": "Mozilla/5.0" } }
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=earningsTrend,earningsHistory,incomeStatementHistory${crumbParam}`,
+      { headers: { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) } }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -195,7 +217,9 @@ async function fetchYahooFinance(ticker) {
 
 async function fetchYahooProfile(ticker) {
   try {
-    const res = await fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile,financialData,defaultKeyStatistics,recommendationTrend`, { headers: { "User-Agent": "Mozilla/5.0" } });
+    const { crumb, cookie } = await getYahooAuth();
+    const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : "";
+    const res = await fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile,financialData,defaultKeyStatistics,recommendationTrend${crumbParam}`, { headers: { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) } });
     if (!res.ok) return null;
     const data = await res.json();
     const r = data.quoteSummary?.result?.[0];

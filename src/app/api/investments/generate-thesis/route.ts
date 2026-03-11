@@ -15,6 +15,23 @@ const PUBLISHER_TIERS: Record<number, string[]> = {
   2: ["24/7 wall st", "insidermonkey", "insider monkey", "simply wall st", "gurufocus", "stocktwits"],
 };
 
+// ─── Yahoo Auth (crumb + cookie required for v10 API) ────────────────────────
+let _yahooCrumb: string | null = null;
+let _yahooCookie: string | null = null;
+
+async function getYahooAuth() {
+  if (_yahooCrumb && _yahooCookie) return { crumb: _yahooCrumb, cookie: _yahooCookie };
+  try {
+    const cookieRes = await fetch("https://fc.yahoo.com", { redirect: "manual" });
+    _yahooCookie = cookieRes.headers.get("set-cookie") || "";
+    const crumbRes = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", {
+      headers: { "User-Agent": "Mozilla/5.0", Cookie: _yahooCookie },
+    });
+    if (crumbRes.ok) _yahooCrumb = await crumbRes.text();
+  } catch {}
+  return { crumb: _yahooCrumb, cookie: _yahooCookie };
+}
+
 // ─── Convex Helpers ──────────────────────────────────────────────────────────
 async function convexMutation(functionPath: string, args: any = {}) {
   const res = await fetch(`${CONVEX_URL}/api/mutation`, {
@@ -44,12 +61,15 @@ const PEER_MAP: Record<string, string[]> = {
 async function fetchPeerComps(ticker: string) {
   const peers = PEER_MAP[ticker] || [];
   if (peers.length === 0) return [];
+  const { crumb, cookie } = await getYahooAuth();
+  const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : "";
+  const headers = { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) };
   const comps: any[] = [];
   for (const peer of peers.slice(0, 5)) {
     try {
       const [priceRes, profRes] = await Promise.all([
         fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${peer}?interval=1d&range=1mo`, { headers: { "User-Agent": "Mozilla/5.0" } }),
-        fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${peer}?modules=financialData,defaultKeyStatistics`, { headers: { "User-Agent": "Mozilla/5.0" } }),
+        fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${peer}?modules=financialData,defaultKeyStatistics${crumbParam}`, { headers }),
       ]);
       const priceMeta = priceRes.ok ? (await priceRes.json()).chart?.result?.[0]?.meta : null;
       const profResult = profRes.ok ? (await profRes.json()).quoteSummary?.result?.[0] : null;
@@ -78,9 +98,11 @@ async function fetchPeerComps(ticker: string) {
 
 async function fetchEarningsData(ticker: string) {
   try {
+    const { crumb, cookie } = await getYahooAuth();
+    const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : "";
     const res = await fetch(
-      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=earningsTrend,earningsHistory`,
-      { headers: { "User-Agent": "Mozilla/5.0" } }
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=earningsTrend,earningsHistory${crumbParam}`,
+      { headers: { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) } }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -139,9 +161,11 @@ async function fetchYahooFinance(ticker: string) {
 
 async function fetchYahooProfile(ticker: string) {
   try {
+    const { crumb, cookie } = await getYahooAuth();
+    const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : "";
     const res = await fetch(
-      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile,financialData,defaultKeyStatistics,earningsTrend,recommendationTrend`,
-      { headers: { "User-Agent": "Mozilla/5.0" } }
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile,financialData,defaultKeyStatistics,earningsTrend,recommendationTrend${crumbParam}`,
+      { headers: { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) } }
     );
     if (!res.ok) return null;
     const data = await res.json();
