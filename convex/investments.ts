@@ -330,6 +330,13 @@ export const acknowledgeAlert = mutation({
   },
 });
 
+export const deleteAlert = mutation({
+  args: { id: v.id("investmentAlerts") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+  },
+});
+
 // ── Opportunities ──────────────────────────────────────
 
 export const listOpportunities = query({

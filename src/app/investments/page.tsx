@@ -39,6 +39,7 @@ import {
   Globe,
   LineChart,
   Lock,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -1474,6 +1475,7 @@ function PositionDetail({
     limit: 20,
   });
   const acknowledgeAlert = useMutation(api.investments.acknowledgeAlert);
+  const deleteAlert = useMutation(api.investments.deleteAlert);
   const updatePosition = useMutation(api.investments.updatePosition);
 
   if (!position) {
@@ -1681,14 +1683,13 @@ function PositionDetail({
                       </div>
                     )}
                   </div>
-                  {!alert.acknowledged && (
-                    <button
-                      onClick={() => acknowledgeAlert({ id: alert._id })}
-                      className="rounded-md border border-[#1A1816] p-1.5 text-[#6B6560] hover:bg-[#1A1816] hover:text-[#E8E4DF] transition-colors"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => deleteAlert({ id: alert._id })}
+                    className="rounded-md border border-[#1A1816] p-1.5 text-[#6B6560] hover:bg-red-500/10 hover:text-red-400 transition-colors shrink-0"
+                    title="Delete alert"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             ))
@@ -1701,7 +1702,7 @@ function PositionDetail({
 
 function AlertsView() {
   const alerts = useQuery(api.investments.listAlerts, { limit: 50 });
-  const acknowledgeAlert = useMutation(api.investments.acknowledgeAlert);
+  const deleteAlert = useMutation(api.investments.deleteAlert);
 
   return (
     <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
@@ -1749,14 +1750,13 @@ function AlertsView() {
                   </div>
                   <p className="mt-1 text-sm text-[#6B6560]">{alert.summary}</p>
                 </div>
-                {!alert.acknowledged && (
-                  <button
-                    onClick={() => acknowledgeAlert({ id: alert._id })}
-                    className="rounded-md border border-[#1A1816] px-2 py-1 text-xs text-[#6B6560] hover:bg-[#1A1816] hover:text-[#E8E4DF] transition-colors"
-                  >
-                    Ack
-                  </button>
-                )}
+                <button
+                  onClick={() => deleteAlert({ id: alert._id })}
+                  className="rounded-md border border-[#1A1816] p-1.5 text-[#6B6560] hover:bg-red-500/10 hover:text-red-400 transition-colors shrink-0"
+                  title="Delete alert"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
           ))
