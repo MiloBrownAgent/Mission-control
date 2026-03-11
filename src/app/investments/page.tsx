@@ -85,6 +85,14 @@ export default function InvestmentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <a
+            href="/investments/playbook"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#6B6560] hover:text-[#E8E4DF] hover:bg-[#1A1816] transition-colors"
+            title="The Playbook"
+          >
+            <BookOpen className="h-4 w-4" />
+            Playbook
+          </a>
           <button
             onClick={togglePrivacy}
             className={cn(
