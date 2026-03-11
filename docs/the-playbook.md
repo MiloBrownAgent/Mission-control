@@ -320,4 +320,96 @@ Only articles from the last 7 days are considered. Older articles are excluded r
 
 ---
 
+## 9. Automated Crons & Scheduled Jobs
+
+Every recurring job that powers the investment system. All times are Central Time (CT).
+
+### Investment Monitor
+- Schedule: Every 15 minutes, Mon-Fri 9:00 AM – 4:00 PM ET
+- Cron ID: `8d77fefd-6eeb-470e-ba34-1802814ba369`
+- Agent: finance
+- What it does: Checks all active positions for price moves, news, short interest, thesis staleness. Creates alerts in Convex. Sends Telegram notification for high/critical alerts. Also updates opportunity track record prices.
+- Script: `scripts/investment-monitor-v2.js`
+
+### Sunday Investment Memo
+- Schedule: Every Sunday at 5:30 AM CT
+- Cron ID: `cdb06ad3-71a9-495c-a0a8-591204e3dfdb`
+- Agent: finance
+- What it does: Gathers all portfolio data, macro context (VIX, S&P, Fed), and news. Writes a comprehensive weekly memo with portfolio snapshot, position-by-position review, watchlist update, prioritized action items, and risk check. Emails to Dave and saves to Convex for display on MC.
+
+### Investment Opportunity Scanner
+- Schedule: Every weekday at 8:00 AM CT
+- Cron ID: `ab0afdeb-3caf-45a1-ad86-bffe14e4e3c3`
+- What it does: Scans for new Pitzy Model opportunities — insider buying clusters, activist filings, merger arb, valuation dislocations. Updates the Opportunities section on the Home tab.
+
+### Portfolio Check (30-min)
+- Schedule: Every 30 minutes, Mon-Fri 9:00 AM – 2:00 PM CT
+- Cron ID: `fc482e6b-c669-437b-afe2-cd63e76f6b75`
+- Agent: main
+- What it does: Quick portfolio health check during market hours. Verifies positions, flags anomalies.
+
+### Convex Scheduled Jobs
+These run on Convex's infrastructure (not the Mac):
+
+- **Daycare report sync**: Every 30 min, 2-6 PM CT weekdays (not investment-related, shared Convex instance)
+- **WHOOP sync**: Every 2 hours (not investment-related)
+
+### Event-Driven Triggers (Not Cron)
+These fire on specific events, not on a schedule:
+
+- **New Position Notification**: When `addPosition` mutation fires in Convex → sends Telegram message to Milo & Team group (topic 6) → Milo generates thesis
+- **Thesis Generation**: Triggered by new position → Convex action calls Vercel API → research data collected → agent writes thesis
+- **Alert Creation**: Triggered by monitor script → creates alert in Convex → high/critical alerts notify via Telegram
+
+### Moral Screens (Applied Everywhere)
+- NO PLTR (Palantir) — surveillance/defense. Non-negotiable.
+- NO META (Meta Platforms) — societal harm. Non-negotiable.
+- These screens apply to: thesis generation, opportunity scanning, weekly memo recommendations, and all automated suggestions.
+
+---
+
+## 10. Architecture Overview
+
+```
+Dave adds ticker on MC
+        ↓
+Convex addPosition mutation
+        ↓
+    ┌───────────────────┐
+    │ Telegram notify    │ → Milo sees it → writes thesis
+    │ Thesis trigger     │ → Vercel collects research data
+    └───────────────────┘
+        ↓
+Thesis saved to Convex → displays on MC
+        ↓
+    ┌───────────────────┐
+    │ Monitor (15 min)   │ → price, news, short interest
+    │ Weekly Memo (Sun)  │ → full portfolio analysis
+    │ Opp Scanner (8AM)  │ → new opportunities
+    └───────────────────┘
+        ↓
+Alerts → Convex + Telegram (high/critical)
+Memo → Email + Convex
+Opportunities → Convex → Home tab
+```
+
+### Data Flow
+1. Yahoo Finance API → prices, fundamentals, analyst targets
+2. Yahoo News RSS → articles scored by quality/trust/relevance
+3. SEC EDGAR → regulatory filings (8-K, 10-K, 13F, S-3, SC 13G)
+4. Brave Search → additional news and analyst coverage
+5. All data → Convex (source of truth) → Next.js frontend (MC)
+6. Alerts → Convex + Telegram
+7. Weekly memo → Email (Resend) + Convex
+
+### Infrastructure
+- Frontend: Next.js on Vercel (mc.lookandseen.com)
+- Backend: Convex (proper-rat-443.convex.cloud)
+- Monitoring: OpenClaw crons on Mac mini
+- Notifications: Telegram Bot API
+- Email: Resend API
+- Repository: github.com/MiloBrownAgent/Mission-control
+
+---
+
 Last updated: March 10, 2026
