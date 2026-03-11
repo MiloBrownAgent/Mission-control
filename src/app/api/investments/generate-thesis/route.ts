@@ -26,7 +26,94 @@ async function convexMutation(functionPath: string, args: any = {}) {
   return (await res.json()).value;
 }
 
+// ─── Peer Company Mapping ────────────────────────────────────────────────────
+const PEER_MAP: Record<string, string[]> = {
+  HIMS: ["TDOC", "AMWL", "GH", "DOCS", "NTRA"],
+  IREN: ["MARA", "RIOT", "CORZ", "CLSK", "HUT"],
+  ONDS: ["AVAV", "KTOS", "RCAT", "JOBY", "LUNR"],
+  PTRN: ["UPST", "AFRM", "SOFI", "LC"],
+  VST: ["CEG", "NRG", "AES", "EXC", "NEE"],
+  AAPL: ["MSFT", "GOOGL", "AMZN", "NVDA"],
+  RKLB: ["BA", "LMT", "ASTS", "SPCE", "LUNR"],
+  SOFI: ["UPST", "AFRM", "LC", "HOOD", "ALLY"],
+  NVO: ["LLY", "AMGN", "AZN", "PFE", "MRK"],
+};
+
 // ─── Data Fetchers ───────────────────────────────────────────────────────────
+
+async function fetchPeerComps(ticker: string) {
+  const peers = PEER_MAP[ticker] || [];
+  if (peers.length === 0) return [];
+  const comps: any[] = [];
+  for (const peer of peers.slice(0, 5)) {
+    try {
+      const [priceRes, profRes] = await Promise.all([
+        fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${peer}?interval=1d&range=1mo`, { headers: { "User-Agent": "Mozilla/5.0" } }),
+        fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${peer}?modules=financialData,defaultKeyStatistics`, { headers: { "User-Agent": "Mozilla/5.0" } }),
+      ]);
+      const priceMeta = priceRes.ok ? (await priceRes.json()).chart?.result?.[0]?.meta : null;
+      const profResult = profRes.ok ? (await profRes.json()).quoteSummary?.result?.[0] : null;
+      if (priceMeta) {
+        comps.push({
+          ticker: peer,
+          price: priceMeta.regularMarketPrice,
+          marketCap: priceMeta.marketCap,
+          revenue: profResult?.financialData?.totalRevenue?.raw,
+          revenueGrowth: profResult?.financialData?.revenueGrowth?.raw,
+          grossMargin: profResult?.financialData?.grossMargins?.raw,
+          operatingMargin: profResult?.financialData?.operatingMargins?.raw,
+          trailingPE: profResult?.defaultKeyStatistics?.trailingPE?.raw,
+          forwardPE: profResult?.defaultKeyStatistics?.forwardPE?.raw,
+          pegRatio: profResult?.defaultKeyStatistics?.pegRatio?.raw,
+          evToRevenue: profResult?.defaultKeyStatistics?.enterpriseToRevenue?.raw,
+          evToEbitda: profResult?.defaultKeyStatistics?.enterpriseToEbitda?.raw,
+          shortPercentOfFloat: profResult?.defaultKeyStatistics?.shortPercentOfFloat?.raw,
+        });
+      }
+      await new Promise((r) => setTimeout(r, 150));
+    } catch {}
+  }
+  return comps;
+}
+
+async function fetchEarningsData(ticker: string) {
+  try {
+    const res = await fetch(
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=earningsTrend,earningsHistory`,
+      { headers: { "User-Agent": "Mozilla/5.0" } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const result = data.quoteSummary?.result?.[0];
+    const trend = result?.earningsTrend?.trend || [];
+    const history = result?.earningsHistory?.history || [];
+    
+    const revisions = trend.map((t: any) => ({
+      period: t.period,
+      endDate: t.endDate,
+      currentEstimate: t.earningsEstimate?.avg?.raw,
+      lowEstimate: t.earningsEstimate?.low?.raw,
+      highEstimate: t.earningsEstimate?.high?.raw,
+      numberOfAnalysts: t.earningsEstimate?.numberOfAnalysts?.raw,
+      revenueEstimate: t.revenueEstimate?.avg?.raw,
+      earningsGrowth: t.growth?.raw,
+      upLast7: t.earningsEstimate?.upLast7days?.raw || 0,
+      downLast7: t.earningsEstimate?.downLast7days?.raw || 0,
+      upLast30: t.earningsEstimate?.upLast30days?.raw || 0,
+      downLast30: t.earningsEstimate?.downLast30days?.raw || 0,
+    }));
+
+    const beats = history.map((h: any) => ({
+      quarter: h.quarter?.raw,
+      date: h.reportDate?.fmt,
+      epsEstimate: h.epsEstimate?.raw,
+      epsActual: h.epsActual?.raw,
+      surprise: h.surprisePercent?.raw,
+    }));
+
+    return { revisions, beats };
+  } catch { return null; }
+}
 
 async function fetchYahooFinance(ticker: string) {
   try {
@@ -241,7 +328,7 @@ function scoreArticle(article: any, ticker: string, companyName: string) {
 
 // ─── LLM Thesis Generation (Cascading Models) ───────────────────────────────
 
-const SYSTEM_PROMPT = `You are a senior equity research analyst writing investment theses for the Pitzy Model — a retail-edge, event-driven value investing framework.
+const SYSTEM_PROMPT = `You are a senior equity research analyst at a top-tier fund writing institutional-quality investment theses for the Pitzy Model — a retail-edge, event-driven value investing framework.
 
 The Pitzy Model's core principles:
 - Retail investors have a structural nimbleness advantage over institutions
@@ -251,7 +338,24 @@ The Pitzy Model's core principles:
 - Track institutional flows, but bet against them when they're forced sellers
 - Sentiment + Valuation + Event Catalyst + Certainty = Buy Signal
 
-Write thorough, honest, number-dense theses. Call out risks bluntly — never sugarcoat. Include specific data points, price targets, and a clear framework for when to hold, add, or exit. Reference the source articles by name when citing data.`;
+Write institutional-quality theses with real numbers, derived valuations, and honest risk assessment. No platitudes, no hedging, no "could potentially maybe." Call it like it is.
+
+IMPORTANT FORMATTING RULES:
+- Do NOT use markdown bold asterisks (**text**). Use plain text with clean formatting.
+- Use ALL CAPS for emphasis instead of bold markers.
+- Use dashes (—) for structure, not asterisks.
+
+Structure your thesis as:
+1. POSITION SUMMARY — ticker, entry, current price, P&L, shares, portfolio weight
+2. BULL CASE — specific catalysts with data points, not generic statements
+3. PEER COMPARABLE ANALYSIS — where does this trade vs comps? Premium/discount justified?
+4. SIMPLIFIED DCF — 3 scenarios (bear/base/bull) with revenue projections, FCF, terminal value, per-share value. Show the math.
+5. KEY CATALYSTS WITH PROBABILITY WEIGHTING — each catalyst gets: probability %, price impact, timeline, expected value
+6. EARNINGS REVISION MOMENTUM — what are analysts doing? Beat/miss history.
+7. MANAGEMENT QUALITY — score 1-10 on track record, insider ownership, capital allocation, communication
+8. RISK FACTORS — brutally honest
+9. PITZY MODEL ASSESSMENT — retail edge score, event certainty, asymmetry, timing
+10. DECISION FRAMEWORK — specific price levels for hold/add/trim/exit`;
 
 // Model cascade: Sonnet → Opus → GPT-5.4 → LMStudio (local)
 // On Vercel: uses direct Anthropic/OpenAI APIs
@@ -436,13 +540,15 @@ export async function POST(req: NextRequest) {
   console.log(`\n📊 Deep thesis generation for ${ticker} (${name})...`);
 
   // Fetch ALL data in parallel
-  const [priceData, profileData, yahooNews, braveNews, secFilings, deepSearch] = await Promise.all([
+  const [priceData, profileData, yahooNews, braveNews, secFilings, deepSearch, earningsData, peerComps] = await Promise.all([
     fetchYahooFinance(ticker),
     fetchYahooProfile(ticker),
     fetchYahooNews(ticker),
     fetchBraveSearch(`${ticker} stock news analysis`, 10),
     fetchSECFilings(ticker),
     fetchFullTextSearch(ticker, name || ticker),
+    fetchEarningsData(ticker),
+    fetchPeerComps(ticker),
   ]);
 
   // Merge and score articles
@@ -523,17 +629,56 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  context += `\n## INSTRUCTIONS
-Write a thorough investment thesis structured as:
-1. **Position summary** (entry, current, P&L)
-2. **Bull case** with specific catalysts and data points
-3. **Key catalysts** (active and upcoming)
-4. **Risk factors** — be brutally honest, flag anything concerning
-5. **Valuation framework** — what's it worth and why
-6. **Pitzy Model assessment** — does this fit the retail-edge, event-driven framework? Is there an institutional flow story?
-7. **Decision framework** — specific conditions for hold/add/exit
+  // ─── Peer Comparable Analysis ──────────────────────────────────────────────
+  if (peerComps && peerComps.length > 0) {
+    const fmtB = (v: number | undefined) => v ? `$${(v / 1e9).toFixed(1)}B` : "N/A";
+    const fmtPct = (v: number | undefined | null) => v != null ? `${(v * 100).toFixed(1)}%` : "N/A";
+    context += `\n## PEER COMPARABLE ANALYSIS\nCompare ${ticker} valuations against direct competitors:\n\n`;
+    context += `| Ticker | Mkt Cap | Revenue | Rev Growth | Gross Margin | P/E (fwd) | EV/Rev | EV/EBITDA | Short% |\n`;
+    context += `|--------|---------|---------|------------|--------------|-----------|--------|-----------|--------|\n`;
+    if (profileData) {
+      context += `| ${ticker} (SUBJECT) | ${fmtB(priceData?.marketCap)} | ${fmtB(profileData.revenue)} | ${fmtPct(profileData.revenueGrowth)} | ${fmtPct(profileData.grossMargin)} | ${profileData.forwardPE?.toFixed(1) || "N/A"} | N/A | N/A | ${fmtPct(profileData.shortPercentOfFloat)} |\n`;
+    }
+    for (const p of peerComps) {
+      context += `| ${p.ticker} | ${fmtB(p.marketCap)} | ${fmtB(p.revenue)} | ${fmtPct(p.revenueGrowth)} | ${fmtPct(p.grossMargin)} | ${p.forwardPE?.toFixed(1) || "N/A"} | ${p.evToRevenue?.toFixed(1) || "N/A"} | ${p.evToEbitda?.toFixed(1) || "N/A"} | ${fmtPct(p.shortPercentOfFloat)} |\n`;
+    }
+    context += `\nAnalyze: Is ${ticker} trading at a premium or discount to peers? Is the premium/discount justified?\n`;
+  }
 
-Reference source articles by name. Use actual numbers from the data above. Do not make up data points.`;
+  // ─── Earnings Estimate Revisions ───────────────────────────────────────────
+  if (earningsData) {
+    if (earningsData.revisions && earningsData.revisions.length > 0) {
+      context += `\n## EARNINGS ESTIMATE REVISIONS\n`;
+      for (const r of earningsData.revisions) {
+        context += `- Period ${r.period} (ending ${r.endDate}): EPS estimate $${r.currentEstimate?.toFixed(2) || "N/A"} | ${r.numberOfAnalysts || 0} analysts | Growth: ${r.earningsGrowth ? (r.earningsGrowth * 100).toFixed(1) + "%" : "N/A"}`;
+        if (r.upLast30 > 0 || r.downLast30 > 0) context += ` | 30d revisions: ${r.upLast30} up / ${r.downLast30} down`;
+        if (r.upLast7 > 0 || r.downLast7 > 0) context += ` | 7d: ${r.upLast7} up / ${r.downLast7} down`;
+        context += `\n`;
+      }
+    }
+    if (earningsData.beats && earningsData.beats.length > 0) {
+      context += `\n## EARNINGS HISTORY\n`;
+      for (const b of earningsData.beats.slice(0, 4)) {
+        const beatMiss = b.surprise > 0 ? `BEAT by ${(b.surprise * 100).toFixed(1)}%` : b.surprise < 0 ? `MISSED by ${(Math.abs(b.surprise) * 100).toFixed(1)}%` : "MET";
+        context += `- Q${b.quarter || "?"} (${b.date || "?"}): Est $${b.epsEstimate?.toFixed(2) || "?"} → Actual $${b.epsActual?.toFixed(2) || "?"} → ${beatMiss}\n`;
+      }
+    }
+  }
+
+  context += `\n## INSTRUCTIONS
+Write an institutional-quality thesis structured as:
+1. POSITION SUMMARY — entry, current, P&L, shares
+2. BULL CASE — specific catalysts, not generic statements
+3. PEER COMPARABLE ANALYSIS — premium/discount to comps, justified?
+4. SIMPLIFIED DCF — 3 scenarios (bear/base/bull): revenue → FCF → terminal value → per-share value. Show the math. Use 10% base discount rate.
+5. KEY CATALYSTS WITH PROBABILITY WEIGHTING — each catalyst: probability %, price impact, timeline, expected value. Sum for probability-weighted target.
+6. EARNINGS REVISION MOMENTUM — are analysts revising up/down? What does the beat/miss history tell us?
+7. MANAGEMENT QUALITY — score 1-10: track record, insider ownership, capital allocation, communication
+8. RISK FACTORS — brutally honest, what kills this thesis
+9. PITZY MODEL ASSESSMENT — retail edge, event certainty, asymmetry, timing scores
+10. DECISION FRAMEWORK — specific hold/add/trim/exit price levels
+
+Do NOT use markdown bold (**text**). Use ALL CAPS for emphasis. Use actual numbers from the data. Do not fabricate data points. Reference source articles by name.`;
 
   // Generate thesis (cascading models)
   const { text: thesis, model: usedModel } = await generateThesisWithLLM(context);

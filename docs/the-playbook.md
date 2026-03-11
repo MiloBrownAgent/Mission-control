@@ -47,15 +47,31 @@ Composite score = weighted average. Only articles scoring 3.0+ are included in t
 - Tier 4 (score 2): Insider Monkey, Simply Wall St, GuruFocus
 - Unknown (score 1): unrecognized publishers
 
-### Thesis Structure
-Every generated thesis includes:
-- Position summary with entry price, current price, unrealized P&L
-- Bull case narrative (the core reason to own it)
-- Key catalysts (specific, dated events)
-- Risk factors (honest assessment of what can go wrong)
-- Valuation framework (what it's worth and why)
-- Pitzy Model assessment (does it fit the framework?)
-- Decision framework (hold/add/trim/exit price levels)
+### Thesis Structure (10-Section Institutional Format)
+Every generated thesis now includes:
+1. POSITION SUMMARY — ticker, entry, current price, P&L, shares, portfolio weight
+2. BULL CASE — specific catalysts with hard data points
+3. PEER COMPARABLE ANALYSIS — valuation vs 5 direct competitors (P/E, EV/Rev, EV/EBITDA, margins, growth). Premium/discount justified?
+4. SIMPLIFIED DCF — 3-scenario model (bear/base/bull): revenue → FCF → terminal value → per-share value. Real math, 10% base discount rate.
+5. PROBABILITY-WEIGHTED CATALYSTS — each catalyst: probability %, price impact, timeline, expected value. Summed for probability-weighted target.
+6. EARNINGS REVISION MOMENTUM — analyst estimate revisions (7d/30d up/down), beat/miss track record
+7. MANAGEMENT QUALITY SCORE (1-10) — track record, insider ownership, capital allocation, communication
+8. RISK FACTORS — brutally honest, specific downside scenarios with price impacts
+9. PITZY MODEL ASSESSMENT — scored on Event Certainty, Asymmetry, Retail Edge, Timing
+10. DECISION FRAMEWORK — specific hold/add/trim/exit price levels with reasoning
+
+### Additional Data Sources (Senior Analyst Upgrade)
+- Yahoo Earnings Trend — EPS estimate revisions (7d/30d up/down counts), earnings growth projections
+- Yahoo Earnings History — beat/miss track record for last 4 quarters
+- Peer Comparable Data — 5 direct competitors: market cap, revenue, growth, margins, P/E, EV/Rev, EV/EBITDA, short interest
+
+### Peer Groups (Hardcoded)
+- HIMS → TDOC, AMWL, GH, DOCS, NTRA (digital health)
+- IREN → MARA, RIOT, CORZ, CLSK, HUT (AI infra / mining)
+- ONDS → AVAV, KTOS, RCAT, JOBY, LUNR (defense / autonomous)
+- PTRN → UPST, AFRM, SOFI, LC (fintech)
+- VST → CEG, NRG, AES, EXC, NEE (nuclear / power)
+- AAPL → MSFT, GOOGL, AMZN, NVDA (mega-cap tech)
 
 ### Influences
 - Rule One Investing (Phil Town) — focus on "wonderful companies at attractive prices"

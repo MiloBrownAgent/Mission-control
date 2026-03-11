@@ -26,6 +26,8 @@ const sections = [
         items: [
           "Yahoo Finance API — current price, 52-week range, market cap, volume, beta",
           "Yahoo Profile — sector, industry, margins, P/E, PEG, short interest, insider/institutional ownership, analyst targets",
+          "Yahoo Earnings — estimate revisions (7d/30d up/down), beat/miss history, growth estimates",
+          "Peer Comparable Analysis — 5 direct competitors' valuations (P/E, EV/Rev, EV/EBITDA, margins, growth)",
           "Yahoo News RSS — last 15 articles within 7 days",
           "Brave Search — additional news and analyst coverage",
           "SEC EDGAR — 8-K, 10-K, 10-Q, S-3, SC 13G filings from last 90 days",
@@ -52,15 +54,18 @@ const sections = [
         ],
       },
       {
-        subtitle: "Thesis Structure",
+        subtitle: "Thesis Structure (10-Section Institutional Format)",
         items: [
-          "Position summary with entry price, current price, unrealized P&L",
-          "Bull case narrative (the core reason to own it)",
-          "Key catalysts (specific, dated events)",
-          "Risk factors (honest assessment of what can go wrong)",
-          "Valuation framework (what it's worth and why)",
-          "Pitzy Model assessment (does it fit the framework?)",
-          "Decision framework (hold/add/trim/exit price levels)",
+          "1. Position Summary — ticker, entry, current price, P&L, shares, portfolio weight",
+          "2. Bull Case — specific catalysts with hard data points, no generic statements",
+          "3. Peer Comparable Analysis — valuation vs 5 direct competitors (P/E, EV/Rev, EV/EBITDA, margins, growth). Is the premium/discount justified?",
+          "4. Simplified DCF — 3-scenario model (bear/base/bull): revenue projection → FCF → terminal value → per-share fair value. Real math, 10% base discount rate.",
+          "5. Probability-Weighted Catalysts — each catalyst gets: probability %, price impact if it hits, timeline, expected value contribution. Summed for a probability-weighted price target.",
+          "6. Earnings Revision Momentum — analyst estimate revisions (up/down last 7d and 30d), beat/miss track record, what the revision trend predicts",
+          "7. Management Quality Score (1-10) — track record on guidance, insider ownership alignment, capital allocation history, investor communication quality",
+          "8. Risk Factors — brutally honest. What kills this thesis? Specific downside scenarios with price impacts.",
+          "9. Pitzy Model Assessment — scored on Event Certainty, Asymmetry, Retail Edge, Timing (each 1-10)",
+          "10. Decision Framework — specific hold/add/trim/exit price levels with reasoning for each",
         ],
       },
       {
@@ -75,8 +80,158 @@ const sections = [
     ],
   },
   {
+    id: "peer-comps",
+    title: "2. Peer Comparable Analysis",
+    content: [
+      {
+        subtitle: "What It Is",
+        text: "Every thesis now includes a direct comparison table of the subject company vs 5 industry peers. This answers the most important valuation question: is this stock cheap or expensive RELATIVE to its competitors?",
+      },
+      {
+        subtitle: "Metrics Compared",
+        items: [
+          "Market cap — size context",
+          "Revenue and revenue growth — are you paying for faster growth?",
+          "Gross margin and operating margin — operational efficiency",
+          "Forward P/E — what you're paying per dollar of future earnings",
+          "EV/Revenue — enterprise value relative to sales (important for unprofitable companies)",
+          "EV/EBITDA — enterprise value relative to cash earnings",
+          "Short % of float — market's bet against the stock",
+        ],
+      },
+      {
+        subtitle: "Peer Groups (Hardcoded)",
+        items: [
+          "HIMS → TDOC, AMWL, GH, DOCS, NTRA (digital health/telehealth)",
+          "IREN → MARA, RIOT, CORZ, CLSK, HUT (AI infra / crypto mining)",
+          "ONDS → AVAV, KTOS, RCAT, JOBY, LUNR (defense / autonomous systems)",
+          "PTRN → UPST, AFRM, SOFI, LC (fintech / pattern recognition)",
+          "VST → CEG, NRG, AES, EXC, NEE (nuclear / power generation)",
+          "AAPL → MSFT, GOOGL, AMZN, NVDA (mega-cap tech)",
+        ],
+      },
+      {
+        subtitle: "How It's Used",
+        text: "If HIMS trades at 4x forward earnings and TDOC trades at 15x, either HIMS is massively undervalued or TDOC is overvalued. The thesis must explain WHY the gap exists and whether it's justified. This is how institutional analysts think about valuation — relative, not absolute.",
+      },
+    ],
+  },
+  {
+    id: "dcf",
+    title: "3. Simplified DCF Valuation",
+    content: [
+      {
+        subtitle: "What It Is",
+        text: "A Discounted Cash Flow model projects what the company's future cash flows are worth today. We run 3 scenarios to capture the range of outcomes instead of pretending we can predict a single number.",
+      },
+      {
+        subtitle: "Three Scenarios",
+        items: [
+          "BEAR case — conservative revenue growth, margin compression, higher discount rate (12%). What's the floor?",
+          "BASE case — consensus analyst growth, stable margins, standard 10% discount rate. What's fair value?",
+          "BULL case — upside growth scenario, margin expansion, catalyst success, 8% discount rate. What's the ceiling?",
+        ],
+      },
+      {
+        subtitle: "The Math",
+        text: `For each scenario:
+1. Project revenue 5 years forward using growth assumptions
+2. Apply FCF margin to get Free Cash Flow each year
+3. Discount each year's FCF back to present value: PV = FCF / (1 + r)^n
+4. Calculate terminal value: TV = FCF_year5 × (1 + g) / (r - g) where g = 3% perpetual growth
+5. Sum discounted FCFs + discounted terminal value = Enterprise Value
+6. Subtract debt, add cash = Equity Value
+7. Divide by shares outstanding = Per-share fair value`,
+      },
+      {
+        subtitle: "Why 3 Scenarios?",
+        text: "Single-point price targets are lies. The bear case tells you what you're risking, the base case tells you fair value, and the bull case tells you what you're hoping for. Smart money always thinks in ranges.",
+      },
+    ],
+  },
+  {
+    id: "probability-catalysts",
+    title: "4. Probability-Weighted Catalyst Analysis",
+    content: [
+      {
+        subtitle: "What It Is",
+        text: "Instead of just listing catalysts, each one is assigned a probability, price impact, and timeline. This produces an expected value for each catalyst and a probability-weighted price target for the whole position.",
+      },
+      {
+        subtitle: "How It Works",
+        text: `For each catalyst:
+— Probability of occurring: 0-100%
+— Price impact if it occurs: +/- dollar amount or percentage
+— Timeline: when does it resolve?
+— Expected value: probability × impact
+
+Example: HIMS Novo Nordisk branded GLP-1 launch
+— Probability: 85% (deal signed, regulatory path clear)
+— Impact: +$8-12/share (opens $2B+ TAM)
+— Timeline: Q3 2026
+— Expected value: 85% × $10 = $8.50/share contribution`,
+      },
+      {
+        subtitle: "Why It Matters",
+        text: "A merger with 90% probability and $5 upside is worth $4.50. A speculative catalyst with 20% probability and $15 upside is worth $3.00. Expected value math prevents you from overweighting low-probability moonshots and underweighting high-probability catalysts.",
+      },
+    ],
+  },
+  {
+    id: "earnings-revisions",
+    title: "5. Earnings Estimate Revisions",
+    content: [
+      {
+        subtitle: "Why This Is the #1 Short-Term Predictor",
+        text: "Academic research (Zacks, S&P) shows that earnings estimate revisions are the single most predictive signal for short-term stock price movement. When analysts revise estimates UP, stocks tend to outperform over the next 1-3 months. When they revise DOWN, stocks underperform. We now track this automatically.",
+      },
+      {
+        subtitle: "What We Track",
+        items: [
+          "EPS estimates for current quarter, next quarter, current year, next year",
+          "Number of analysts covering the stock",
+          "Upward revisions in last 7 days and 30 days",
+          "Downward revisions in last 7 days and 30 days",
+          "Revenue estimate consensus",
+          "Earnings growth projections",
+        ],
+      },
+      {
+        subtitle: "Beat/Miss History",
+        text: "We track the last 4 quarters of earnings surprises. A company that beats 4/4 quarters has a very different risk profile than one that misses 2/4. Consistent beaters tend to keep beating. Consistent missers have a management credibility problem.",
+      },
+      {
+        subtitle: "Revision Momentum Signal",
+        items: [
+          "More up than down revisions in 30 days = POSITIVE momentum — historically bullish",
+          "More down than up = NEGATIVE momentum — historically bearish",
+          "Equal = NEUTRAL — wait for direction",
+        ],
+      },
+    ],
+  },
+  {
+    id: "management",
+    title: "6. Management Quality Score",
+    content: [
+      {
+        subtitle: "Scored 1-10 on Four Dimensions",
+        items: [
+          "Track Record: Have they hit previous guidance? Have prior strategic moves worked? Do they under-promise and over-deliver?",
+          "Insider Ownership: Are executives and directors significant shareholders? Skin in the game matters.",
+          "Capital Allocation: Are they buying back stock (good), making accretive acquisitions (good), or diluting shareholders (bad)?",
+          "Communication: Are they transparent about challenges? Do earnings calls have real information or corporate-speak?",
+        ],
+      },
+      {
+        subtitle: "Why It Matters",
+        text: "A great business with bad management will eventually become a bad business. A mediocre business with great management can surprise you. Management quality is the hardest thing to quantify but one of the most important factors in long-term returns.",
+      },
+    ],
+  },
+  {
     id: "monte-carlo",
-    title: "2. Monte Carlo Simulation",
+    title: "7. Monte Carlo Simulation",
     content: [
       {
         subtitle: "How It Works",
@@ -117,7 +272,7 @@ Where P(t) = price at time t, μ = drift (expected return minus half the varianc
   },
   {
     id: "sentiment",
-    title: "3. Sentiment Analysis",
+    title: "8. Sentiment Analysis",
     content: [
       {
         subtitle: "Data Sources",
@@ -157,7 +312,7 @@ Range: -100 (extreme fear) to +100 (extreme greed)`,
   },
   {
     id: "monitor",
-    title: "4. Investment Monitoring Engine",
+    title: "9. Investment Monitoring Engine",
     content: [
       {
         subtitle: "Price Monitoring Thresholds",
@@ -201,7 +356,7 @@ Positive: upgrade, beat estimate, raised guidance, partnership, contract win, FD
   },
   {
     id: "trade-system",
-    title: "5. Trade System",
+    title: "10. Trade System",
     content: [
       {
         subtitle: "Trade Zones (set BEFORE entering)",
@@ -220,7 +375,7 @@ Positive: upgrade, beat estimate, raised guidance, partnership, contract win, FD
   },
   {
     id: "track-record",
-    title: "6. Track Record & Performance Analytics",
+    title: "11. Track Record & Performance Analytics",
     content: [
       {
         subtitle: "Metrics Tracked",
@@ -248,7 +403,7 @@ Positive: upgrade, beat estimate, raised guidance, partnership, contract win, FD
   },
   {
     id: "opportunities",
-    title: "7. Opportunity Pipeline",
+    title: "12. Opportunity Pipeline",
     content: [
       {
         subtitle: "How Opportunities Are Generated",
@@ -280,7 +435,7 @@ Positive: upgrade, beat estimate, raised guidance, partnership, contract win, FD
   },
   {
     id: "crons",
-    title: "8. Automated Crons & Scheduled Jobs",
+    title: "13. Automated Crons & Scheduled Jobs",
     content: [
       {
         subtitle: "Investment Monitor",
@@ -310,7 +465,7 @@ Positive: upgrade, beat estimate, raised guidance, partnership, contract win, FD
   },
   {
     id: "architecture",
-    title: "9. Architecture",
+    title: "14. Architecture",
     content: [
       {
         subtitle: "Data Flow",
