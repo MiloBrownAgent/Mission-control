@@ -49,8 +49,9 @@ import dynamic from "next/dynamic";
 const MonteCarloTab = dynamic(() => import("@/components/quant/MonteCarloTab"), { ssr: false });
 const PaperTradesTab = dynamic(() => import("@/components/quant/PaperTradesTab"), { ssr: false });
 const SentimentTab = dynamic(() => import("@/components/quant/SentimentTab"), { ssr: false });
+const PlaybookContent = dynamic(() => import("@/components/quant/PlaybookTab"), { ssr: false });
 
-type MainTab = "home" | "research" | "portfolio";
+type MainTab = "home" | "research" | "portfolio" | "playbook";
 
 const PrivacyContext = createContext(false);
 function usePrivacy() { return useContext(PrivacyContext); }
@@ -85,14 +86,6 @@ export default function InvestmentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <a
-            href="/investments/playbook"
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#6B6560] hover:text-[#E8E4DF] hover:bg-[#1A1816] transition-colors"
-            title="The Playbook"
-          >
-            <BookOpen className="h-4 w-4" />
-            Playbook
-          </a>
           <button
             onClick={togglePrivacy}
             className={cn(
@@ -133,6 +126,7 @@ export default function InvestmentsPage() {
           { key: "home" as MainTab, label: "Home", icon: Home },
           { key: "research" as MainTab, label: "Research", icon: FlaskConical },
           { key: "portfolio" as MainTab, label: "Portfolio", icon: Briefcase },
+          { key: "playbook" as MainTab, label: "Playbook", icon: BookOpen },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -154,6 +148,7 @@ export default function InvestmentsPage() {
       {activeTab === "home" && <HomeTab />}
       {activeTab === "research" && <ResearchTab />}
       {activeTab === "portfolio" && <PortfolioTab subTab={portfolioSubTab} setSubTab={setPortfolioSubTab} />}
+      {activeTab === "playbook" && <PlaybookContent />}
 
       {/* Add Position Modal */}
       {showAddForm && <AddPositionModal onClose={() => setShowAddForm(false)} initialStage={addFormStage} />}
