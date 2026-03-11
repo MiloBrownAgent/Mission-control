@@ -40,6 +40,8 @@ import {
   LineChart,
   Lock,
   Trash2,
+  FlaskConical,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -48,7 +50,7 @@ const MonteCarloTab = dynamic(() => import("@/components/quant/MonteCarloTab"), 
 const PaperTradesTab = dynamic(() => import("@/components/quant/PaperTradesTab"), { ssr: false });
 const SentimentTab = dynamic(() => import("@/components/quant/SentimentTab"), { ssr: false });
 
-type MainTab = "home" | "positions" | "signal_engine" | "trade_system" | "track_record";
+type MainTab = "home" | "research" | "portfolio";
 
 const PrivacyContext = createContext(false);
 function usePrivacy() { return useContext(PrivacyContext); }
@@ -58,6 +60,7 @@ export default function InvestmentsPage() {
   const [activeTab, setActiveTab] = useState<MainTab>("home");
   const [showAddForm, setShowAddForm] = useState(false);
   const [addFormStage, setAddFormStage] = useState<"research" | "portfolio">("research");
+  const [portfolioSubTab, setPortfolioSubTab] = useState<PortfolioSubTab>("holdings");
   const [privacyMode, setPrivacyMode] = useState(() => {
     if (typeof window !== "undefined") return localStorage.getItem("investment-privacy") === "true";
     return false;
@@ -67,7 +70,6 @@ export default function InvestmentsPage() {
     setPrivacyMode(next);
     if (typeof window !== "undefined") localStorage.setItem("investment-privacy", String(next));
   };
-  const mask = (value: string | number) => privacyMode ? "••••••" : String(value);
 
   return (
     <PrivacyContext.Provider value={privacyMode}>
@@ -79,7 +81,7 @@ export default function InvestmentsPage() {
             Investment Hub
           </h1>
           <p className="mt-1 text-sm text-[#6B6560]">
-            Portfolio pulse · Signals · Trade system · Track record
+            Intelligence · Research · Portfolio
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -96,9 +98,18 @@ export default function InvestmentsPage() {
             {privacyMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             {privacyMode ? "Private" : ""}
           </button>
-          {activeTab === "positions" && (
+          {activeTab === "research" && (
             <button
               onClick={() => { setAddFormStage("research"); setShowAddForm(true); }}
+              className="flex items-center gap-2 rounded-lg bg-[#B8956A] px-4 py-2 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Add to Watchlist
+            </button>
+          )}
+          {activeTab === "portfolio" && portfolioSubTab === "holdings" && (
+            <button
+              onClick={() => { setAddFormStage("portfolio"); setShowAddForm(true); }}
               className="flex items-center gap-2 rounded-lg bg-[#B8956A] px-4 py-2 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] transition-colors"
             >
               <Plus className="h-4 w-4" />
@@ -112,10 +123,8 @@ export default function InvestmentsPage() {
       <div className="flex items-center gap-1 rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-1 w-fit">
         {[
           { key: "home" as MainTab, label: "Home", icon: Home },
-          { key: "positions" as MainTab, label: "Positions", icon: Target },
-          { key: "signal_engine" as MainTab, label: "Signal Engine", icon: Radio },
-          { key: "trade_system" as MainTab, label: "Trade System", icon: BarChart3 },
-          { key: "track_record" as MainTab, label: "Track Record", icon: Trophy },
+          { key: "research" as MainTab, label: "Research", icon: FlaskConical },
+          { key: "portfolio" as MainTab, label: "Portfolio", icon: Briefcase },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -135,10 +144,8 @@ export default function InvestmentsPage() {
 
       {/* Tab Content */}
       {activeTab === "home" && <HomeTab />}
-      {activeTab === "positions" && <PositionsTab />}
-      {activeTab === "signal_engine" && <SignalEngineTab />}
-      {activeTab === "trade_system" && <TradeSystemTab />}
-      {activeTab === "track_record" && <TrackRecordTab />}
+      {activeTab === "research" && <ResearchTab />}
+      {activeTab === "portfolio" && <PortfolioTab subTab={portfolioSubTab} setSubTab={setPortfolioSubTab} />}
 
       {/* Add Position Modal */}
       {showAddForm && <AddPositionModal onClose={() => setShowAddForm(false)} initialStage={addFormStage} />}
@@ -148,16 +155,105 @@ export default function InvestmentsPage() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TAB 1: HOME — Portfolio Pulse
+   TAB 1: HOME — Daily Intelligence Dashboard
    ═══════════════════════════════════════════════════════════ */
 
 function HomeTab() {
+  return (
+    <div className="space-y-8">
+      {/* Morning Briefing */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Radio className="h-4 w-4 text-[#B8956A]" />
+          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Morning Briefing</h2>
+        </div>
+        <MorningBriefing />
+      </section>
+
+      {/* Event Scanner */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Search className="h-4 w-4 text-[#B8956A]" />
+          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Event Scanner</h2>
+        </div>
+        <EventScanner />
+      </section>
+
+      {/* Macro Context */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Globe className="h-4 w-4 text-[#B8956A]" />
+          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Macro Context</h2>
+        </div>
+        <MacroContext />
+      </section>
+
+      {/* Opportunities */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Lightbulb className="h-4 w-4 text-[#B8956A]" />
+          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Opportunities</h2>
+        </div>
+        <OpportunitiesView />
+      </section>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 2: RESEARCH — Study Lab
+   ═══════════════════════════════════════════════════════════ */
+
+type ResearchSubTab = "watchlist" | "monte_carlo" | "paper_trades" | "sentiment" | "alerts";
+
+function ResearchTab() {
+  const [subTab, setSubTab] = useState<ResearchSubTab>("watchlist");
+
+  return (
+    <div className="space-y-4">
+      {/* Sub-nav */}
+      <div className="flex items-center gap-1 border-b border-[#1A1816] pb-3 flex-wrap">
+        {[
+          { key: "watchlist" as ResearchSubTab, label: "Watchlist" },
+          { key: "monte_carlo" as ResearchSubTab, label: "Monte Carlo" },
+          { key: "paper_trades" as ResearchSubTab, label: "Paper Trades" },
+          { key: "sentiment" as ResearchSubTab, label: "Sentiment" },
+          { key: "alerts" as ResearchSubTab, label: "Alerts" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setSubTab(tab.key)}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+              subTab === tab.key
+                ? "text-[#E8E4DF] bg-[#1A1816]"
+                : "text-[#6B6560] hover:text-[#E8E4DF]"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {subTab === "watchlist" && <WatchlistView />}
+      {subTab === "monte_carlo" && <MonteCarloTab />}
+      {subTab === "paper_trades" && <PaperTradesTab />}
+      {subTab === "sentiment" && <SentimentTab />}
+      {subTab === "alerts" && <AlertsView />}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 3: PORTFOLIO — Real Holdings
+   ═══════════════════════════════════════════════════════════ */
+
+type PortfolioSubTab = "holdings" | "trade_system" | "track_record";
+
+function PortfolioTab({ subTab, setSubTab }: { subTab: PortfolioSubTab; setSubTab: (t: PortfolioSubTab) => void }) {
   const privacyMode = usePrivacy();
   const allPositions = useQuery(api.investments.listPositions, {});
-  const alerts = useQuery(api.investments.listAlerts, { acknowledged: false, limit: 5 });
-  const latestBriefing = useQuery(api.signals.getLatestBriefing);
 
-  // Helper: determine effective stage for backward compatibility
   const getEffectiveStage = (p: any) =>
     p.stage ?? ((p.shares && p.shares > 0 && p.entryPrice && p.entryPrice > 0) ? "portfolio" : "research");
 
@@ -166,7 +262,6 @@ function HomeTab() {
     [allPositions]
   );
 
-  // Only portfolio-stage positions count toward portfolio value and stats
   const portfolioPositions = useMemo(
     () => activePositions.filter((p) => getEffectiveStage(p) === "portfolio"),
     [activePositions]
@@ -181,11 +276,9 @@ function HomeTab() {
     }, 0);
   }, [portfolioPositions]);
 
-  const criticalAlerts = alerts?.filter((a) => a.severity === "high" || a.severity === "critical") ?? [];
-
   return (
-    <div className="space-y-6">
-      {/* Stats Bar */}
+    <div className="space-y-4">
+      {/* Portfolio Stats Bar */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard label="Portfolio Value" value={privacyMode ? "••••••" : `$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 0 })}`} />
         <StatCard label="Today's P&L" value={privacyMode ? "••••••" : "—"} muted={!privacyMode} />
@@ -198,156 +291,12 @@ function HomeTab() {
         />
       </div>
 
-      {/* Quick Alerts */}
-      {criticalAlerts.length > 0 && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="h-4 w-4 text-red-400" />
-            <span className="text-sm font-semibold text-red-400">Active Alerts</span>
-          </div>
-          <div className="space-y-2">
-            {criticalAlerts.map((alert) => (
-              <div key={alert._id} className="flex items-start gap-3 text-sm">
-                <span className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 mt-0.5",
-                  alert.severity === "critical" ? "bg-red-500/20 text-red-400" : "bg-orange-500/20 text-orange-400"
-                )}>
-                  {alert.severity}
-                </span>
-                <div>
-                  <span className="text-[#B8956A] font-medium mr-2">{alert.ticker}</span>
-                  <span className="text-[#E8E4DF]">{alert.title}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Portfolio Columns */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <PortfolioColumn
-          title="High Risk"
-          icon={<Flame className="h-5 w-5 text-red-400" />}
-          positions={highRisk}
-          color="red"
-        />
-        <PortfolioColumn
-          title="Low Risk"
-          icon={<Shield className="h-5 w-5 text-blue-400" />}
-          positions={lowRisk}
-          color="blue"
-        />
-      </div>
-
-      {/* Latest Signal */}
-      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Radio className="h-4 w-4 text-[#B8956A]" />
-          <span className="text-sm font-semibold text-[#E8E4DF]">Latest Signal</span>
-        </div>
-        {latestBriefing ? (
-          <div>
-            <p className="text-xs text-[#6B6560] mb-1">{latestBriefing.date} · {latestBriefing.marketStatus}</p>
-            {latestBriefing.sections.slice(0, 2).map((s, i) => (
-              <p key={i} className="text-sm text-[#E8E4DF]/80">
-                {s.ticker && <span className="text-[#B8956A] mr-1">{s.ticker}</span>}
-                {s.title}: {s.summary.slice(0, 120)}{s.summary.length > 120 ? "..." : ""}
-              </p>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-[#6B6560]">No signals yet. Morning briefing generates at 6:00 AM CT.</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value, sub, muted }: { label: string; value: string; sub?: string; muted?: boolean }) {
-  return (
-    <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-4">
-      <p className="text-xs text-[#6B6560] mb-1">{label}</p>
-      <p className={cn("text-xl font-bold", muted ? "text-[#6B6560]" : "text-[#E8E4DF]")}>{value}</p>
-      {sub && <p className="text-[10px] text-[#6B6560] mt-0.5">{sub}</p>}
-    </div>
-  );
-}
-
-function PortfolioColumn({
-  title,
-  icon,
-  positions,
-  color,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  positions: any[];
-  color: "red" | "blue";
-}) {
-  const privacyMode = usePrivacy();
-  return (
-    <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
-      <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
-        {icon}
-        <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">{title}</h2>
-        <span className={cn(
-          "ml-auto rounded-full px-2.5 py-0.5 text-xs",
-          color === "red" ? "bg-red-500/10 text-red-400" : "bg-blue-500/10 text-blue-400"
-        )}>
-          {positions.length} active
-        </span>
-      </div>
-      <div className="divide-y divide-[#1A1816]">
-        {positions.length === 0 ? (
-          <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
-            No {title.toLowerCase()} positions yet.
-          </div>
-        ) : (
-          positions.map((pos) => (
-            <div key={pos._id} className="px-5 py-3">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-[#E8E4DF]">{pos.ticker}</span>
-                <span className="text-xs text-[#6B6560]">{pos.name}</span>
-                {pos.shares && pos.entryPrice && (
-                  <span className="ml-auto text-xs text-[#6B6560]">
-                    {privacyMode ? "••••" : `${pos.shares} @ $${pos.entryPrice}`}
-                  </span>
-                )}
-              </div>
-              {pos.thesis && (
-                <p className="mt-1 text-xs text-[#6B6560] line-clamp-1">{pos.thesis}</p>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   TAB 2: POSITIONS — Full Pitzy Model (preserved)
-   ═══════════════════════════════════════════════════════════ */
-
-type PositionsSubTab = "portfolios" | "alerts" | "opportunities" | "track_record" | "monte_carlo" | "paper_trades" | "sentiment";
-
-function PositionsTab() {
-  const [subTab, setSubTab] = useState<PositionsSubTab>("portfolios");
-  const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
-
-  return (
-    <div className="space-y-4">
       {/* Sub-nav */}
       <div className="flex items-center gap-1 border-b border-[#1A1816] pb-3 flex-wrap">
         {[
-          { key: "portfolios" as PositionsSubTab, label: "Positions" },
-          { key: "alerts" as PositionsSubTab, label: "Alerts" },
-          { key: "opportunities" as PositionsSubTab, label: "Opportunities" },
-          { key: "track_record" as PositionsSubTab, label: "Track Record" },
-          { key: "monte_carlo" as PositionsSubTab, label: "Monte Carlo" },
-          { key: "paper_trades" as PositionsSubTab, label: "Paper Trades" },
-          { key: "sentiment" as PositionsSubTab, label: "Sentiment" },
+          { key: "holdings" as PortfolioSubTab, label: "Holdings" },
+          { key: "trade_system" as PortfolioSubTab, label: "Trade System" },
+          { key: "track_record" as PortfolioSubTab, label: "Track Record" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -364,60 +313,210 @@ function PositionsTab() {
         ))}
       </div>
 
-      {subTab === "portfolios" && (
-        <PortfolioView
-          selectedPosition={selectedPosition}
-          setSelectedPosition={setSelectedPosition}
-        />
-      )}
-      {subTab === "alerts" && <AlertsView />}
-      {subTab === "opportunities" && <OpportunitiesView />}
-      {subTab === "track_record" && <OpportunityTrackRecordView />}
-      {subTab === "monte_carlo" && <MonteCarloTab />}
-      {subTab === "paper_trades" && <PaperTradesTab />}
-      {subTab === "sentiment" && <SentimentTab />}
+      {subTab === "holdings" && <HoldingsView />}
+      {subTab === "trade_system" && <TradeSystemTab />}
+      {subTab === "track_record" && <TrackRecordTab />}
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TAB 3: SIGNAL ENGINE
+   WATCHLIST VIEW (Research stage positions)
    ═══════════════════════════════════════════════════════════ */
 
-type SignalSubTab = "briefing" | "events" | "macro";
+function WatchlistView() {
+  const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
+  const [promoteTarget, setPromoteTarget] = useState<string | null>(null);
+  const allPositions = useQuery(api.investments.listPositions, {});
 
-function SignalEngineTab() {
-  const [subTab, setSubTab] = useState<SignalSubTab>("briefing");
+  const getEffectiveStage = (p: any) =>
+    p.stage ?? ((p.shares && p.shares > 0 && p.entryPrice && p.entryPrice > 0) ? "portfolio" : "research");
+
+  const activePositions = useMemo(
+    () => allPositions?.filter((p) => p.status !== "exited") ?? [],
+    [allPositions]
+  );
+
+  const researchPositions = useMemo(
+    () => activePositions.filter((p) => getEffectiveStage(p) === "research"),
+    [activePositions]
+  );
+
+  if (selectedPosition) {
+    return (
+      <PositionDetail
+        id={selectedPosition as Id<"investmentPositions">}
+        onBack={() => setSelectedPosition(null)}
+      />
+    );
+  }
+
+  if (promoteTarget) {
+    const pos = activePositions.find((p) => p._id === promoteTarget);
+    if (pos) {
+      return (
+        <PromoteToPortfolioForm
+          position={pos}
+          onClose={() => setPromoteTarget(null)}
+        />
+      );
+    }
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-1 border-b border-[#1A1816] pb-3">
-        {[
-          { key: "briefing" as SignalSubTab, label: "Morning Briefing" },
-          { key: "events" as SignalSubTab, label: "Event Scanner" },
-          { key: "macro" as SignalSubTab, label: "Macro Context" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setSubTab(tab.key)}
-            className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
-              subTab === tab.key
-                ? "text-[#E8E4DF] bg-[#1A1816]"
-                : "text-[#6B6560] hover:text-[#E8E4DF]"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {subTab === "briefing" && <MorningBriefing />}
-      {subTab === "events" && <EventScanner />}
-      {subTab === "macro" && <MacroContext />}
+    <div className="space-y-3">
+      {researchPositions.length === 0 ? (
+        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-12 text-center">
+          <Search className="mx-auto h-8 w-8 text-[#6B6560] mb-3" />
+          <p className="text-sm font-medium text-[#E8E4DF]">No tickers in watchlist</p>
+          <p className="text-xs text-[#6B6560] mt-1">Add a ticker to start studying it before committing capital</p>
+        </div>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {researchPositions.map((pos) => (
+            <div
+              key={pos._id}
+              className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-4 hover:border-[#B8956A]/30 transition-colors group"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base font-semibold text-[#E8E4DF]">{pos.ticker}</span>
+                <span className="text-xs text-[#6B6560] truncate">{pos.name}</span>
+              </div>
+              {pos.thesis ? (
+                <p className="text-xs text-[#6B6560] line-clamp-2 mb-3">{pos.thesis}</p>
+              ) : (
+                <button
+                  onClick={() => setSelectedPosition(pos._id)}
+                  className="text-xs text-[#B8956A] hover:text-[#CDAA7E] mb-3 flex items-center gap-1"
+                >
+                  <Brain className="h-3 w-3" />
+                  Generate Thesis
+                </button>
+              )}
+              <div className="flex items-center gap-2 pt-2 border-t border-[#1A1816]">
+                <button
+                  onClick={() => setSelectedPosition(pos._id)}
+                  className="text-[10px] text-[#6B6560] hover:text-[#E8E4DF] transition-colors"
+                >
+                  View Details
+                </button>
+                <button
+                  onClick={() => setPromoteTarget(pos._id)}
+                  className="ml-auto flex items-center gap-1 rounded-md bg-[#B8956A]/10 px-2.5 py-1 text-[10px] font-medium text-[#B8956A] hover:bg-[#B8956A]/20 transition-colors"
+                >
+                  <ArrowUp className="h-3 w-3" />
+                  Promote to Portfolio
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════
+   HOLDINGS VIEW (Portfolio stage positions)
+   ═══════════════════════════════════════════════════════════ */
+
+function HoldingsView() {
+  const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
+  const allPositions = useQuery(api.investments.listPositions, {});
+  const demoteToResearch = useMutation(api.investments.demoteToResearch);
+
+  const getEffectiveStage = (p: any) =>
+    p.stage ?? ((p.shares && p.shares > 0 && p.entryPrice && p.entryPrice > 0) ? "portfolio" : "research");
+
+  const activePositions = useMemo(
+    () => allPositions?.filter((p) => p.status !== "exited") ?? [],
+    [allPositions]
+  );
+
+  const portfolioPositions = useMemo(
+    () => activePositions.filter((p) => getEffectiveStage(p) === "portfolio"),
+    [activePositions]
+  );
+
+  if (selectedPosition) {
+    return (
+      <PositionDetail
+        id={selectedPosition as Id<"investmentPositions">}
+        onBack={() => setSelectedPosition(null)}
+      />
+    );
+  }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {/* High Risk */}
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
+          <Flame className="h-5 w-5 text-red-400" />
+          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
+            High Risk
+          </h2>
+          <span className="ml-auto rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs text-red-400">
+            {portfolioPositions.filter((p) => p.portfolioType === "high_risk").length} active
+          </span>
+        </div>
+        <div className="divide-y divide-[#1A1816]">
+          {portfolioPositions.filter((p) => p.portfolioType === "high_risk").length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
+              No high risk positions in portfolio.
+            </div>
+          ) : (
+            portfolioPositions
+              .filter((p) => p.portfolioType === "high_risk")
+              .map((pos) => (
+                <PositionRow
+                  key={pos._id}
+                  position={pos}
+                  onClick={() => setSelectedPosition(pos._id)}
+                  onDemote={() => demoteToResearch({ positionId: pos._id as Id<"investmentPositions"> })}
+                />
+              ))
+          )}
+        </div>
+      </div>
+
+      {/* Low Risk */}
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
+          <Shield className="h-5 w-5 text-blue-400" />
+          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
+            Low Risk
+          </h2>
+          <span className="ml-auto rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs text-blue-400">
+            {portfolioPositions.filter((p) => p.portfolioType === "low_risk").length} active
+          </span>
+        </div>
+        <div className="divide-y divide-[#1A1816]">
+          {portfolioPositions.filter((p) => p.portfolioType === "low_risk").length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
+              No low risk positions in portfolio.
+            </div>
+          ) : (
+            portfolioPositions
+              .filter((p) => p.portfolioType === "low_risk")
+              .map((pos) => (
+                <PositionRow
+                  key={pos._id}
+                  position={pos}
+                  onClick={() => setSelectedPosition(pos._id)}
+                  onDemote={() => demoteToResearch({ positionId: pos._id as Id<"investmentPositions"> })}
+                />
+              ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SIGNAL ENGINE COMPONENTS (now used in Home tab)
+   ═══════════════════════════════════════════════════════════ */
 
 function MorningBriefing() {
   const today = new Date().toISOString().split("T")[0];
@@ -611,127 +710,125 @@ function MacroContext() {
   const activePositions = positions?.filter((p) => p.status === "active") ?? [];
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Fed Funds Rate */}
-        <MacroCard title="Fed Funds Rate" icon={<DollarSign className="h-4 w-4" />}>
-          {macro?.fedFundsRate != null ? (
-            <div>
-              <p className="text-2xl font-bold text-[#E8E4DF]">{macro.fedFundsRate}%</p>
-              {macro.fedNextMeeting && <p className="text-xs text-[#6B6560] mt-1">Next meeting: {macro.fedNextMeeting}</p>}
-              {macro.fedChangeProb != null && <p className="text-xs text-[#6B6560]">Change prob: {macro.fedChangeProb}%</p>}
-            </div>
-          ) : (
-            <MacroEmpty text="Fed rate data pending" />
-          )}
-        </MacroCard>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Fed Funds Rate */}
+      <MacroCard title="Fed Funds Rate" icon={<DollarSign className="h-4 w-4" />}>
+        {macro?.fedFundsRate != null ? (
+          <div>
+            <p className="text-2xl font-bold text-[#E8E4DF]">{macro.fedFundsRate}%</p>
+            {macro.fedNextMeeting && <p className="text-xs text-[#6B6560] mt-1">Next meeting: {macro.fedNextMeeting}</p>}
+            {macro.fedChangeProb != null && <p className="text-xs text-[#6B6560]">Change prob: {macro.fedChangeProb}%</p>}
+          </div>
+        ) : (
+          <MacroEmpty text="Fed rate data pending" />
+        )}
+      </MacroCard>
 
-        {/* VIX */}
-        <MacroCard title="VIX" icon={<Activity className="h-4 w-4" />}>
-          {macro?.vix != null ? (
-            <div>
-              <p className={cn(
-                "text-2xl font-bold",
-                macro.vix < 15 ? "text-green-400" :
-                macro.vix <= 25 ? "text-yellow-400" :
-                "text-red-400"
-              )}>
-                {macro.vix}
-              </p>
-              {macro.vixTrend && (
-                <div className="flex items-center gap-1 mt-1">
-                  {macro.vixTrend === "up" && <ArrowUp className="h-3 w-3 text-red-400" />}
-                  {macro.vixTrend === "down" && <ArrowDown className="h-3 w-3 text-green-400" />}
-                  {macro.vixTrend === "flat" && <Minus className="h-3 w-3 text-[#6B6560]" />}
-                  <span className="text-xs text-[#6B6560] capitalize">{macro.vixTrend}</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <MacroEmpty text="VIX data pending" />
-          )}
-        </MacroCard>
+      {/* VIX */}
+      <MacroCard title="VIX" icon={<Activity className="h-4 w-4" />}>
+        {macro?.vix != null ? (
+          <div>
+            <p className={cn(
+              "text-2xl font-bold",
+              macro.vix < 15 ? "text-green-400" :
+              macro.vix <= 25 ? "text-yellow-400" :
+              "text-red-400"
+            )}>
+              {macro.vix}
+            </p>
+            {macro.vixTrend && (
+              <div className="flex items-center gap-1 mt-1">
+                {macro.vixTrend === "up" && <ArrowUp className="h-3 w-3 text-red-400" />}
+                {macro.vixTrend === "down" && <ArrowDown className="h-3 w-3 text-green-400" />}
+                {macro.vixTrend === "flat" && <Minus className="h-3 w-3 text-[#6B6560]" />}
+                <span className="text-xs text-[#6B6560] capitalize">{macro.vixTrend}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <MacroEmpty text="VIX data pending" />
+        )}
+      </MacroCard>
 
-        {/* Yield Curve */}
-        <MacroCard title="Yield Curve" icon={<LineChart className="h-4 w-4" />}>
-          {macro?.yieldCurveStatus ? (
-            <div>
-              <span className={cn(
-                "rounded-full px-3 py-1 text-sm font-semibold",
-                macro.yieldCurveStatus === "Normal" ? "bg-green-500/10 text-green-400" :
-                macro.yieldCurveStatus === "Flat" ? "bg-yellow-500/10 text-yellow-400" :
-                "bg-red-500/10 text-red-400"
-              )}>
-                {macro.yieldCurveStatus}
-              </span>
-              {macro.yield2y10ySpread != null && (
-                <p className="text-xs text-[#6B6560] mt-2">2Y-10Y Spread: {macro.yield2y10ySpread}bps</p>
-              )}
-            </div>
-          ) : (
-            <MacroEmpty text="Yield curve data pending" />
-          )}
-        </MacroCard>
+      {/* Yield Curve */}
+      <MacroCard title="Yield Curve" icon={<LineChart className="h-4 w-4" />}>
+        {macro?.yieldCurveStatus ? (
+          <div>
+            <span className={cn(
+              "rounded-full px-3 py-1 text-sm font-semibold",
+              macro.yieldCurveStatus === "Normal" ? "bg-green-500/10 text-green-400" :
+              macro.yieldCurveStatus === "Flat" ? "bg-yellow-500/10 text-yellow-400" :
+              "bg-red-500/10 text-red-400"
+            )}>
+              {macro.yieldCurveStatus}
+            </span>
+            {macro.yield2y10ySpread != null && (
+              <p className="text-xs text-[#6B6560] mt-2">2Y-10Y Spread: {macro.yield2y10ySpread}bps</p>
+            )}
+          </div>
+        ) : (
+          <MacroEmpty text="Yield curve data pending" />
+        )}
+      </MacroCard>
 
-        {/* Dollar Index */}
-        <MacroCard title="Dollar Index (DXY)" icon={<Globe className="h-4 w-4" />}>
-          {macro?.dxy != null ? (
-            <div>
-              <p className="text-2xl font-bold text-[#E8E4DF]">{macro.dxy}</p>
-              {macro.dxyTrend && (
-                <div className="flex items-center gap-1 mt-1">
-                  {macro.dxyTrend === "up" && <ArrowUp className="h-3 w-3 text-green-400" />}
-                  {macro.dxyTrend === "down" && <ArrowDown className="h-3 w-3 text-red-400" />}
-                  {macro.dxyTrend === "flat" && <Minus className="h-3 w-3 text-[#6B6560]" />}
-                  <span className="text-xs text-[#6B6560] capitalize">{macro.dxyTrend}</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <MacroEmpty text="DXY data pending" />
-          )}
-        </MacroCard>
+      {/* Dollar Index */}
+      <MacroCard title="Dollar Index (DXY)" icon={<Globe className="h-4 w-4" />}>
+        {macro?.dxy != null ? (
+          <div>
+            <p className="text-2xl font-bold text-[#E8E4DF]">{macro.dxy}</p>
+            {macro.dxyTrend && (
+              <div className="flex items-center gap-1 mt-1">
+                {macro.dxyTrend === "up" && <ArrowUp className="h-3 w-3 text-green-400" />}
+                {macro.dxyTrend === "down" && <ArrowDown className="h-3 w-3 text-red-400" />}
+                {macro.dxyTrend === "flat" && <Minus className="h-3 w-3 text-[#6B6560]" />}
+                <span className="text-xs text-[#6B6560] capitalize">{macro.dxyTrend}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <MacroEmpty text="DXY data pending" />
+        )}
+      </MacroCard>
 
-        {/* Sector Rotation */}
-        <MacroCard title="Sector Rotation" icon={<BarChart3 className="h-4 w-4" />}>
-          {macro?.sectorRotation ? (
-            <div className="grid grid-cols-3 gap-1">
-              {Object.entries(macro.sectorRotation as Record<string, number>).map(([sector, value]) => (
-                <div
-                  key={sector}
-                  className={cn(
-                    "rounded px-2 py-1 text-center text-[10px]",
-                    (value as number) >= 0 ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
-                  )}
-                >
-                  {sector}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <MacroEmpty text="Sector data pending" />
-          )}
-        </MacroCard>
+      {/* Sector Rotation */}
+      <MacroCard title="Sector Rotation" icon={<BarChart3 className="h-4 w-4" />}>
+        {macro?.sectorRotation ? (
+          <div className="grid grid-cols-3 gap-1">
+            {Object.entries(macro.sectorRotation as Record<string, number>).map(([sector, value]) => (
+              <div
+                key={sector}
+                className={cn(
+                  "rounded px-2 py-1 text-center text-[10px]",
+                  (value as number) >= 0 ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                )}
+              >
+                {sector}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <MacroEmpty text="Sector data pending" />
+        )}
+      </MacroCard>
 
-        {/* Earnings Calendar */}
-        <MacroCard title="Earnings Calendar" icon={<Calendar className="h-4 w-4" />}>
-          {macro?.earningsCalendar && macro.earningsCalendar.length > 0 ? (
-            <div className="space-y-1.5">
-              {macro.earningsCalendar.slice(0, 5).map((e, i) => (
-                <div key={i} className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#E8E4DF]">{e.ticker}</span>
-                  <span className="text-[#6B6560]">{e.date}</span>
-                  {e.estimate && <span className="text-[#6B6560]">Est: {e.estimate}</span>}
-                </div>
-              ))}
-            </div>
-          ) : activePositions.length > 0 ? (
-            <MacroEmpty text="No upcoming earnings for your positions" />
-          ) : (
-            <MacroEmpty text="Add positions to track earnings" />
-          )}
-        </MacroCard>
-      </div>
+      {/* Earnings Calendar */}
+      <MacroCard title="Earnings Calendar" icon={<Calendar className="h-4 w-4" />}>
+        {macro?.earningsCalendar && macro.earningsCalendar.length > 0 ? (
+          <div className="space-y-1.5">
+            {macro.earningsCalendar.slice(0, 5).map((e, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-[#E8E4DF]">{e.ticker}</span>
+                <span className="text-[#6B6560]">{e.date}</span>
+                {e.estimate && <span className="text-[#6B6560]">Est: {e.estimate}</span>}
+              </div>
+            ))}
+          </div>
+        ) : activePositions.length > 0 ? (
+          <MacroEmpty text="No upcoming earnings for your positions" />
+        ) : (
+          <MacroEmpty text="Add positions to track earnings" />
+        )}
+      </MacroCard>
     </div>
   );
 }
@@ -753,7 +850,7 @@ function MacroEmpty({ text }: { text: string }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TAB 4: TRADE SYSTEM
+   TRADE SYSTEM (Portfolio sub-tab)
    ═══════════════════════════════════════════════════════════ */
 
 function TradeSystemTab() {
@@ -889,7 +986,7 @@ function PriceRuler({ rule, currentEntry }: { rule: any; currentEntry?: number }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TAB 5: TRACK RECORD
+   TRACK RECORD (Portfolio sub-tab)
    ═══════════════════════════════════════════════════════════ */
 
 function TrackRecordTab() {
@@ -1019,213 +1116,15 @@ function TrackRecordTab() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   PRESERVED COMPONENTS from original page
+   SHARED COMPONENTS
    ═══════════════════════════════════════════════════════════ */
 
-type StageView = "research" | "portfolio";
-
-function PortfolioView({
-  selectedPosition,
-  setSelectedPosition,
-}: {
-  selectedPosition: string | null;
-  setSelectedPosition: (id: string | null) => void;
-}) {
-  const [stageView, setStageView] = useState<StageView>("research");
-  const [promoteTarget, setPromoteTarget] = useState<string | null>(null);
-  const allPositions = useQuery(api.investments.listPositions, {});
-  const demoteToResearch = useMutation(api.investments.demoteToResearch);
-
-  const getEffectiveStage = (p: any) =>
-    p.stage ?? ((p.shares && p.shares > 0 && p.entryPrice && p.entryPrice > 0) ? "portfolio" : "research");
-
-  const activePositions = useMemo(
-    () => allPositions?.filter((p) => p.status !== "exited") ?? [],
-    [allPositions]
-  );
-
-  const researchPositions = useMemo(
-    () => activePositions.filter((p) => getEffectiveStage(p) === "research"),
-    [activePositions]
-  );
-
-  const portfolioPositions = useMemo(
-    () => activePositions.filter((p) => getEffectiveStage(p) === "portfolio"),
-    [activePositions]
-  );
-
-  if (selectedPosition) {
-    return (
-      <PositionDetail
-        id={selectedPosition as Id<"investmentPositions">}
-        onBack={() => setSelectedPosition(null)}
-      />
-    );
-  }
-
-  if (promoteTarget) {
-    const pos = activePositions.find((p) => p._id === promoteTarget);
-    if (pos) {
-      return (
-        <PromoteToPortfolioForm
-          position={pos}
-          onClose={() => setPromoteTarget(null)}
-        />
-      );
-    }
-  }
-
+function StatCard({ label, value, sub, muted }: { label: string; value: string; sub?: string; muted?: boolean }) {
   return (
-    <div className="space-y-4">
-      {/* Research / Portfolio toggle */}
-      <div className="flex items-center gap-1 rounded-lg border border-[#1A1816] bg-[#0D0C0A] p-1 w-fit">
-        <button
-          onClick={() => setStageView("research")}
-          className={cn(
-            "flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-all",
-            stageView === "research"
-              ? "bg-[#1A1816] text-[#E8E4DF]"
-              : "text-[#6B6560] hover:text-[#E8E4DF]"
-          )}
-        >
-          <Search className="h-3.5 w-3.5" />
-          Research
-          <span className="rounded-full bg-[#1A1816] px-1.5 py-0.5 text-[10px] text-[#6B6560]">{researchPositions.length}</span>
-        </button>
-        <button
-          onClick={() => setStageView("portfolio")}
-          className={cn(
-            "flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-all",
-            stageView === "portfolio"
-              ? "bg-[#1A1816] text-[#E8E4DF]"
-              : "text-[#6B6560] hover:text-[#E8E4DF]"
-          )}
-        >
-          <DollarSign className="h-3.5 w-3.5" />
-          Portfolio
-          <span className="rounded-full bg-[#1A1816] px-1.5 py-0.5 text-[10px] text-[#6B6560]">{portfolioPositions.length}</span>
-        </button>
-      </div>
-
-      {/* Research View */}
-      {stageView === "research" && (
-        <div className="space-y-3">
-          {researchPositions.length === 0 ? (
-            <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-12 text-center">
-              <Search className="mx-auto h-8 w-8 text-[#6B6560] mb-3" />
-              <p className="text-sm font-medium text-[#E8E4DF]">No tickers in research</p>
-              <p className="text-xs text-[#6B6560] mt-1">Add a ticker to start studying it before committing capital</p>
-            </div>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {researchPositions.map((pos) => (
-                <div
-                  key={pos._id}
-                  className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-4 hover:border-[#B8956A]/30 transition-colors group"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-base font-semibold text-[#E8E4DF]">{pos.ticker}</span>
-                    <span className="text-xs text-[#6B6560] truncate">{pos.name}</span>
-                  </div>
-                  {pos.thesis ? (
-                    <p className="text-xs text-[#6B6560] line-clamp-2 mb-3">{pos.thesis}</p>
-                  ) : (
-                    <button
-                      onClick={() => setSelectedPosition(pos._id)}
-                      className="text-xs text-[#B8956A] hover:text-[#CDAA7E] mb-3 flex items-center gap-1"
-                    >
-                      <Brain className="h-3 w-3" />
-                      Generate Thesis
-                    </button>
-                  )}
-                  <div className="flex items-center gap-2 pt-2 border-t border-[#1A1816]">
-                    <button
-                      onClick={() => setSelectedPosition(pos._id)}
-                      className="text-[10px] text-[#6B6560] hover:text-[#E8E4DF] transition-colors"
-                    >
-                      View Details
-                    </button>
-                    <button
-                      onClick={() => setPromoteTarget(pos._id)}
-                      className="ml-auto flex items-center gap-1 rounded-md bg-[#B8956A]/10 px-2.5 py-1 text-[10px] font-medium text-[#B8956A] hover:bg-[#B8956A]/20 transition-colors"
-                    >
-                      <ArrowUp className="h-3 w-3" />
-                      Promote to Portfolio
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Portfolio View */}
-      {stageView === "portfolio" && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* High Risk */}
-          <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
-            <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
-              <Flame className="h-5 w-5 text-red-400" />
-              <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
-                High Risk
-              </h2>
-              <span className="ml-auto rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs text-red-400">
-                {portfolioPositions.filter((p) => p.portfolioType === "high_risk").length} active
-              </span>
-            </div>
-            <div className="divide-y divide-[#1A1816]">
-              {portfolioPositions.filter((p) => p.portfolioType === "high_risk").length === 0 ? (
-                <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
-                  No high risk positions in portfolio.
-                </div>
-              ) : (
-                portfolioPositions
-                  .filter((p) => p.portfolioType === "high_risk")
-                  .map((pos) => (
-                    <PositionRow
-                      key={pos._id}
-                      position={pos}
-                      onClick={() => setSelectedPosition(pos._id)}
-                      onDemote={() => demoteToResearch({ positionId: pos._id as Id<"investmentPositions"> })}
-                    />
-                  ))
-              )}
-            </div>
-          </div>
-
-          {/* Low Risk */}
-          <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
-            <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
-              <Shield className="h-5 w-5 text-blue-400" />
-              <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
-                Low Risk
-              </h2>
-              <span className="ml-auto rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs text-blue-400">
-                {portfolioPositions.filter((p) => p.portfolioType === "low_risk").length} active
-              </span>
-            </div>
-            <div className="divide-y divide-[#1A1816]">
-              {portfolioPositions.filter((p) => p.portfolioType === "low_risk").length === 0 ? (
-                <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
-                  No low risk positions in portfolio.
-                </div>
-              ) : (
-                portfolioPositions
-                  .filter((p) => p.portfolioType === "low_risk")
-                  .map((pos) => (
-                    <PositionRow
-                      key={pos._id}
-                      position={pos}
-                      onClick={() => setSelectedPosition(pos._id)}
-                      onDemote={() => demoteToResearch({ positionId: pos._id as Id<"investmentPositions"> })}
-                    />
-                  ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+    <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-4">
+      <p className="text-xs text-[#6B6560] mb-1">{label}</p>
+      <p className={cn("text-xl font-bold", muted ? "text-[#6B6560]" : "text-[#E8E4DF]")}>{value}</p>
+      {sub && <p className="text-[10px] text-[#6B6560] mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -1918,165 +1817,6 @@ function OpportunitiesView() {
   );
 }
 
-function OpportunityTrackRecordView() {
-  const allOpps = useQuery(api.investments.listAllOpportunitiesTracked);
-  const weeklySummaries = useQuery(api.investments.listWeeklySummaries, { limit: 52 });
-
-  const winners = allOpps?.filter((o) => (o.returnPct ?? 0) > 0).length ?? 0;
-  const losers = allOpps?.filter((o) => (o.returnPct ?? 0) < 0).length ?? 0;
-  const tracked = allOpps?.filter((o) => o.priceAtRecommendation != null) ?? [];
-  const avgReturn = tracked.length > 0
-    ? tracked.reduce((sum, o) => sum + (o.returnPct ?? 0), 0) / tracked.length
-    : 0;
-
-  return (
-    <div className="space-y-6">
-      {/* Scorecard */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: "Total Picks", value: allOpps?.length ?? 0, color: "text-[#E8E4DF]" },
-          { label: "Winners", value: winners, color: "text-green-400" },
-          { label: "Losers", value: losers, color: "text-red-400" },
-          { label: "Avg Return", value: `${avgReturn >= 0 ? "+" : ""}${avgReturn.toFixed(1)}%`, color: avgReturn >= 0 ? "text-green-400" : "text-red-400" },
-        ].map((stat) => (
-          <div key={stat.label} className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-4 text-center">
-            <p className="text-xs text-[#6B6560] mb-1">{stat.label}</p>
-            <p className={cn("text-2xl font-bold", stat.color)}>{stat.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Weekly Summaries */}
-      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
-        <div className="border-b border-[#1A1816] px-5 py-4">
-          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
-            Weekly Summaries
-          </h2>
-        </div>
-        <div className="divide-y divide-[#1A1816] max-h-[400px] overflow-y-auto">
-          {(!weeklySummaries || weeklySummaries.length === 0) ? (
-            <div className="px-5 py-8 text-center text-sm text-[#6B6560]">
-              No weekly summaries yet. First review runs Friday 4 PM CT.
-            </div>
-          ) : (
-            weeklySummaries.map((ws) => (
-              <WeeklySummaryRow key={ws._id} summary={ws} />
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* All Tracked Opportunities */}
-      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
-        <div className="border-b border-[#1A1816] px-5 py-4">
-          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">
-            All Proposed Opportunities
-          </h2>
-          <p className="text-xs text-[#6B6560] mt-1">Every pick tracked with performance history</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#1A1816] text-[#6B6560] text-xs">
-                <th className="px-5 py-3 text-left font-medium">Date</th>
-                <th className="px-3 py-3 text-left font-medium">Ticker</th>
-                <th className="px-3 py-3 text-left font-medium">Name</th>
-                <th className="px-3 py-3 text-right font-medium">Rec Price</th>
-                <th className="px-3 py-3 text-right font-medium">Current</th>
-                <th className="px-3 py-3 text-right font-medium">Return</th>
-                <th className="px-3 py-3 text-left font-medium">Status</th>
-                <th className="px-3 py-3 text-left font-medium">Updates</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1A1816]">
-              {allOpps?.map((opp) => (
-                <tr key={opp._id} className="hover:bg-[#1A1816]/30">
-                  <td className="px-5 py-3 text-[#6B6560]">
-                    {new Date(opp.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-3 py-3 font-semibold text-[#E8E4DF]">{opp.ticker}</td>
-                  <td className="px-3 py-3 text-[#6B6560]">{opp.name}</td>
-                  <td className="px-3 py-3 text-right text-[#6B6560]">
-                    {opp.priceAtRecommendation ? `$${opp.priceAtRecommendation.toFixed(2)}` : "—"}
-                  </td>
-                  <td className="px-3 py-3 text-right text-[#E8E4DF]">
-                    {opp.currentPrice ? `$${opp.currentPrice.toFixed(2)}` : "—"}
-                  </td>
-                  <td className={cn(
-                    "px-3 py-3 text-right font-medium",
-                    (opp.returnPct ?? 0) >= 0 ? "text-green-400" : "text-red-400"
-                  )}>
-                    {opp.returnPct != null ? `${opp.returnPct >= 0 ? "+" : ""}${opp.returnPct.toFixed(1)}%` : "—"}
-                  </td>
-                  <td className="px-3 py-3">
-                    <span className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px]",
-                      opp.status === "hit_target" ? "bg-green-500/10 text-green-400" :
-                      opp.status === "stopped_out" ? "bg-red-500/10 text-red-400" :
-                      opp.status === "expired" ? "bg-[#1A1816] text-[#6B6560]" :
-                      "bg-yellow-500/10 text-yellow-400"
-                    )}>
-                      {(opp.status ?? "active").replace("_", " ")}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-[10px] text-[#6B6560]">
-                    {opp.weeklyNotes?.length ?? 0} notes
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function WeeklySummaryRow({ summary }: { summary: any }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div>
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-[#1A1816]/30 transition-colors"
-      >
-        <ChevronRight className={cn("h-3.5 w-3.5 text-[#6B6560] transition-transform", open && "rotate-90")} />
-        <span className="text-sm font-medium text-[#E8E4DF]">Week of {summary.weekOf}</span>
-        <div className="flex items-center gap-3 ml-auto text-xs">
-          <span className="text-green-400">{summary.winnersCount}W</span>
-          <span className="text-red-400">{summary.losersCount}L</span>
-          {summary.avgReturn != null && (
-            <span className={cn(
-              summary.avgReturn >= 0 ? "text-green-400" : "text-red-400"
-            )}>
-              {summary.avgReturn >= 0 ? "+" : ""}{summary.avgReturn.toFixed(1)}%
-            </span>
-          )}
-        </div>
-      </button>
-      {open && (
-        <div className="px-5 pb-4 border-t border-[#1A1816]/50">
-          <div className="pt-3 text-sm text-[#E8E4DF]/80 whitespace-pre-wrap">{summary.summary}</div>
-          {summary.bestPicker && (
-            <p className="mt-2 text-xs text-green-400">
-              Best: {summary.bestPicker.ticker} (+{summary.bestPicker.returnPct.toFixed(1)}%)
-            </p>
-          )}
-          {summary.worstPicker && (
-            <p className="text-xs text-red-400">
-              Worst: {summary.worstPicker.ticker} ({summary.worstPicker.returnPct.toFixed(1)}%)
-            </p>
-          )}
-          {summary.positionUpdates && (
-            <div className="mt-2 text-xs text-[#6B6560]">{summary.positionUpdates}</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function AddPositionModal({ onClose, initialStage = "research" }: { onClose: () => void; initialStage?: "research" | "portfolio" }) {
   const addPosition = useMutation(api.investments.addPosition);
   const [stage, setStage] = useState<"research" | "portfolio">(initialStage);
@@ -2285,7 +2025,7 @@ function AddPositionModal({ onClose, initialStage = "research" }: { onClose: () 
             disabled={submitting || !ticker.trim() || !name.trim() || (stage === "portfolio" && (!shares || !entryPrice))}
             className="w-full rounded-lg bg-[#B8956A] px-4 py-2.5 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] disabled:opacity-50 transition-colors"
           >
-            {submitting ? "Adding..." : stage === "research" ? "Add to Research" : "Add to Portfolio"}
+            {submitting ? "Adding..." : stage === "research" ? "Add to Watchlist" : "Add to Portfolio"}
           </button>
         </form>
       </div>
