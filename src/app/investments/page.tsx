@@ -3,7 +3,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
-import { useState, useMemo } from "react";
+import { useState, useMemo, createContext, useContext } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -33,10 +33,12 @@ import {
   ArrowDown,
   Minus,
   Eye,
+  EyeOff,
   BookOpen,
   Zap,
   Globe,
   LineChart,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -47,12 +49,27 @@ const SentimentTab = dynamic(() => import("@/components/quant/SentimentTab"), { 
 
 type MainTab = "home" | "positions" | "signal_engine" | "trade_system" | "track_record";
 
+const PrivacyContext = createContext(false);
+function usePrivacy() { return useContext(PrivacyContext); }
+function maskValue(privacyMode: boolean, value: string | number) { return privacyMode ? "••••••" : String(value); }
+
 export default function InvestmentsPage() {
   const [activeTab, setActiveTab] = useState<MainTab>("home");
   const [showAddForm, setShowAddForm] = useState(false);
   const [addFormStage, setAddFormStage] = useState<"research" | "portfolio">("research");
+  const [privacyMode, setPrivacyMode] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("investment-privacy") === "true";
+    return false;
+  });
+  const togglePrivacy = () => {
+    const next = !privacyMode;
+    setPrivacyMode(next);
+    if (typeof window !== "undefined") localStorage.setItem("investment-privacy", String(next));
+  };
+  const mask = (value: string | number) => privacyMode ? "••••••" : String(value);
 
   return (
+    <PrivacyContext.Provider value={privacyMode}>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -64,15 +81,30 @@ export default function InvestmentsPage() {
             Portfolio pulse · Signals · Trade system · Track record
           </p>
         </div>
-        {activeTab === "positions" && (
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => { setAddFormStage("research"); setShowAddForm(true); }}
-            className="flex items-center gap-2 rounded-lg bg-[#B8956A] px-4 py-2 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] transition-colors"
+            onClick={togglePrivacy}
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              privacyMode
+                ? "bg-[#B8956A]/20 text-[#B8956A] border border-[#B8956A]/30"
+                : "text-[#6B6560] hover:text-[#E8E4DF] hover:bg-[#1A1816]"
+            )}
+            title={privacyMode ? "Show financial data" : "Hide financial data"}
           >
-            <Plus className="h-4 w-4" />
-            Add Position
+            {privacyMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {privacyMode ? "Private" : ""}
           </button>
-        )}
+          {activeTab === "positions" && (
+            <button
+              onClick={() => { setAddFormStage("research"); setShowAddForm(true); }}
+              className="flex items-center gap-2 rounded-lg bg-[#B8956A] px-4 py-2 text-sm font-medium text-[#060606] hover:bg-[#CDAA7E] transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Add Position
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Navigation Tabs */}
@@ -110,6 +142,7 @@ export default function InvestmentsPage() {
       {/* Add Position Modal */}
       {showAddForm && <AddPositionModal onClose={() => setShowAddForm(false)} initialStage={addFormStage} />}
     </div>
+    </PrivacyContext.Provider>
   );
 }
 
@@ -118,6 +151,7 @@ export default function InvestmentsPage() {
    ═══════════════════════════════════════════════════════════ */
 
 function HomeTab() {
+  const privacyMode = usePrivacy();
   const allPositions = useQuery(api.investments.listPositions, {});
   const alerts = useQuery(api.investments.listAlerts, { acknowledged: false, limit: 5 });
   const latestBriefing = useQuery(api.signals.getLatestBriefing);
@@ -152,9 +186,9 @@ function HomeTab() {
     <div className="space-y-6">
       {/* Stats Bar */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <StatCard label="Portfolio Value" value={`$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 0 })}`} />
-        <StatCard label="Today's P&L" value="—" muted />
-        <StatCard label="Unrealized P&L" value="—" muted />
+        <StatCard label="Portfolio Value" value={privacyMode ? "••••••" : `$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 0 })}`} />
+        <StatCard label="Today's P&L" value={privacyMode ? "••••••" : "—"} muted={!privacyMode} />
+        <StatCard label="Unrealized P&L" value={privacyMode ? "••••••" : "—"} muted={!privacyMode} />
         <StatCard label="Positions" value={String(portfolioPositions.length)} sub={`${activePositions.length - portfolioPositions.length} in research`} />
         <StatCard
           label="Risk Budget"
@@ -250,6 +284,7 @@ function PortfolioColumn({
   positions: any[];
   color: "red" | "blue";
 }) {
+  const privacyMode = usePrivacy();
   return (
     <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
       <div className="flex items-center gap-3 border-b border-[#1A1816] px-5 py-4">
@@ -275,7 +310,7 @@ function PortfolioColumn({
                 <span className="text-xs text-[#6B6560]">{pos.name}</span>
                 {pos.shares && pos.entryPrice && (
                   <span className="ml-auto text-xs text-[#6B6560]">
-                    {pos.shares} @ ${pos.entryPrice}
+                    {privacyMode ? "••••" : `${pos.shares} @ $${pos.entryPrice}`}
                   </span>
                 )}
               </div>
@@ -721,6 +756,7 @@ function MacroEmpty({ text }: { text: string }) {
    ═══════════════════════════════════════════════════════════ */
 
 function TradeSystemTab() {
+  const privacyMode = usePrivacy();
   const positions = useQuery(api.investments.listPositions, {});
   const tradeRules = useQuery(api.trades.listTradeRules);
   const decisions = useQuery(api.trades.listTradeDecisions, { limit: 30 });
@@ -756,7 +792,7 @@ function TradeSystemTab() {
                     <span className="text-sm font-bold text-[#E8E4DF]">{pos.ticker}</span>
                     <span className="text-xs text-[#6B6560]">{pos.name}</span>
                     {pos.entryPrice && (
-                      <span className="ml-auto text-xs text-[#6B6560]">Entry: ${pos.entryPrice}</span>
+                      <span className="ml-auto text-xs text-[#6B6560]">Entry: {privacyMode ? "••••" : `$${pos.entryPrice}`}</span>
                     )}
                   </div>
                   {rule ? (
@@ -856,6 +892,7 @@ function PriceRuler({ rule, currentEntry }: { rule: any; currentEntry?: number }
    ═══════════════════════════════════════════════════════════ */
 
 function TrackRecordTab() {
+  const privacyMode = usePrivacy();
   const closedTrades = useQuery(api.trades.listClosedTrades, { limit: 100 });
   const exitedPositions = useQuery(api.investments.listPositions, {});
 
@@ -945,8 +982,8 @@ function TrackRecordTab() {
                     <td className="px-5 py-3 font-semibold text-[#E8E4DF]">{t.ticker}</td>
                     <td className="px-3 py-3 text-[#6B6560]">{t.entryDate}</td>
                     <td className="px-3 py-3 text-[#6B6560]">{t.exitDate}</td>
-                    <td className="px-3 py-3 text-right text-[#6B6560]">${t.entryPrice.toFixed(2)}</td>
-                    <td className="px-3 py-3 text-right text-[#6B6560]">${t.exitPrice.toFixed(2)}</td>
+                    <td className="px-3 py-3 text-right text-[#6B6560]">{privacyMode ? "••••" : `$${t.entryPrice.toFixed(2)}`}</td>
+                    <td className="px-3 py-3 text-right text-[#6B6560]">{privacyMode ? "••••" : `$${t.exitPrice.toFixed(2)}`}</td>
                     <td className={cn(
                       "px-3 py-3 text-right font-medium",
                       t.returnPct >= 0 ? "text-green-400" : "text-red-400"
@@ -1354,6 +1391,7 @@ function PositionRow({
   onClick: () => void;
   onDemote?: () => void;
 }) {
+  const privacyMode = usePrivacy();
   const alerts = useQuery(api.investments.listAlerts, {
     ticker: position.ticker,
     acknowledged: false,
@@ -1381,7 +1419,7 @@ function PositionRow({
         <div className="flex items-center gap-3 mt-1">
           {position.shares && position.entryPrice && (
             <span className="text-xs text-[#6B6560]">
-              {position.shares} shares @ ${position.entryPrice}
+              {privacyMode ? "•••• shares @ ••••" : `${position.shares} shares @ $${position.entryPrice}`}
             </span>
           )}
           {position.thesis ? (
@@ -1429,6 +1467,7 @@ function PositionDetail({
   id: Id<"investmentPositions">;
   onBack: () => void;
 }) {
+  const privacyMode = usePrivacy();
   const position = useQuery(api.investments.getPosition, { id });
   const alerts = useQuery(api.investments.listAlerts, {
     ticker: position?.ticker ?? "",
@@ -1469,8 +1508,8 @@ function PositionDetail({
             </span>
           </div>
           <div className="flex items-center gap-4 mt-1 text-sm text-[#6B6560]">
-            {position.shares && <span>{position.shares} shares</span>}
-            {position.entryPrice && <span>@ ${position.entryPrice}</span>}
+            {position.shares && <span>{privacyMode ? "•••• shares" : `${position.shares} shares`}</span>}
+            {position.entryPrice && <span>{privacyMode ? "@ ••••" : `@ $${position.entryPrice}`}</span>}
             {position.timeHorizon && (
               <span className="capitalize">{position.timeHorizon} horizon</span>
             )}
