@@ -82,13 +82,20 @@ async function fetchPrice(ticker) {
     );
     if (!res.ok) return null;
     const data = await res.json();
-    const meta = data.chart?.result?.[0]?.meta;
+    const result = data.chart?.result?.[0];
+    const meta = result?.meta;
     if (!meta) return null;
+    
+    // Use actual previous day's close from price history, not chartPreviousClose (which can be stale)
+    const closes = result?.indicators?.quote?.[0]?.close?.filter(c => c != null) || [];
+    const prevClose = closes.length >= 2 ? closes[closes.length - 2] : meta.chartPreviousClose;
+    const currentPrice = meta.regularMarketPrice;
+    
     return {
-      price: meta.regularMarketPrice,
-      previousClose: meta.chartPreviousClose,
-      dayChange: meta.regularMarketPrice - meta.chartPreviousClose,
-      dayChangePct: ((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose * 100),
+      price: currentPrice,
+      previousClose: prevClose,
+      dayChange: currentPrice - prevClose,
+      dayChangePct: ((currentPrice - prevClose) / prevClose * 100),
       fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh,
       fiftyTwoWeekLow: meta.fiftyTwoWeekLow,
     };
