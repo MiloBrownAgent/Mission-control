@@ -121,27 +121,29 @@ export default function InvestmentsPage() {
       </div>
 
       {/* Main Navigation Tabs */}
-      <div className="flex items-center gap-1 rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-1 w-fit">
-        {[
-          { key: "home" as MainTab, label: "Home", icon: Home },
-          { key: "research" as MainTab, label: "Research", icon: FlaskConical },
-          { key: "portfolio" as MainTab, label: "Portfolio", icon: Briefcase },
-          { key: "playbook" as MainTab, label: "Playbook", icon: BookOpen },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all",
-              activeTab === tab.key
-                ? "bg-[#B8956A] text-[#060606] shadow-sm"
-                : "text-[#6B6560] hover:text-[#E8E4DF]"
-            )}
-          >
-            <tab.icon className="h-3.5 w-3.5" />
-            {tab.label}
-          </button>
-        ))}
+      <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max items-center gap-1 rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-1 min-w-full sm:min-w-0 sm:w-fit">
+          {[
+            { key: "home" as MainTab, label: "Home", icon: Home },
+            { key: "research" as MainTab, label: "Research", icon: FlaskConical },
+            { key: "portfolio" as MainTab, label: "Portfolio", icon: Briefcase },
+            { key: "playbook" as MainTab, label: "Playbook", icon: BookOpen },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                "shrink-0 flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all whitespace-nowrap",
+                activeTab === tab.key
+                  ? "bg-[#B8956A] text-[#060606] shadow-sm"
+                  : "text-[#6B6560] hover:text-[#E8E4DF]"
+              )}
+            >
+              <tab.icon className="h-3.5 w-3.5" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Content */}
