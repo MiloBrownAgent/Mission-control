@@ -7,18 +7,15 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { useState, useMemo, createContext, useContext, useEffect, useRef } from "react";
 import {
   TrendingUp,
-  TrendingDown,
   AlertTriangle,
   Plus,
   X,
   ChevronRight,
   Bell,
-  Check,
   Shield,
   Flame,
   Lightbulb,
   Activity,
-  Gauge,
   Brain,
   Home,
   Target,
@@ -36,10 +33,8 @@ import {
   Eye,
   EyeOff,
   BookOpen,
-  Zap,
   Globe,
   LineChart,
-  Lock,
   Trash2,
   FlaskConical,
   Briefcase,
@@ -61,7 +56,6 @@ type MainTab = "home" | "research" | "portfolio" | "playbook";
 
 const PrivacyContext = createContext(false);
 function usePrivacy() { return useContext(PrivacyContext); }
-function maskValue(privacyMode: boolean, value: string | number) { return privacyMode ? "••••••" : String(value); }
 
 type InvestmentPosition = Doc<"investmentPositions">;
 
@@ -1641,7 +1635,6 @@ function PositionDetail({
     ticker: position?.ticker ?? "",
     limit: 20,
   });
-  const acknowledgeAlert = useMutation(api.investments.acknowledgeAlert);
   const deleteAlert = useMutation(api.investments.deleteAlert);
   const updatePosition = useMutation(api.investments.updatePosition);
   const [refreshingThesis, setRefreshingThesis] = useState(false);

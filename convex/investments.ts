@@ -1,4 +1,4 @@
-import { query, mutation, internalMutation, internalAction, action } from "./_generated/server";
+import { query, mutation, internalMutation, internalAction } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
@@ -909,11 +909,11 @@ export const notifyNewPosition = internalAction({
           message_thread_id: 6,
         }),
       });
-      const data = await res.json();
+      const data: { ok?: boolean; description?: string } = await res.json();
       if (!data.ok) console.error("Telegram notification failed:", data.description);
       else console.log(`Telegram notification sent for ${args.ticker}`);
-    } catch (e: any) {
-      console.error("Telegram notification error:", e.message);
+    } catch (error: unknown) {
+      console.error("Telegram notification error:", error instanceof Error ? error.message : String(error));
     }
   },
 });
@@ -944,12 +944,12 @@ export const triggerThesisGeneration = internalAction({
           timeHorizon: args.timeHorizon,
         }),
       });
-      const data = await res.json();
+      const data: { status?: string } = await res.json();
       console.log(`Thesis generation for ${args.ticker}:`, data.status || "unknown");
-    } catch (e: any) {
-      console.error(`Thesis generation failed for ${args.ticker}:`, e.message);
+    } catch (error: unknown) {
+      console.error(`Thesis generation failed for ${args.ticker}:`, error instanceof Error ? error.message : String(error));
       // Convex will retry this action on failure
-      throw e;
+      throw error;
     }
   },
 });
@@ -958,7 +958,7 @@ export const triggerThesisGeneration = internalAction({
 
 export const sweepMissingTheses = internalAction({
   args: {},
-  handler: async (ctx) => {
+  handler: async () => {
     // Query all positions
     const siteUrl = process.env.SITE_URL || "https://mc.lookandseen.com";
     const queryRes = await fetch(`https://proper-rat-443.convex.cloud/api/query`, {
@@ -966,32 +966,33 @@ export const sweepMissingTheses = internalAction({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: "investments:listPositions", args: {} }),
     });
-    const positions = (await queryRes.json()).value || [];
-    
+    const payload: { value?: PositionDoc[] } = await queryRes.json();
+    const positions = payload.value || [];
+
     const missing = positions.filter(
-      (p: any) => p.status === "active" && !p.thesis && 
+      (position) => position.status === "active" && !position.thesis &&
       // Don't retry if it was just added (give the event-driven trigger 2 minutes)
-      (Date.now() - p.addedAt > 2 * 60 * 1000)
+      (Date.now() - position.addedAt > 2 * 60 * 1000)
     );
 
-    for (const pos of missing) {
-      console.log(`Sweep: generating thesis for ${pos.ticker} (added ${Math.round((Date.now() - pos.addedAt) / 60000)}m ago)`);
+    for (const position of missing) {
+      console.log(`Sweep: generating thesis for ${position.ticker} (added ${Math.round((Date.now() - position.addedAt) / 60000)}m ago)`);
       try {
         await fetch(`${siteUrl}/api/investments/generate-thesis`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            ticker: pos.ticker,
-            name: pos.name,
-            positionId: pos._id,
-            portfolioType: pos.portfolioType,
-            shares: pos.shares,
-            entryPrice: pos.entryPrice,
-            timeHorizon: pos.timeHorizon,
+            ticker: position.ticker,
+            name: position.name,
+            positionId: position._id,
+            portfolioType: position.portfolioType,
+            shares: position.shares,
+            entryPrice: position.entryPrice,
+            timeHorizon: position.timeHorizon,
           }),
         });
-      } catch (e: any) {
-        console.error(`Sweep failed for ${pos.ticker}:`, e.message);
+      } catch (error: unknown) {
+        console.error(`Sweep failed for ${position.ticker}:`, error instanceof Error ? error.message : String(error));
       }
     }
 

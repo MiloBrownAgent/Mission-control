@@ -184,7 +184,7 @@ Checks every active position against these thresholds:
 |-----------|----------|
 | Daily drop ≥ 10% | High |
 | Daily drop ≥ 5% | Medium |
-| Daily surge ≥ 15% | Medium |
+| Daily surge ≥ 10% | Medium |
 | Down ≥ 25% from entry | Critical |
 | Down ≥ 15% from entry | High |
 | Within 10% of 52-week low | Medium |
