@@ -39,8 +39,12 @@ async function convexMutation(functionPath: string, args: any = {}) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ path: functionPath, args }),
   });
+  const payload = await res.json().catch(() => null);
   if (!res.ok) throw new Error(`Convex mutation failed: ${res.status}`);
-  return (await res.json()).value;
+  if (payload?.status && payload.status !== "success") {
+    throw new Error(`Convex mutation ${functionPath} returned ${JSON.stringify(payload)}`);
+  }
+  return Object.prototype.hasOwnProperty.call(payload || {}, "value") ? payload.value : payload;
 }
 
 // ─── Peer Company Mapping ────────────────────────────────────────────────────
@@ -159,49 +163,82 @@ async function fetchYahooFinance(ticker: string) {
   } catch { return null; }
 }
 
-async function fetchYahooProfile(ticker: string) {
+async function fetchYahooQuoteSummary(ticker: string, modules: string, attempt = 0): Promise<any | null> {
   try {
+    if (attempt > 0) {
+      _yahooCrumb = null;
+      _yahooCookie = null;
+      await new Promise((resolve) => setTimeout(resolve, 150 * attempt));
+    }
     const { crumb, cookie } = await getYahooAuth();
     const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : "";
     const res = await fetch(
-      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile,financialData,defaultKeyStatistics,earningsTrend,recommendationTrend${crumbParam}`,
-      { headers: { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) } }
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=${modules}${crumbParam}`,
+      {
+        headers: { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) },
+        cache: "no-store",
+      }
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      if ((res.status === 401 || res.status === 429) && attempt < 2) {
+        return fetchYahooQuoteSummary(ticker, modules, attempt + 1);
+      }
+      return null;
+    }
     const data = await res.json();
-    const result = data.quoteSummary?.result?.[0];
-    return {
-      sector: result?.assetProfile?.sector,
-      industry: result?.assetProfile?.industry,
-      description: result?.assetProfile?.longBusinessSummary,
-      employees: result?.assetProfile?.fullTimeEmployees,
-      website: result?.assetProfile?.website,
-      revenue: result?.financialData?.totalRevenue?.raw,
-      revenueGrowth: result?.financialData?.revenueGrowth?.raw,
-      grossMargin: result?.financialData?.grossMargins?.raw,
-      operatingMargin: result?.financialData?.operatingMargins?.raw,
-      ebitdaMargin: result?.financialData?.ebitdaMargins?.raw,
-      targetMeanPrice: result?.financialData?.targetMeanPrice?.raw,
-      targetHighPrice: result?.financialData?.targetHighPrice?.raw,
-      targetLowPrice: result?.financialData?.targetLowPrice?.raw,
-      recommendationKey: result?.financialData?.recommendationKey,
-      numberOfAnalystOpinions: result?.financialData?.numberOfAnalystOpinions?.raw,
-      totalDebt: result?.financialData?.totalDebt?.raw,
-      totalCash: result?.financialData?.totalCash?.raw,
-      freeCashflow: result?.financialData?.freeCashflow?.raw,
-      trailingPE: result?.defaultKeyStatistics?.trailingPE?.raw,
-      forwardPE: result?.defaultKeyStatistics?.forwardPE?.raw,
-      pegRatio: result?.defaultKeyStatistics?.pegRatio?.raw,
-      beta: result?.defaultKeyStatistics?.beta?.raw,
-      shortPercentOfFloat: result?.defaultKeyStatistics?.shortPercentOfFloat?.raw,
-      shortRatio: result?.defaultKeyStatistics?.shortRatio?.raw,
-      sharesShort: result?.defaultKeyStatistics?.sharesShort?.raw,
-      heldPercentInsiders: result?.defaultKeyStatistics?.heldPercentInsiders?.raw,
-      heldPercentInstitutions: result?.defaultKeyStatistics?.heldPercentInstitutions?.raw,
-      earningsGrowth: result?.defaultKeyStatistics?.earningsQuarterlyGrowth?.raw,
-      recommendationTrend: result?.recommendationTrend?.trend,
-    };
-  } catch { return null; }
+    return data.quoteSummary?.result?.[0] ?? null;
+  } catch {
+    if (attempt < 2) return fetchYahooQuoteSummary(ticker, modules, attempt + 1);
+    return null;
+  }
+}
+
+async function fetchYahooProfile(ticker: string) {
+  const result = await fetchYahooQuoteSummary(
+    ticker,
+    "price,assetProfile,financialData,defaultKeyStatistics,earningsTrend,recommendationTrend"
+  );
+  if (!result) return null;
+  return {
+    symbol: result?.price?.symbol,
+    shortName: result?.price?.shortName,
+    longName: result?.price?.longName,
+    exchange: result?.price?.exchangeName,
+    currency: result?.price?.currency,
+    currentPrice: result?.price?.regularMarketPrice?.raw ?? result?.financialData?.currentPrice?.raw,
+    marketCap: result?.price?.marketCap?.raw,
+    sharesOutstanding: result?.defaultKeyStatistics?.sharesOutstanding?.raw ?? result?.price?.sharesOutstanding?.raw,
+    impliedSharesOutstanding: result?.defaultKeyStatistics?.impliedSharesOutstanding?.raw,
+    sector: result?.assetProfile?.sector,
+    industry: result?.assetProfile?.industry,
+    description: result?.assetProfile?.longBusinessSummary,
+    employees: result?.assetProfile?.fullTimeEmployees,
+    website: result?.assetProfile?.website,
+    revenue: result?.financialData?.totalRevenue?.raw,
+    revenueGrowth: result?.financialData?.revenueGrowth?.raw,
+    grossMargin: result?.financialData?.grossMargins?.raw,
+    operatingMargin: result?.financialData?.operatingMargins?.raw,
+    ebitdaMargin: result?.financialData?.ebitdaMargins?.raw,
+    targetMeanPrice: result?.financialData?.targetMeanPrice?.raw,
+    targetHighPrice: result?.financialData?.targetHighPrice?.raw,
+    targetLowPrice: result?.financialData?.targetLowPrice?.raw,
+    recommendationKey: result?.financialData?.recommendationKey,
+    numberOfAnalystOpinions: result?.financialData?.numberOfAnalystOpinions?.raw,
+    totalDebt: result?.financialData?.totalDebt?.raw,
+    totalCash: result?.financialData?.totalCash?.raw,
+    freeCashflow: result?.financialData?.freeCashflow?.raw,
+    trailingPE: result?.defaultKeyStatistics?.trailingPE?.raw,
+    forwardPE: result?.defaultKeyStatistics?.forwardPE?.raw,
+    pegRatio: result?.defaultKeyStatistics?.pegRatio?.raw,
+    beta: result?.defaultKeyStatistics?.beta?.raw,
+    shortPercentOfFloat: result?.defaultKeyStatistics?.shortPercentOfFloat?.raw,
+    shortRatio: result?.defaultKeyStatistics?.shortRatio?.raw,
+    sharesShort: result?.defaultKeyStatistics?.sharesShort?.raw,
+    heldPercentInsiders: result?.defaultKeyStatistics?.heldPercentInsiders?.raw,
+    heldPercentInstitutions: result?.defaultKeyStatistics?.heldPercentInstitutions?.raw,
+    earningsGrowth: result?.defaultKeyStatistics?.earningsQuarterlyGrowth?.raw,
+    recommendationTrend: result?.recommendationTrend?.trend,
+  };
 }
 
 async function fetchYahooNews(ticker: string) {
@@ -350,6 +387,425 @@ function scoreArticle(article: any, ticker: string, companyName: string) {
   return { ...article, quality, trustworthiness, relevance, compositeScore };
 }
 
+type MarketCapSource = "quoteSummary.price.marketCap" | "price_x_sharesOutstanding" | "price_x_impliedSharesOutstanding";
+
+type VerifiedFacts = {
+  ticker: string;
+  companyName: string;
+  exchange?: string;
+  currency?: string;
+  currentPrice: number;
+  marketCap: number;
+  marketCapSource: MarketCapSource;
+  sharesOutstanding?: number;
+  impliedSharesOutstanding?: number;
+  fiftyTwoWeekHigh?: number;
+  fiftyTwoWeekLow?: number;
+  sector?: string;
+  industry?: string;
+  revenue?: number;
+  revenueGrowth?: number;
+  grossMargin?: number;
+  operatingMargin?: number;
+  freeCashflow?: number;
+  totalDebt?: number;
+  totalCash?: number;
+  forwardPE?: number;
+  shortPercentOfFloat?: number;
+  analystConsensus?: string;
+  targetMeanPrice?: number;
+  validatedAt: number;
+};
+
+function positiveNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function normalizeName(value?: string | null): string {
+  return (value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(inc|incorporated|corp|corporation|company|co|class a|class b|class c|holdings|holding|holdings inc|plc|ltd|limited|group)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function compactName(value?: string | null): string {
+  return normalizeName(value).replace(/\s+/g, "");
+}
+
+function namesRoughlyMatch(inputName: string | undefined, candidates: Array<string | undefined>): boolean {
+  const normalizedInput = normalizeName(inputName);
+  const compactInput = compactName(inputName);
+  if (!normalizedInput) return true;
+
+  return candidates.some((candidate) => {
+    const normalizedCandidate = normalizeName(candidate);
+    const compactCandidate = compactName(candidate);
+    if (!normalizedCandidate) return false;
+
+    if (normalizedCandidate.includes(normalizedInput)) {
+      return true;
+    }
+
+    if (compactCandidate && compactInput && compactCandidate === compactInput) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
+function resolveMarketCap(currentPrice: number | undefined, profileData: any) {
+  const directMarketCap = positiveNumber(profileData?.marketCap);
+  if (directMarketCap) {
+    return { marketCap: directMarketCap, marketCapSource: "quoteSummary.price.marketCap" as const };
+  }
+
+  const price = positiveNumber(currentPrice);
+  const sharesOutstanding = positiveNumber(profileData?.sharesOutstanding);
+  if (price && sharesOutstanding) {
+    return {
+      marketCap: price * sharesOutstanding,
+      marketCapSource: "price_x_sharesOutstanding" as const,
+    };
+  }
+
+  const impliedSharesOutstanding = positiveNumber(profileData?.impliedSharesOutstanding);
+  if (price && impliedSharesOutstanding) {
+    return {
+      marketCap: price * impliedSharesOutstanding,
+      marketCapSource: "price_x_impliedSharesOutstanding" as const,
+    };
+  }
+
+  return null;
+}
+
+function buildVerifiedFacts(ticker: string, requestedName: string | undefined, priceData: any, profileData: any) {
+  const errors: string[] = [];
+  const normalizedTicker = ticker.toUpperCase();
+  const yahooSymbol = profileData?.symbol?.toUpperCase?.();
+  if (!yahooSymbol || yahooSymbol !== normalizedTicker) {
+    errors.push(`ticker identity mismatch: requested ${normalizedTicker}, yahoo returned ${profileData?.symbol || "unknown"}`);
+  }
+
+  if (!namesRoughlyMatch(requestedName, [profileData?.longName, profileData?.shortName])) {
+    errors.push(`company identity mismatch: requested "${requestedName}", yahoo returned "${profileData?.longName || profileData?.shortName || "unknown"}"`);
+  }
+
+  const currentPrice = positiveNumber(profileData?.currentPrice) ?? positiveNumber(priceData?.price);
+  if (!currentPrice) {
+    errors.push("current price missing or invalid");
+  }
+
+  const resolvedMarketCap = resolveMarketCap(currentPrice, profileData);
+  if (!resolvedMarketCap?.marketCap) {
+    errors.push("market cap missing; could not resolve from direct field or shares outstanding");
+  }
+
+  if (errors.length > 0 || !currentPrice || !resolvedMarketCap) {
+    return { ok: false as const, errors };
+  }
+
+  const companyName = profileData?.longName || profileData?.shortName || requestedName || normalizedTicker;
+  return {
+    ok: true as const,
+    facts: {
+      ticker: normalizedTicker,
+      companyName,
+      exchange: profileData?.exchange || priceData?.exchange,
+      currency: profileData?.currency || priceData?.currency,
+      currentPrice,
+      marketCap: resolvedMarketCap.marketCap,
+      marketCapSource: resolvedMarketCap.marketCapSource,
+      sharesOutstanding: positiveNumber(profileData?.sharesOutstanding),
+      impliedSharesOutstanding: positiveNumber(profileData?.impliedSharesOutstanding),
+      fiftyTwoWeekHigh: positiveNumber(priceData?.fiftyTwoWeekHigh),
+      fiftyTwoWeekLow: positiveNumber(priceData?.fiftyTwoWeekLow),
+      sector: profileData?.sector,
+      industry: profileData?.industry,
+      revenue: positiveNumber(profileData?.revenue),
+      revenueGrowth: typeof profileData?.revenueGrowth === "number" ? profileData.revenueGrowth : undefined,
+      grossMargin: typeof profileData?.grossMargin === "number" ? profileData.grossMargin : undefined,
+      operatingMargin: typeof profileData?.operatingMargin === "number" ? profileData.operatingMargin : undefined,
+      freeCashflow: typeof profileData?.freeCashflow === "number" ? profileData.freeCashflow : undefined,
+      totalDebt: positiveNumber(profileData?.totalDebt),
+      totalCash: positiveNumber(profileData?.totalCash),
+      forwardPE: positiveNumber(profileData?.forwardPE),
+      shortPercentOfFloat: typeof profileData?.shortPercentOfFloat === "number" ? profileData.shortPercentOfFloat : undefined,
+      analystConsensus: profileData?.recommendationKey,
+      targetMeanPrice: positiveNumber(profileData?.targetMeanPrice),
+      validatedAt: Date.now(),
+    } satisfies VerifiedFacts,
+  };
+}
+
+function formatCurrency(value: number | undefined, digits = 2) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "N/A";
+  return `$${value.toFixed(digits)}`;
+}
+
+function formatBillions(value: number | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "N/A";
+  if (Math.abs(value) >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+  if (Math.abs(value) >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+  if (Math.abs(value) >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+  return `$${value.toFixed(0)}`;
+}
+
+function magnitudeToNumber(raw: string, unit?: string) {
+  const value = Number(raw.replace(/,/g, ""));
+  if (!Number.isFinite(value)) return null;
+  const normalizedUnit = (unit || "").toLowerCase();
+  if (normalizedUnit.startsWith("t")) return value * 1e12;
+  if (normalizedUnit.startsWith("b")) return value * 1e9;
+  if (normalizedUnit.startsWith("m")) return value * 1e6;
+  if (normalizedUnit.startsWith("k")) return value * 1e3;
+  return value;
+}
+
+function extractMentionedMarketCaps(text: string) {
+  const matches: number[] = [];
+  const patterns = [
+    /market cap[^\n\r$]{0,40}\$([0-9][0-9,]*(?:\.[0-9]+)?)\s*([TBMK]|trillion|billion|million|thousand)?/gi,
+    /\$([0-9][0-9,]*(?:\.[0-9]+)?)\s*([TBMK]|trillion|billion|million|thousand)\s+market cap/gi,
+  ];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const parsed = magnitudeToNumber(match[1], match[2]);
+      if (parsed) matches.push(parsed);
+    }
+  }
+  return matches;
+}
+
+function extractMentionedCurrentPrices(text: string) {
+  const matches: number[] = [];
+  const patterns = [
+    /current price[^\n\r$]{0,20}\$([0-9][0-9,]*(?:\.[0-9]+)?)/gi,
+    /(?:shares|stock) (?:trade|trades|trading)[^\n\r$]{0,20}\$([0-9][0-9,]*(?:\.[0-9]+)?)/gi,
+  ];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const parsed = Number(match[1].replace(/,/g, ""));
+      if (Number.isFinite(parsed)) matches.push(parsed);
+    }
+  }
+  return matches;
+}
+
+function relativeDifference(a: number, b: number) {
+  return Math.abs(a - b) / Math.max(Math.abs(b), 1);
+}
+
+function validateGeneratedThesis(thesis: string, facts: VerifiedFacts) {
+  const issues: string[] = [];
+
+  const marketCaps = extractMentionedMarketCaps(thesis);
+  if (marketCaps.length > 0) {
+    const hasCloseMarketCap = marketCaps.some((value) => relativeDifference(value, facts.marketCap) <= 0.25);
+    if (!hasCloseMarketCap) {
+      issues.push(`market cap in thesis does not match verified value (${formatBillions(facts.marketCap)})`);
+    }
+  }
+
+  const currentPrices = extractMentionedCurrentPrices(thesis);
+  if (currentPrices.length > 0) {
+    const hasClosePrice = currentPrices.some((value) => relativeDifference(value, facts.currentPrice) <= 0.15);
+    if (!hasClosePrice) {
+      issues.push(`current price in thesis does not match verified value (${formatCurrency(facts.currentPrice)})`);
+    }
+  }
+
+  const upper = thesis.toUpperCase();
+  if (!upper.includes(facts.ticker)) {
+    issues.push(`ticker ${facts.ticker} missing from thesis body`);
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
+function buildVerifiedFactsSection(facts: VerifiedFacts) {
+  const lines = [
+    `## VERIFIED FACTS — USE THESE NUMBERS EXACTLY`,
+    `- Ticker: ${facts.ticker}`,
+    `- Company: ${facts.companyName}`,
+    `- Current price: ${formatCurrency(facts.currentPrice)}`,
+    `- Market cap: ${formatBillions(facts.marketCap)} (${facts.marketCapSource})`,
+    `- Shares outstanding: ${facts.sharesOutstanding ? facts.sharesOutstanding.toLocaleString("en-US") : "N/A"}`,
+    `- Implied shares outstanding: ${facts.impliedSharesOutstanding ? facts.impliedSharesOutstanding.toLocaleString("en-US") : "N/A"}`,
+    `- Exchange / currency: ${facts.exchange || "N/A"} / ${facts.currency || "N/A"}`,
+    `- 52-week range: ${formatCurrency(facts.fiftyTwoWeekLow)} – ${formatCurrency(facts.fiftyTwoWeekHigh)}`,
+    `- Revenue: ${formatBillions(facts.revenue)}`,
+    `- Revenue growth: ${typeof facts.revenueGrowth === "number" ? `${(facts.revenueGrowth * 100).toFixed(1)}%` : "N/A"}`,
+    `- Gross margin: ${typeof facts.grossMargin === "number" ? `${(facts.grossMargin * 100).toFixed(1)}%` : "N/A"}`,
+    `- Operating margin: ${typeof facts.operatingMargin === "number" ? `${(facts.operatingMargin * 100).toFixed(1)}%` : "N/A"}`,
+    `- Free cash flow: ${formatBillions(facts.freeCashflow)}`,
+    `- Total debt: ${formatBillions(facts.totalDebt)}`,
+    `- Total cash: ${formatBillions(facts.totalCash)}`,
+    `- Forward P/E: ${typeof facts.forwardPE === "number" ? facts.forwardPE.toFixed(1) : "N/A"}`,
+    `- Short % of float: ${typeof facts.shortPercentOfFloat === "number" ? `${(facts.shortPercentOfFloat * 100).toFixed(1)}%` : "N/A"}`,
+    `- Analyst consensus: ${facts.analystConsensus || "N/A"}`,
+    `- Mean target: ${formatCurrency(facts.targetMeanPrice)}`,
+  ];
+  return lines.join("\n");
+}
+
+function buildPartialThesisFromFacts(facts: VerifiedFacts | null, issues: string[], worthyArticles: any[], priceData: any, entryPrice: number | undefined, pnlPct: string) {
+  const header = issues.length > 0 ? `[PARTIAL — thesis validation failed]` : `[PARTIAL — LLM synthesis pending]`;
+  const factLines = facts ? [
+    `Verified ticker: ${facts.ticker}`,
+    `Verified company: ${facts.companyName}`,
+    `Verified current price: ${formatCurrency(facts.currentPrice)}`,
+    `Verified market cap: ${formatBillions(facts.marketCap)} (${facts.marketCapSource})`,
+  ] : [
+    `Current price: ${priceData?.price ? formatCurrency(priceData.price) : "N/A"}`,
+    `Entry price: ${entryPrice ? formatCurrency(entryPrice) : "N/A"}`,
+    `P&L: ${pnlPct}%`,
+  ];
+  const issueLines = issues.length > 0 ? [`Validation issues:`, ...issues.map((issue) => `- ${issue}`)] : [];
+  const articleLines = worthyArticles.slice(0, 5).map((a: any) => `• ${a.title}`);
+  return [header, "", ...factLines, "", ...issueLines, ...(issueLines.length ? [""] : []), `Top headlines:`, ...articleLines].join("\n");
+}
+
+function buildDeterministicFinalThesis(params: {
+  facts: VerifiedFacts;
+  profileData: any;
+  worthyArticles: any[];
+  secFilings: any[];
+  peerComps: any[];
+  earningsData: any;
+  portfolioType?: string;
+  shares?: number;
+  entryPrice?: number;
+  timeHorizon?: string;
+  refreshReason?: string;
+  pnlPct: string;
+}) {
+  const {
+    facts,
+    profileData,
+    worthyArticles,
+    secFilings,
+    peerComps,
+    earningsData,
+    portfolioType,
+    shares,
+    entryPrice,
+    timeHorizon,
+    refreshReason,
+    pnlPct,
+  } = params;
+
+  const topArticles = worthyArticles.slice(0, 5);
+  const topFilings = secFilings.slice(0, 3);
+  const topPeers = peerComps.slice(0, 5);
+  const revisions = earningsData?.revisions?.slice?.(0, 3) ?? [];
+  const beats = earningsData?.beats?.slice?.(0, 4) ?? [];
+  const catalysts: string[] = [];
+
+  if (typeof facts.revenueGrowth === "number" && facts.revenueGrowth > 0.15) {
+    catalysts.push(`Revenue growth is still strong at ${(facts.revenueGrowth * 100).toFixed(1)}%, which keeps the upside case alive if that pace holds.`);
+  }
+  if (typeof facts.freeCashflow === "number" && facts.freeCashflow > 0) {
+    catalysts.push(`Free cash flow is positive at ${formatBillions(facts.freeCashflow)}, so this is not purely a story stock.`);
+  }
+  if (typeof facts.totalCash === "number" && typeof facts.totalDebt === "number") {
+    if (facts.totalCash > facts.totalDebt) {
+      catalysts.push(`The balance sheet is net-cash positive with ${formatBillions(facts.totalCash)} cash against ${formatBillions(facts.totalDebt)} debt.`);
+    } else {
+      catalysts.push(`The capital structure needs watching: ${formatBillions(facts.totalDebt)} debt against ${formatBillions(facts.totalCash)} cash.`);
+    }
+  }
+  if (typeof facts.shortPercentOfFloat === "number" && facts.shortPercentOfFloat >= 0.1) {
+    catalysts.push(`Short interest sits at ${(facts.shortPercentOfFloat * 100).toFixed(1)}% of float, which can amplify both squeezes and downside if the thesis cracks.`);
+  }
+  if (topArticles.length === 0) {
+    catalysts.push("Recent source coverage is thin, so conviction should stay tied to verified operating facts rather than narrative momentum.");
+  }
+
+  const riskLines = [
+    `The stock currently trades around ${formatCurrency(facts.currentPrice)} on a verified market cap of ${formatBillions(facts.marketCap)}. If the market is wrong, the upside comes from execution improving from here. If the market is right, that valuation can still compress.`,
+    typeof facts.revenueGrowth === "number" && facts.revenueGrowth > 0
+      ? `If revenue growth falls materially below ${(facts.revenueGrowth * 100).toFixed(1)}%, the market will likely cut the multiple before it waits for management explanations.`
+      : `If growth or margin evidence weakens, the market cap can fall faster than the operating business changes.`,
+    typeof facts.operatingMargin === "number"
+      ? `Operating margin is currently ${(facts.operatingMargin * 100).toFixed(1)}%. That leaves limited room for narrative mistakes if profitability disappoints.`
+      : `Operating margin is not cleanly verified here, so margin durability remains a live underwriting risk.`,
+  ];
+
+  const peerLead = topPeers.length > 0
+    ? `Peers worth anchoring against: ${topPeers.map((peer: any) => `${peer.ticker}${typeof peer.forwardPE === "number" ? ` (${peer.forwardPE.toFixed(1)}x fwd P/E)` : ""}`).join(", ")}.`
+    : "Peer data did not resolve cleanly in this run, so valuation framing should stay conservative.";
+
+  const revisionLead = revisions.length > 0
+    ? revisions.map((r: any) => {
+        const bits = [`${r.period}: ${r.numberOfAnalysts || 0} analysts`];
+        if (typeof r.currentEstimate === "number") bits.push(`EPS est ${r.currentEstimate.toFixed(2)}`);
+        if (typeof r.upLast30 === "number" || typeof r.downLast30 === "number") bits.push(`30d revisions ${r.upLast30 || 0} up / ${r.downLast30 || 0} down`);
+        return bits.join(" | ");
+      }).join("\n")
+    : "No clean estimate-revision read came through the feed, so treat earnings-momentum confidence as limited.";
+
+  const beatLead = beats.length > 0
+    ? beats.map((b: any) => {
+        const surprise = typeof b.surprise === "number"
+          ? (b.surprise > 0 ? `beat ${(b.surprise * 100).toFixed(1)}%` : b.surprise < 0 ? `miss ${(Math.abs(b.surprise) * 100).toFixed(1)}%` : "met")
+          : "result unavailable";
+        return `${b.date || b.quarter || "Recent quarter"}: ${surprise}`;
+      }).join("\n")
+    : "Recent beat/miss history did not resolve cleanly in this run.";
+
+  const managementScore = (() => {
+    let score = 5;
+    if (typeof facts.revenueGrowth === "number" && facts.revenueGrowth > 0.2) score += 1;
+    if (typeof facts.freeCashflow === "number" && facts.freeCashflow > 0) score += 1;
+    if (typeof facts.totalCash === "number" && typeof facts.totalDebt === "number" && facts.totalCash > facts.totalDebt) score += 1;
+    if (typeof facts.operatingMargin === "number" && facts.operatingMargin < 0) score -= 1;
+    return Math.max(3, Math.min(8, score));
+  })();
+
+  const lines = [
+    `POSITION SUMMARY — ${facts.ticker} (${facts.companyName})`,
+    `Ticker verified as ${facts.ticker}. Current price is ${formatCurrency(facts.currentPrice)}. Verified market cap is ${formatBillions(facts.marketCap)} via ${facts.marketCapSource}. Portfolio type: ${portfolioType || "N/A"}. Entry price: ${entryPrice ? formatCurrency(entryPrice) : "N/A"}. Shares: ${shares || "N/A"}. P&L: ${pnlPct}%. Time horizon: ${timeHorizon || "N/A"}. Refresh reason: ${refreshReason || "initial generation"}.`,
+    "",
+    `BULL CASE — ${facts.ticker} is only investable if the verified operating profile keeps improving faster than the market expects. ${catalysts.join(" ")}`,
+    "",
+    `PEER COMPARABLE ANALYSIS — ${peerLead} Subject company verified facts: revenue ${formatBillions(facts.revenue)}, gross margin ${typeof facts.grossMargin === "number" ? `${(facts.grossMargin * 100).toFixed(1)}%` : "N/A"}, operating margin ${typeof facts.operatingMargin === "number" ? `${(facts.operatingMargin * 100).toFixed(1)}%` : "N/A"}, forward P/E ${typeof facts.forwardPE === "number" ? facts.forwardPE.toFixed(1) : "N/A"}. Use that to decide whether the current valuation is cheap for the quality level or cheap for a reason.`,
+    "",
+    `SIMPLIFIED DCF — With revenue at ${formatBillions(facts.revenue)} and free cash flow at ${formatBillions(facts.freeCashflow)}, the clean way to frame value is scenario-based instead of fake precision. BEAR: growth slows hard and valuation compresses. BASE: current growth and margin structure broadly hold. BULL: growth persists and operating leverage expands. The key point is that the present market cap is ${formatBillions(facts.marketCap)}; underwriting should start from that verified value, not from an invented target.`,
+    "",
+    `KEY CATALYSTS WITH PROBABILITY WEIGHTING — 1) Execution against the current growth profile (${typeof facts.revenueGrowth === "number" ? `${(facts.revenueGrowth * 100).toFixed(1)}% revenue growth` : "growth rate unverified"}) is the primary upside driver. 2) Balance-sheet durability and cash generation (${formatBillions(facts.totalCash)} cash, ${formatBillions(facts.totalDebt)} debt, ${formatBillions(facts.freeCashflow)} FCF) determine whether the company can self-fund its thesis. 3) Market narrative can shift quickly if recent source flow is confirmed by filings and earnings rather than headlines alone.`,
+    "",
+    `EARNINGS REVISION MOMENTUM — ${revisionLead}\n${beatLead}`,
+    "",
+    `MANAGEMENT QUALITY — ${managementScore}/10. This is a deterministic score based on the verified operating profile, cash generation, and balance-sheet posture from this run. It is directionally useful, not a substitute for direct transcript work.`,
+    "",
+    `RISK FACTORS — ${riskLines.join(" ")}`,
+    "",
+    `PITZY MODEL ASSESSMENT — Retail edge exists only if the market is still underreacting to the operating trajectory and the source flow is identifying a real catalyst instead of recycled noise. Event certainty is ${topArticles.length > 0 || topFilings.length > 0 ? "moderate" : "low"}. Asymmetry depends on whether ${facts.ticker} can outperform what a ${formatBillions(facts.marketCap)} valuation already implies.`,
+    "",
+    `DECISION FRAMEWORK — Stay constructive only while verified facts remain intact: current price ${formatCurrency(facts.currentPrice)}, market cap ${formatBillions(facts.marketCap)}, and the latest operating metrics do not break. If those verified anchors weaken, downgrade fast. If they improve and the market still prices the company like a broken story, the position remains valid.`,
+  ];
+
+  if (topArticles.length > 0) {
+    lines.push("", "SOURCE CHECK — Recent high-scoring articles used in this deterministic fallback:");
+    for (const article of topArticles) {
+      lines.push(`- ${article.title}${article.publisher ? ` (${article.publisher})` : ""}`);
+    }
+  }
+
+  if (topFilings.length > 0) {
+    lines.push("", "RECENT SEC FILINGS —");
+    for (const filing of topFilings) {
+      lines.push(`- ${filing.form} filed ${filing.filed}: ${filing.description}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
 // ─── LLM Thesis Generation (Cascading Models) ───────────────────────────────
 
 const SYSTEM_PROMPT = `You are a senior equity research analyst at a top-tier fund writing institutional-quality investment theses for the Pitzy Model — a retail-edge, event-driven value investing framework.
@@ -363,6 +819,8 @@ The Pitzy Model's core principles:
 - Sentiment + Valuation + Event Catalyst + Certainty = Buy Signal
 
 Write institutional-quality theses with real numbers, derived valuations, and honest risk assessment. No platitudes, no hedging, no "could potentially maybe." Call it like it is.
+
+Hard rule: the VERIFIED FACTS block in the user prompt is the only source of truth for critical numeric facts like current price, market cap, shares outstanding, and valuation anchors. If you are unsure, say the number is unavailable. Never invent or approximate a market cap.
 
 IMPORTANT FORMATTING RULES:
 - Do NOT use markdown bold asterisks (**text**). Use plain text with clean formatting.
@@ -428,6 +886,7 @@ async function callAnthropicDirect(model: string, context: string): Promise<stri
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: context }],
     }),
+    signal: AbortSignal.timeout(45000),
   });
   if (!res.ok) {
     console.log(`  ✗ Anthropic ${model}: ${res.status}`);
@@ -455,6 +914,7 @@ async function callOpenAIDirect(model: string, context: string): Promise<string 
       max_tokens: 4000,
       temperature: 0.3,
     }),
+    signal: AbortSignal.timeout(45000),
   });
   if (!res.ok) {
     console.log(`  ✗ OpenAI ${model}: ${res.status}`);
@@ -481,6 +941,7 @@ async function callOpenClawGateway(model: string, context: string): Promise<stri
       max_tokens: 4000,
       temperature: 0.3,
     }),
+    signal: AbortSignal.timeout(30000),
   });
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
@@ -504,6 +965,7 @@ async function callLMStudio(model: string, context: string): Promise<string | nu
       max_tokens: 4000,
       temperature: 0.3,
     }),
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) {
     console.log(`  ✗ LMStudio ${model}: ${res.status}`);
@@ -555,13 +1017,13 @@ async function generateThesisWithLLM(context: string): Promise<{ text: string | 
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { ticker, name, positionId, portfolioType, shares, entryPrice, timeHorizon } = body;
+  const { ticker, name, positionId, portfolioType, shares, entryPrice, timeHorizon, refreshReason } = body;
 
   if (!ticker || !positionId) {
     return NextResponse.json({ error: "Missing ticker or positionId" }, { status: 400 });
   }
 
-  console.log(`\n📊 Deep thesis generation for ${ticker} (${name})...`);
+  console.log(`\n📊 Deep thesis generation for ${ticker} (${name})${refreshReason ? ` — ${refreshReason}` : ""}...`);
 
   // Fetch ALL data in parallel
   const [priceData, profileData, yahooNews, braveNews, secFilings, deepSearch, earningsData, peerComps] = await Promise.all([
@@ -574,6 +1036,23 @@ export async function POST(req: NextRequest) {
     fetchEarningsData(ticker),
     fetchPeerComps(ticker),
   ]);
+
+  const verification = buildVerifiedFacts(ticker, name, priceData, profileData);
+  if (!verification.ok) {
+    const thesis = buildPartialThesisFromFacts(null, verification.errors, [], priceData, entryPrice, "N/A");
+    await convexMutation("investments:updatePosition", {
+      id: positionId,
+      thesis,
+      thesisStatus: "partial",
+      thesisValidationIssues: verification.errors,
+      verifiedFacts: undefined,
+      thesisSources: [],
+      thesisGeneratedAt: Date.now(),
+    });
+    return NextResponse.json({ status: "partial", ticker, errors: verification.errors }, { status: 422 });
+  }
+
+  const verifiedFacts = verification.facts;
 
   // Merge and score articles
   const seen = new Set<string>();
@@ -593,18 +1072,20 @@ export async function POST(req: NextRequest) {
   console.log(`  Deep search: ${deepSearch.length} results`);
 
   // Build rich context for LLM
-  const pnlPct = priceData && entryPrice ? (((priceData.price - entryPrice) / entryPrice) * 100).toFixed(1) : "N/A";
+  const pnlPct = verifiedFacts.currentPrice && entryPrice ? (((verifiedFacts.currentPrice - entryPrice) / entryPrice) * 100).toFixed(1) : "N/A";
 
-  let context = `Generate a comprehensive investment thesis for ${ticker} (${name}).
+  let context = `Generate a comprehensive investment thesis for ${verifiedFacts.ticker} (${verifiedFacts.companyName}).
+
+${buildVerifiedFactsSection(verifiedFacts)}
 
 ## POSITION DATA
 - Portfolio type: ${portfolioType}
 - Shares: ${shares || "N/A"}
 - Entry price: $${entryPrice || "N/A"}
-- Current price: $${priceData?.price || "N/A"}
+- Current price: ${formatCurrency(verifiedFacts.currentPrice)}
 - Unrealized P&L: ${pnlPct}%
 - Time horizon: ${timeHorizon || "N/A"}
-- 52-week range: $${priceData?.fiftyTwoWeekLow || "?"} – $${priceData?.fiftyTwoWeekHigh || "?"}
+- Refresh reason: ${refreshReason || "initial generation"}
 
 ## FUNDAMENTALS
 `;
@@ -661,7 +1142,7 @@ export async function POST(req: NextRequest) {
     context += `| Ticker | Mkt Cap | Revenue | Rev Growth | Gross Margin | P/E (fwd) | EV/Rev | EV/EBITDA | Short% |\n`;
     context += `|--------|---------|---------|------------|--------------|-----------|--------|-----------|--------|\n`;
     if (profileData) {
-      context += `| ${ticker} (SUBJECT) | ${fmtB(priceData?.marketCap)} | ${fmtB(profileData.revenue)} | ${fmtPct(profileData.revenueGrowth)} | ${fmtPct(profileData.grossMargin)} | ${profileData.forwardPE?.toFixed(1) || "N/A"} | N/A | N/A | ${fmtPct(profileData.shortPercentOfFloat)} |\n`;
+      context += `| ${ticker} (SUBJECT) | ${fmtB(verifiedFacts.marketCap)} | ${fmtB(profileData.revenue)} | ${fmtPct(profileData.revenueGrowth)} | ${fmtPct(profileData.grossMargin)} | ${profileData.forwardPE?.toFixed(1) || "N/A"} | N/A | N/A | ${fmtPct(profileData.shortPercentOfFloat)} |\n`;
     }
     for (const p of peerComps) {
       context += `| ${p.ticker} | ${fmtB(p.marketCap)} | ${fmtB(p.revenue)} | ${fmtPct(p.revenueGrowth)} | ${fmtPct(p.grossMargin)} | ${p.forwardPE?.toFixed(1) || "N/A"} | ${p.evToRevenue?.toFixed(1) || "N/A"} | ${p.evToEbitda?.toFixed(1) || "N/A"} | ${fmtPct(p.shortPercentOfFloat)} |\n`;
@@ -702,33 +1183,14 @@ Write an institutional-quality thesis structured as:
 9. PITZY MODEL ASSESSMENT — retail edge, event certainty, asymmetry, timing scores
 10. DECISION FRAMEWORK — specific hold/add/trim/exit price levels
 
-Do NOT use markdown bold (**text**). Use ALL CAPS for emphasis. Use actual numbers from the data. Do not fabricate data points. Reference source articles by name.`;
+Do NOT use markdown bold (**text**). Use ALL CAPS for emphasis. Use actual numbers from the data. Do not fabricate data points. Reference source articles by name.
+
+Critical rules: 1) Use the VERIFIED FACTS block exactly for current price and market cap. 2) If you mention market cap, it must match the verified market cap within rounding. 3) If a number is not verified, say it is unavailable instead of inventing it.`;
 
   // Generate thesis (cascading models)
   const { text: thesis, model: usedModel } = await generateThesisWithLLM(context);
   console.log(`  Model used: ${usedModel || "none"}`);
 
-  if (!thesis) {
-    console.log(`  ⚠️ LLM generation failed — saving research data without synthesis`);
-    // Save what we have even without LLM synthesis
-    const fallbackThesis = `[Auto-generated research data — LLM synthesis pending]\n\nPrice: $${priceData?.price || "N/A"} | Entry: $${entryPrice || "N/A"} | P&L: ${pnlPct}%\n\n${worthyArticles.slice(0, 5).map((a: any) => `• ${a.title}`).join("\n")}`;
-
-    await convexMutation("investments:updatePosition", {
-      id: positionId,
-      thesis: fallbackThesis,
-      thesisSources: worthyArticles.slice(0, 15).map((a: any) => ({
-        title: a.title, url: a.url, publisher: a.publisher,
-        publishedAt: a.publishedAt, quality: a.quality,
-        trustworthiness: a.trustworthiness, relevance: a.relevance,
-        compositeScore: a.compositeScore,
-      })),
-      thesisGeneratedAt: Date.now(),
-    });
-
-    return NextResponse.json({ status: "partial", message: "Research saved, LLM synthesis failed" });
-  }
-
-  // Save thesis + sources
   const sources = worthyArticles.slice(0, 15).map((a: any) => ({
     title: a.title, url: a.url, publisher: a.publisher,
     publishedAt: a.publishedAt, quality: a.quality,
@@ -736,9 +1198,75 @@ Do NOT use markdown bold (**text**). Use ALL CAPS for emphasis. Use actual numbe
     compositeScore: a.compositeScore,
   }));
 
+  if (!thesis) {
+    console.log(`  ⚠️ LLM generation failed — using deterministic final-writer fallback`);
+    const fallbackThesis = buildDeterministicFinalThesis({
+      facts: verifiedFacts,
+      profileData,
+      worthyArticles,
+      secFilings,
+      peerComps,
+      earningsData,
+      portfolioType,
+      shares,
+      entryPrice,
+      timeHorizon,
+      refreshReason,
+      pnlPct,
+    });
+
+    const fallbackValidation = validateGeneratedThesis(fallbackThesis, verifiedFacts);
+    if (!fallbackValidation.ok) {
+      console.log(`  ⚠️ Deterministic fallback validation failed: ${fallbackValidation.issues.join("; ")}`);
+      const partialThesis = buildPartialThesisFromFacts(verifiedFacts, ["LLM synthesis failed", ...fallbackValidation.issues], worthyArticles, priceData, entryPrice, pnlPct);
+      await convexMutation("investments:updatePosition", {
+        id: positionId,
+        thesis: partialThesis,
+        thesisStatus: "partial",
+        thesisValidationIssues: ["LLM synthesis failed", ...fallbackValidation.issues],
+        verifiedFacts,
+        thesisSources: sources,
+        thesisGeneratedAt: Date.now(),
+      });
+
+      return NextResponse.json({ status: "partial", message: "Research saved, deterministic fallback failed validation" }, { status: 422 });
+    }
+
+    await convexMutation("investments:updatePosition", {
+      id: positionId,
+      thesis: fallbackThesis,
+      thesisStatus: "final",
+      thesisValidationIssues: [],
+      verifiedFacts,
+      thesisSources: sources,
+      thesisGeneratedAt: Date.now(),
+    });
+
+    return NextResponse.json({ status: "ok", ticker, model: "deterministic-fallback", sourcesCount: sources.length, thesisLength: fallbackThesis.length, verifiedFacts });
+  }
+
+  const thesisValidation = validateGeneratedThesis(thesis, verifiedFacts);
+  if (!thesisValidation.ok) {
+    console.log(`  ⚠️ Thesis validation failed: ${thesisValidation.issues.join("; ")}`);
+    const partialThesis = buildPartialThesisFromFacts(verifiedFacts, thesisValidation.issues, worthyArticles, priceData, entryPrice, pnlPct);
+    await convexMutation("investments:updatePosition", {
+      id: positionId,
+      thesis: partialThesis,
+      thesisStatus: "partial",
+      thesisValidationIssues: thesisValidation.issues,
+      verifiedFacts,
+      thesisSources: sources,
+      thesisGeneratedAt: Date.now(),
+    });
+    return NextResponse.json({ status: "partial", ticker, issues: thesisValidation.issues }, { status: 422 });
+  }
+
   await convexMutation("investments:updatePosition", {
     id: positionId,
     thesis,
+    thesisStatus: "final",
+    thesisValidationIssues: [],
+    verifiedFacts,
     thesisSources: sources,
     thesisGeneratedAt: Date.now(),
   });
@@ -751,5 +1279,6 @@ Do NOT use markdown bold (**text**). Use ALL CAPS for emphasis. Use actual numbe
     model: usedModel,
     sourcesCount: sources.length,
     thesisLength: thesis.length,
+    verifiedFacts,
   });
 }

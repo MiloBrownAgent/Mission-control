@@ -1,4 +1,5 @@
 import { query, mutation, internalMutation, internalAction, action } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -76,6 +77,9 @@ export const addPosition = mutation({
         stage,
         status: "active",
         thesis: undefined,
+        thesisStatus: "pending",
+        thesisValidationIssues: undefined,
+        verifiedFacts: undefined,
         thesisSources: undefined,
         thesisGeneratedAt: undefined,
         addedAt: Date.now(),
@@ -114,6 +118,7 @@ export const addPosition = mutation({
       timeHorizon: args.timeHorizon,
       stage,
       status: "active",
+      thesisStatus: "pending",
       addedAt: Date.now(),
     });
     // Trigger thesis generation
@@ -147,6 +152,39 @@ export const updatePosition = mutation({
     status: v.optional(v.union(v.literal("active"), v.literal("watching"), v.literal("exited"))),
     timeHorizon: v.optional(v.union(v.literal("short"), v.literal("medium"), v.literal("long"))),
     thesis: v.optional(v.string()),
+    thesisStatus: v.optional(v.union(v.literal("pending"), v.literal("partial"), v.literal("final"))),
+    thesisValidationIssues: v.optional(v.array(v.string())),
+    verifiedFacts: v.optional(v.object({
+      ticker: v.string(),
+      companyName: v.string(),
+      exchange: v.optional(v.string()),
+      currency: v.optional(v.string()),
+      currentPrice: v.number(),
+      marketCap: v.number(),
+      marketCapSource: v.union(
+        v.literal("quoteSummary.price.marketCap"),
+        v.literal("price_x_sharesOutstanding"),
+        v.literal("price_x_impliedSharesOutstanding")
+      ),
+      sharesOutstanding: v.optional(v.number()),
+      impliedSharesOutstanding: v.optional(v.number()),
+      fiftyTwoWeekHigh: v.optional(v.number()),
+      fiftyTwoWeekLow: v.optional(v.number()),
+      sector: v.optional(v.string()),
+      industry: v.optional(v.string()),
+      revenue: v.optional(v.number()),
+      revenueGrowth: v.optional(v.number()),
+      grossMargin: v.optional(v.number()),
+      operatingMargin: v.optional(v.number()),
+      freeCashflow: v.optional(v.number()),
+      totalDebt: v.optional(v.number()),
+      totalCash: v.optional(v.number()),
+      forwardPE: v.optional(v.number()),
+      shortPercentOfFloat: v.optional(v.number()),
+      analystConsensus: v.optional(v.string()),
+      targetMeanPrice: v.optional(v.number()),
+      validatedAt: v.number(),
+    })),
     thesisSources: v.optional(v.array(v.object({
       title: v.string(),
       url: v.string(),
@@ -171,6 +209,39 @@ export const updateThesisInternal = internalMutation({
   args: {
     id: v.id("investmentPositions"),
     thesis: v.string(),
+    thesisStatus: v.optional(v.union(v.literal("pending"), v.literal("partial"), v.literal("final"))),
+    thesisValidationIssues: v.optional(v.array(v.string())),
+    verifiedFacts: v.optional(v.object({
+      ticker: v.string(),
+      companyName: v.string(),
+      exchange: v.optional(v.string()),
+      currency: v.optional(v.string()),
+      currentPrice: v.number(),
+      marketCap: v.number(),
+      marketCapSource: v.union(
+        v.literal("quoteSummary.price.marketCap"),
+        v.literal("price_x_sharesOutstanding"),
+        v.literal("price_x_impliedSharesOutstanding")
+      ),
+      sharesOutstanding: v.optional(v.number()),
+      impliedSharesOutstanding: v.optional(v.number()),
+      fiftyTwoWeekHigh: v.optional(v.number()),
+      fiftyTwoWeekLow: v.optional(v.number()),
+      sector: v.optional(v.string()),
+      industry: v.optional(v.string()),
+      revenue: v.optional(v.number()),
+      revenueGrowth: v.optional(v.number()),
+      grossMargin: v.optional(v.number()),
+      operatingMargin: v.optional(v.number()),
+      freeCashflow: v.optional(v.number()),
+      totalDebt: v.optional(v.number()),
+      totalCash: v.optional(v.number()),
+      forwardPE: v.optional(v.number()),
+      shortPercentOfFloat: v.optional(v.number()),
+      analystConsensus: v.optional(v.string()),
+      targetMeanPrice: v.optional(v.number()),
+      validatedAt: v.number(),
+    })),
     thesisSources: v.array(v.object({
       title: v.string(),
       url: v.string(),
@@ -186,6 +257,9 @@ export const updateThesisInternal = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, {
       thesis: args.thesis,
+      thesisStatus: args.thesisStatus,
+      thesisValidationIssues: args.thesisValidationIssues,
+      verifiedFacts: args.verifiedFacts,
       thesisSources: args.thesisSources,
       thesisGeneratedAt: args.thesisGeneratedAt,
     });
@@ -339,14 +413,80 @@ export const deleteAlert = mutation({
 
 // ── Opportunities ──────────────────────────────────────
 
+type OpportunityDoc = Doc<"investmentOpportunities">;
+
+function normalizeOpportunityTicker(ticker: string) {
+  return ticker.trim().toUpperCase();
+}
+
+function opportunityTimestamp(opportunity: OpportunityDoc) {
+  return opportunity.lastRefreshedAt ?? opportunity.priceUpdatedAt ?? opportunity.createdAt ?? 0;
+}
+
+function opportunityStatusRank(status: OpportunityDoc["status"]) {
+  switch (status) {
+    case "active": return 4;
+    case "hit_target": return 3;
+    case "stopped_out": return 2;
+    case "expired": return 1;
+    default: return 0;
+  }
+}
+
+function normalizeOpportunityRecord(opportunity: OpportunityDoc): OpportunityDoc {
+  return {
+    ...opportunity,
+    ticker: normalizeOpportunityTicker(opportunity.ticker),
+    firstSeenAt: opportunity.firstSeenAt ?? opportunity.createdAt,
+    lastRefreshedAt: opportunity.lastRefreshedAt ?? opportunity.priceUpdatedAt ?? opportunity.createdAt,
+  };
+}
+
+function pickCanonicalOpportunity(a: OpportunityDoc, b: OpportunityDoc): OpportunityDoc {
+  const aTs = opportunityTimestamp(a);
+  const bTs = opportunityTimestamp(b);
+  if (bTs > aTs) return b;
+  if (aTs > bTs) return a;
+  if (opportunityStatusRank(b.status) > opportunityStatusRank(a.status)) return b;
+  return a;
+}
+
+function mergeOpportunitiesByTicker(opportunities: OpportunityDoc[]) {
+  const merged = new Map<string, OpportunityDoc>();
+
+  for (const rawOpportunity of opportunities) {
+    const opportunity = normalizeOpportunityRecord(rawOpportunity);
+    if (!opportunity.ticker) continue;
+
+    const existing = merged.get(opportunity.ticker);
+    if (!existing) {
+      merged.set(opportunity.ticker, opportunity);
+      continue;
+    }
+
+    const canonical = pickCanonicalOpportunity(existing, opportunity);
+    merged.set(opportunity.ticker, {
+      ...canonical,
+      ticker: opportunity.ticker,
+      firstSeenAt: Math.min(existing.firstSeenAt ?? existing.createdAt, opportunity.firstSeenAt ?? opportunity.createdAt),
+      lastRefreshedAt: Math.max(opportunityTimestamp(existing), opportunityTimestamp(opportunity)),
+      emailedAt: Math.max(existing.emailedAt ?? 0, opportunity.emailedAt ?? 0) || undefined,
+    });
+  }
+
+  return Array.from(merged.values()).sort((a, b) => opportunityTimestamp(b) - opportunityTimestamp(a));
+}
+
 export const listOpportunities = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    return ctx.db
+    const opportunities = await ctx.db
       .query("investmentOpportunities")
       .withIndex("by_created")
       .order("desc")
-      .take(args.limit ?? 20);
+      .collect();
+
+    return mergeOpportunitiesByTicker(opportunities).slice(0, args.limit ?? 20);
   },
 });
 
@@ -369,9 +509,15 @@ export const createOpportunity = internalMutation({
     status: v.optional(v.union(v.literal("active"), v.literal("hit_target"), v.literal("stopped_out"), v.literal("expired"))),
   },
   handler: async (ctx, args) => {
+    const now = Date.now();
     return ctx.db.insert("investmentOpportunities", {
       ...args,
-      createdAt: Date.now(),
+      ticker: normalizeOpportunityTicker(args.ticker),
+      createdAt: now,
+      firstSeenAt: now,
+      lastRefreshedAt: now,
+      status: args.status ?? "active",
+      priceUpdatedAt: args.priceUpdatedAt ?? now,
     });
   },
 });
@@ -396,20 +542,27 @@ export const createOpportunityPublic = mutation({
     status: v.optional(v.union(v.literal("active"), v.literal("hit_target"), v.literal("stopped_out"), v.literal("expired"))),
   },
   handler: async (ctx, args) => {
-    const createdAt = args.createdAt ?? Date.now();
-    const startOfDay = new Date(createdAt);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(createdAt);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const existing = (await ctx.db
+    const now = Date.now();
+    const normalizedTicker = normalizeOpportunityTicker(args.ticker);
+    const indexedExisting = await ctx.db
       .query("investmentOpportunities")
-      .withIndex("by_ticker", (q) => q.eq("ticker", args.ticker))
-      .collect())
-      .find((opp) => opp.createdAt >= startOfDay.getTime() && opp.createdAt <= endOfDay.getTime());
+      .withIndex("by_ticker", (q) => q.eq("ticker", normalizedTicker))
+      .collect();
+    const existing = indexedExisting.length > 0
+      ? indexedExisting
+      : (await ctx.db.query("investmentOpportunities").collect())
+          .filter((opp) => normalizeOpportunityTicker(opp.ticker) === normalizedTicker);
+
+    const canonical = [...existing]
+      .map(normalizeOpportunityRecord)
+      .sort((a, b) => opportunityTimestamp(b) - opportunityTimestamp(a) || opportunityStatusRank(b.status) - opportunityStatusRank(a.status))[0];
+
+    const firstSeenAt = existing.length > 0
+      ? Math.min(...existing.map((opp) => opp.firstSeenAt ?? opp.createdAt))
+      : (args.createdAt ?? now);
 
     const payload = {
-      ticker: args.ticker,
+      ticker: normalizedTicker,
       name: args.name,
       opportunityType: args.opportunityType,
       thesis: args.thesis,
@@ -419,17 +572,20 @@ export const createOpportunityPublic = mutation({
       risks: args.risks,
       timeHorizon: args.timeHorizon,
       moralScreenPass: args.moralScreenPass,
-      createdAt,
-      priceAtRecommendation: args.priceAtRecommendation,
-      currentPrice: args.currentPrice,
-      priceUpdatedAt: args.priceUpdatedAt,
-      returnPct: args.returnPct,
-      status: args.status,
+      createdAt: canonical?.createdAt ?? args.createdAt ?? now,
+      firstSeenAt,
+      lastRefreshedAt: now,
+      priceAtRecommendation: args.priceAtRecommendation ?? canonical?.priceAtRecommendation,
+      currentPrice: args.currentPrice ?? canonical?.currentPrice,
+      priceUpdatedAt: args.priceUpdatedAt ?? canonical?.priceUpdatedAt ?? now,
+      returnPct: args.returnPct ?? canonical?.returnPct,
+      status: args.status ?? "active",
+      emailedAt: canonical?.emailedAt,
     };
 
-    if (existing) {
-      await ctx.db.patch(existing._id, payload);
-      return existing._id;
+    if (canonical) {
+      await ctx.db.patch(canonical._id, payload);
+      return canonical._id;
     }
 
     return ctx.db.insert("investmentOpportunities", payload);
@@ -437,6 +593,19 @@ export const createOpportunityPublic = mutation({
 });
 
 export const listAllOpportunitiesTracked = query({
+  args: {},
+  handler: async (ctx) => {
+    const opportunities = await ctx.db
+      .query("investmentOpportunities")
+      .withIndex("by_created")
+      .order("desc")
+      .collect();
+
+    return mergeOpportunitiesByTicker(opportunities);
+  },
+});
+
+export const listOpportunitiesRaw = query({
   args: {},
   handler: async (ctx) => {
     return ctx.db
@@ -499,7 +668,7 @@ export const patchOpportunity = mutation({
     const { id, ...updates } = args;
     const clean = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
     if (Object.keys(clean).length === 0) return;
-    await ctx.db.patch(id, clean);
+    await ctx.db.patch(id, { ...clean, lastRefreshedAt: Date.now() });
   },
 });
 
@@ -521,7 +690,7 @@ export const updateOpportunityTracking = internalMutation({
     const { id, ...updates } = args;
     const clean = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
     if (Object.keys(clean).length === 0) return;
-    await ctx.db.patch(id, clean);
+    await ctx.db.patch(id, { ...clean, lastRefreshedAt: Date.now() });
   },
 });
 
