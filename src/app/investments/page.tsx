@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation } from "convex/react";
+import type { Doc } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useState, useMemo, createContext, useContext } from "react";
@@ -42,6 +43,11 @@ import {
   Trash2,
   FlaskConical,
   Briefcase,
+  RefreshCw,
+  Share2,
+  Mail,
+  Copy,
+  CheckCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -56,6 +62,44 @@ type MainTab = "home" | "research" | "portfolio" | "playbook";
 const PrivacyContext = createContext(false);
 function usePrivacy() { return useContext(PrivacyContext); }
 function maskValue(privacyMode: boolean, value: string | number) { return privacyMode ? "••••••" : String(value); }
+
+type InvestmentPosition = Doc<"investmentPositions">;
+
+function formatShareDate(ts?: number) {
+  if (!ts) return "Unknown";
+  return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function thesisAgeLabel(ts?: number) {
+  if (!ts) return "No thesis yet";
+  const days = Math.max(0, Math.floor((Date.now() - ts) / (1000 * 60 * 60 * 24)));
+  if (days === 0) return "Updated today";
+  if (days === 1) return "Updated yesterday";
+  return `Updated ${days} days ago`;
+}
+
+function buildThesisShareText(position: InvestmentPosition, mode: "full" | "brief" = "full") {
+  const lines = [
+    `${position.ticker} — ${position.name}`,
+    position.portfolioType === "high_risk" ? "High Risk" : "Low Risk",
+    position.stage ? `Stage: ${position.stage}` : undefined,
+    position.timeHorizon ? `Horizon: ${position.timeHorizon}` : undefined,
+    position.thesisGeneratedAt ? `Last Updated: ${formatShareDate(position.thesisGeneratedAt)}` : undefined,
+    "",
+    mode === "brief"
+      ? (position.thesis?.split("\n").filter(Boolean).slice(0, 8).join("\n") ?? "No thesis yet.")
+      : (position.thesis ?? "No thesis yet."),
+  ].filter(Boolean) as string[];
+
+  if (mode === "full" && position.thesisSources?.length) {
+    lines.push("", `Sources (${position.thesisSources.length})`);
+    for (const src of [...position.thesisSources].slice(0, 8)) {
+      lines.push(`- ${src.title}${src.publisher ? ` (${src.publisher})` : ""}`);
+    }
+  }
+
+  return lines.join("\n");
+}
 
 export default function InvestmentsPage() {
   const [activeTab, setActiveTab] = useState<MainTab>("home");
@@ -1496,6 +1540,79 @@ function PositionDetail({
   const acknowledgeAlert = useMutation(api.investments.acknowledgeAlert);
   const deleteAlert = useMutation(api.investments.deleteAlert);
   const updatePosition = useMutation(api.investments.updatePosition);
+  const [refreshingThesis, setRefreshingThesis] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<null | "full" | "brief">(null);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
+
+  const triggerThesisRefresh = async () => {
+    if (!position || refreshingThesis) return;
+    setRefreshingThesis(true);
+    setShareStatus(null);
+    try {
+      const res = await fetch('/api/investments/generate-thesis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker: position.ticker,
+          name: position.name,
+          positionId: position._id,
+          portfolioType: position.portfolioType,
+          shares: position.shares,
+          entryPrice: position.entryPrice,
+          timeHorizon: position.timeHorizon,
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setShareStatus(data.status === 'success' ? 'Thesis refreshed.' : 'Refresh queued.');
+    } catch (error) {
+      console.error(error);
+      setShareStatus('Refresh failed.');
+    } finally {
+      setRefreshingThesis(false);
+    }
+  };
+
+  const copyThesis = async (mode: 'full' | 'brief') => {
+    if (!position) return;
+    try {
+      await navigator.clipboard.writeText(buildThesisShareText(position, mode));
+      setCopyStatus(mode);
+      setShareStatus(mode === 'brief' ? 'Brief thesis copied.' : 'Full thesis copied.');
+      window.setTimeout(() => setCopyStatus(null), 2500);
+    } catch (error) {
+      console.error(error);
+      setShareStatus('Copy failed.');
+    }
+  };
+
+  const shareThesis = async () => {
+    if (!position) return;
+    const text = buildThesisShareText(position, 'full');
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `${position.ticker} thesis`, text });
+        setShareStatus('Share sheet opened.');
+      } else {
+        await navigator.clipboard.writeText(text);
+        setShareStatus('Share not available here. Copied instead.');
+      }
+    } catch (error: any) {
+      if (error?.name === 'AbortError') return;
+      console.error(error);
+      setShareStatus('Share failed.');
+    }
+  };
+
+  const emailThesis = () => {
+    if (!position) return;
+    const subject = encodeURIComponent(`${position.ticker} thesis — ${position.name}`);
+    const body = encodeURIComponent(buildThesisShareText(position, 'full'));
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
 
   if (!position) {
     return (
@@ -1548,9 +1665,61 @@ function PositionDetail({
 
       {/* Thesis */}
       <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-6">
-        <h3 className="text-sm font-semibold text-[#B8956A] uppercase tracking-wider mb-3">
-          Investment Thesis
-        </h3>
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-[#B8956A] uppercase tracking-wider">
+              Investment Thesis
+            </h3>
+            <p className="mt-1 text-[11px] text-[#6B6560]">
+              {thesisAgeLabel(position.thesisGeneratedAt)}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={triggerThesisRefresh}
+              disabled={refreshingThesis}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#1A1816] px-2.5 py-1.5 text-[11px] text-[#E8E4DF] hover:bg-[#1A1816] disabled:opacity-60"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", refreshingThesis && "animate-spin")} />
+              {position.thesis ? "Refresh" : "Generate"}
+            </button>
+            <button
+              onClick={shareThesis}
+              disabled={!position.thesis}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#1A1816] px-2.5 py-1.5 text-[11px] text-[#E8E4DF] hover:bg-[#1A1816] disabled:opacity-40"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </button>
+            <button
+              onClick={emailThesis}
+              disabled={!position.thesis}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#1A1816] px-2.5 py-1.5 text-[11px] text-[#E8E4DF] hover:bg-[#1A1816] disabled:opacity-40"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Email
+            </button>
+            <button
+              onClick={() => copyThesis('full')}
+              disabled={!position.thesis}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#1A1816] px-2.5 py-1.5 text-[11px] text-[#E8E4DF] hover:bg-[#1A1816] disabled:opacity-40"
+            >
+              {copyStatus === 'full' ? <CheckCheck className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              Copy
+            </button>
+            <button
+              onClick={() => copyThesis('brief')}
+              disabled={!position.thesis}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#1A1816] px-2.5 py-1.5 text-[11px] text-[#E8E4DF] hover:bg-[#1A1816] disabled:opacity-40"
+            >
+              {copyStatus === 'brief' ? <CheckCheck className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              Copy Brief
+            </button>
+          </div>
+        </div>
+        {shareStatus && (
+          <p className="mb-3 text-[11px] text-[#6B6560]">{shareStatus}</p>
+        )}
         {position.thesis ? (
           <>
             <div className="text-sm text-[#E8E4DF]/80 whitespace-pre-wrap">
@@ -1639,7 +1808,7 @@ function PositionDetail({
         ) : (
           <div className="flex items-center gap-2 text-sm text-[#B8956A]">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#B8956A] border-t-transparent" />
-            Thesis generation pending — will be generated on next monitoring cycle
+            Thesis generation pending — use Generate to force a refresh immediately.
           </div>
         )}
       </div>
