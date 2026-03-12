@@ -7,6 +7,7 @@ Personal dashboard for managing OpenClaw — built with Next.js, Convex, Tailwin
 - **Tasks Board** — Kanban-style board with drag-and-drop (To Do, In Progress, Done)
 - **Memory Browser** — Full-text search across stored memories with category filtering
 - **Calendar** — Monthly calendar view with events, tasks, cron jobs, and reminders
+- **Investment Hub hardening** — thesis generation now separates verified numeric facts from model narrative, validates critical facts before save, and downgrades bad generations to partial instead of persisting hallucinated finals
 - **Dark Mode** — VS Code / Linear-inspired dark theme by default
 - **Real-time** — Convex provides live updates across all connected clients
 

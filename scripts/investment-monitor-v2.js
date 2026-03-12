@@ -1,62 +1,56 @@
 #!/usr/bin/env node
+
 /**
- * Investment Monitor v2
- * 
- * Comprehensive monitoring for ALL active positions (high_risk + low_risk).
+ * Investment Monitor V2
  * Checks price moves, news, short interest, insider activity, and thesis staleness.
  * Creates alerts in Convex and outputs summary for OpenClaw agent to notify via Telegram.
- * 
- * Usage: node investment-monitor-v2.js
- * 
- * Runs every 15 min during market hours via OpenClaw cron.
  */
 
 const CONVEX_URL = "https://proper-rat-443.convex.cloud";
+const SITE_URL = process.env.SITE_URL || "https://mc.lookandseen.com";
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const TELEGRAM_THREAD_ID = process.env.TELEGRAM_THREAD_ID ? Number(process.env.TELEGRAM_THREAD_ID) : 6;
 
 // ─── Alert Thresholds ────────────────────────────────────────────────────────
 const THRESHOLDS = {
   // Price alerts
   DAY_DROP_HIGH: -10,          // % drop in a day → high severity
   DAY_DROP_MEDIUM: -5,         // % drop in a day → medium
-  DAY_SPIKE_HIGH: 15,          // % spike in a day → medium (could be squeeze or news)
+  DAY_SPIKE_HIGH: 10,          // % spike in a day → medium (major upside move must trigger)
   FROM_ENTRY_CRITICAL: -25,    // % from entry → critical
   FROM_ENTRY_HIGH: -15,        // % from entry → high
-  NEAR_52WK_LOW_PCT: 10,      // within X% of 52-week low → medium
-  HIT_ANALYST_TARGET: 0.95,   // within 5% of mean analyst target → low
+  NEAR_52WK_LOW_PCT: 10,       // within X% of 52-week low → medium
 
-  // News scoring
-  NEGATIVE_NEWS_THRESHOLD: 3,  // number of negative articles in 7 days → alert
-  
-  // Thesis freshness
-  THESIS_STALE_DAYS: 30,      // days before thesis is considered stale
-  THESIS_VERY_STALE_DAYS: 60, // days before thesis is critically stale
+  // Thesis staleness
+  THESIS_STALE_DAYS: 30,       // days before thesis is considered stale
+  THESIS_VERY_STALE_DAYS: 60,  // days before thesis is critically stale
 
   // Short interest
   SHORT_INTEREST_HIGH: 15,     // % of float → medium alert
   SHORT_INTEREST_CRITICAL: 25, // % of float → high alert
+
+  // News sentiment
+  NEGATIVE_NEWS_THRESHOLD: 3,  // number of negative articles in 7 days → alert
 };
 
-// ─── Negative news keywords ──────────────────────────────────────────────────
 const NEGATIVE_KEYWORDS = [
-  "downgrade", "lawsuit", "investigation", "sec probe", "fraud", "subpoena",
-  "class action", "recall", "fda warning", "data breach", "ceo resign",
-  "cfo resign", "bankruptcy", "default", "delisted", "dilution", "offering",
-  "short seller", "short report", "audit concern", "restatement", "going concern",
-  "layoff", "restructuring", "guidance cut", "missed estimate", "revenue miss",
-  "earnings miss", "warning letter", "insider selling", "margin call",
+  "probe", "investigation", "lawsuit", "fraud", "misses", "cut", "warning",
+  "downgrade", "recall", "delay", "bankruptcy", "dilution", "secondary",
+  "insider selling", "bearish", "collapse", "concern", "slump"
 ];
 
 const POSITIVE_KEYWORDS = [
-  "upgrade", "beat estimate", "raised guidance", "partnership", "contract win",
-  "fda approval", "buy rating", "price target raised", "insider buying",
-  "revenue beat", "earnings beat", "expansion", "acquisition", "merger approved",
-  "patent granted", "breakthrough", "record revenue", "buyback",
+  "beats", "surge", "upgrade", "partnership", "contract", "approval",
+  "buyback", "acquisition", "raises", "expands", "launches"
 ];
 
-// ─── Convex ──────────────────────────────────────────────────────────────────
+// ─── Convex Helpers ──────────────────────────────────────────────────────────
+
 async function convexQuery(fn, args = {}) {
   const res = await fetch(`${CONVEX_URL}/api/query`, {
     method: "POST", headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20_000),
     body: JSON.stringify({ path: fn, args }),
   });
   if (!res.ok) throw new Error(`Convex query ${fn} failed: ${res.status}`);
@@ -66,10 +60,67 @@ async function convexQuery(fn, args = {}) {
 async function convexMutation(fn, args = {}) {
   const res = await fetch(`${CONVEX_URL}/api/mutation`, {
     method: "POST", headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20_000),
     body: JSON.stringify({ path: fn, args }),
   });
   if (!res.ok) throw new Error(`Convex mutation ${fn} failed: ${res.status}`);
   return (await res.json()).value;
+}
+
+function effectiveStage(position) {
+  return position.stage ?? ((position.shares && position.shares > 0 && position.entryPrice && position.entryPrice > 0) ? "portfolio" : "research");
+}
+
+function getRefreshReason(position, alerts) {
+  const stage = effectiveStage(position);
+  const staleThreshold = stage === "portfolio" ? 7 : 14;
+  const cooldownHours = stage === "portfolio" ? 12 : 24;
+  const nonFinalRetryDays = stage === "portfolio" ? 1 : 2;
+  const ageMs = position.thesisGeneratedAt ? (Date.now() - position.thesisGeneratedAt) : Number.POSITIVE_INFINITY;
+  const ageDays = ageMs / (1000 * 60 * 60 * 24);
+  const cooldownMs = cooldownHours * 60 * 60 * 1000;
+  const thesisStatus = position.thesisStatus || (position.thesis ? "final" : "pending");
+  const cooldownElapsed = ageMs >= cooldownMs;
+
+  if (!position.thesis) return "missing thesis";
+  if (!cooldownElapsed) return null;
+
+  if (thesisStatus !== "final" && ageDays >= nonFinalRetryDays) {
+    return `${thesisStatus} thesis retry (${Math.round(ageDays)}d)`;
+  }
+
+  if (alerts.some(a => a.type === "thesis_risk" && (a.severity === "critical" || a.severity === "high"))) {
+    return "high-risk alert";
+  }
+
+  if (alerts.some(a => a.type === "thesis_evolution" && (a.severity === "medium" || a.severity === "high"))) {
+    return "material thesis evolution";
+  }
+
+  if (ageDays >= staleThreshold) return `stale thesis (${Math.round(ageDays)}d)`;
+
+  return null;
+}
+
+async function requestThesisRefresh(position, reason) {
+  const res = await fetch(`${SITE_URL}/api/investments/generate-thesis`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(45_000),
+    body: JSON.stringify({
+      ticker: position.ticker,
+      name: position.name,
+      positionId: position._id,
+      portfolioType: position.portfolioType,
+      shares: position.shares,
+      entryPrice: position.entryPrice,
+      timeHorizon: position.timeHorizon,
+      refreshReason: reason,
+    }),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok && res.status !== 422) throw new Error(`thesis refresh failed: ${res.status}`);
+  return data || { status: res.ok ? "ok" : "partial" };
 }
 
 // ─── Data Fetchers ───────────────────────────────────────────────────────────
@@ -78,121 +129,107 @@ async function fetchPrice(ticker) {
   try {
     const res = await fetch(
       `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5d`,
-      { headers: { "User-Agent": "Mozilla/5.0" } }
+      { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(15_000) }
     );
     if (!res.ok) return null;
     const data = await res.json();
-    const result = data.chart?.result?.[0];
-    const meta = result?.meta;
-    if (!meta) return null;
-    
-    // Use actual previous day's close from price history, not chartPreviousClose (which can be stale)
-    const closes = result?.indicators?.quote?.[0]?.close?.filter(c => c != null) || [];
-    const prevClose = closes.length >= 2 ? closes[closes.length - 2] : meta.chartPreviousClose;
-    const currentPrice = meta.regularMarketPrice;
-    
+    const meta = data?.chart?.result?.[0]?.meta;
+    if (!meta?.regularMarketPrice || !meta?.previousClose) return null;
+
+    const price = meta.regularMarketPrice;
+    const previousClose = meta.previousClose;
+    const dayChangePct = ((price - previousClose) / previousClose) * 100;
+
     return {
-      price: currentPrice,
-      previousClose: prevClose,
-      dayChange: currentPrice - prevClose,
-      dayChangePct: ((currentPrice - prevClose) / prevClose * 100),
-      fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh,
+      price,
+      previousClose,
+      dayChangePct,
       fiftyTwoWeekLow: meta.fiftyTwoWeekLow,
+      fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh,
+      marketCap: meta.marketCap,
     };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 async function fetchKeyStats(ticker) {
   try {
     const res = await fetch(
       `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=defaultKeyStatistics,financialData`,
-      { headers: { "User-Agent": "Mozilla/5.0" } }
+      { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(15_000) }
     );
     if (!res.ok) return null;
     const data = await res.json();
-    const r = data.quoteSummary?.result?.[0];
+    const stats = data?.quoteSummary?.result?.[0]?.defaultKeyStatistics;
+    const fin = data?.quoteSummary?.result?.[0]?.financialData;
+
     return {
-      shortPercentOfFloat: r?.defaultKeyStatistics?.shortPercentOfFloat?.raw,
-      shortRatio: r?.defaultKeyStatistics?.shortRatio?.raw,
-      sharesShort: r?.defaultKeyStatistics?.sharesShort?.raw,
-      sharesShortPriorMonth: r?.defaultKeyStatistics?.sharesShortPriorMonth?.raw,
-      heldPercentInsiders: r?.defaultKeyStatistics?.heldPercentInsiders?.raw,
-      heldPercentInstitutions: r?.defaultKeyStatistics?.heldPercentInstitutions?.raw,
-      targetMeanPrice: r?.financialData?.targetMeanPrice?.raw,
-      targetHighPrice: r?.financialData?.targetHighPrice?.raw,
-      targetLowPrice: r?.financialData?.targetLowPrice?.raw,
-      recommendationKey: r?.financialData?.recommendationKey,
-      numberOfAnalysts: r?.financialData?.numberOfAnalystOpinions?.raw,
+      shortPercentOfFloat: stats?.shortPercentOfFloat?.raw,
+      shortRatio: stats?.shortRatio?.raw,
+      beta: stats?.beta?.raw,
+      heldPercentInsiders: stats?.heldPercentInsiders?.raw,
+      heldPercentInstitutions: stats?.heldPercentInstitutions?.raw,
+      targetMeanPrice: fin?.targetMeanPrice?.raw,
+      recommendationKey: fin?.recommendationKey,
     };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 async function fetchRecentNews(ticker) {
-  const articles = [];
-  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   try {
     const res = await fetch(
       `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${ticker}&region=US&lang=en-US`,
-      { headers: { "User-Agent": "Mozilla/5.0" } }
+      { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(15_000) }
     );
     if (res.ok) {
       const xml = await res.text();
-      for (const item of xml.split("<item>").slice(1, 16)) {
-        const t = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/);
-        const d = item.match(/<pubDate>(.*?)<\/pubDate>/);
-        const title = t ? (t[1] || t[2]).replace(/&amp;/g, "&") : null;
-        const pubDate = d ? new Date(d[1]) : null;
-        if (title && pubDate && pubDate.getTime() > sevenDaysAgo) {
-          articles.push({ title, date: pubDate.toISOString() });
-        }
-      }
+      const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((m) => m[1]).slice(0, 10);
+      return items.map((item) => ({
+        title: (item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1] || item.match(/<title>(.*?)<\/title>/)?.[1] || "").trim(),
+        pubDate: item.match(/<pubDate>(.*?)<\/pubDate>/)?.[1],
+      }));
     }
   } catch {}
-  return articles;
+  return [];
 }
 
-// ─── Alert Logic ─────────────────────────────────────────────────────────────
+// ─── Analysis Engine ─────────────────────────────────────────────────────────
 
 function analyzePosition(position, priceData, keyStats, news) {
   const alerts = [];
   const ticker = position.ticker;
 
-  // ── Price Alerts ──
+  // 1. Price move alerts
   if (priceData) {
     const dayPct = priceData.dayChangePct;
-    const fromEntry = position.entryPrice
-      ? ((priceData.price - position.entryPrice) / position.entryPrice) * 100
-      : null;
-    const distFromLow = priceData.fiftyTwoWeekLow
-      ? ((priceData.price - priceData.fiftyTwoWeekLow) / priceData.fiftyTwoWeekLow) * 100
-      : null;
 
-    // Big daily drop
     if (dayPct <= THRESHOLDS.DAY_DROP_HIGH) {
       alerts.push({
         type: "price_alert", severity: "high",
-        title: `${ticker} crashed ${dayPct.toFixed(1)}% today`,
+        title: `${ticker} dropped ${dayPct.toFixed(1)}% in one day`,
         summary: `${ticker} dropped ${dayPct.toFixed(1)}% today to $${priceData.price.toFixed(2)}. Previous close: $${priceData.previousClose.toFixed(2)}. This is a significant single-day move that may require thesis review.`,
       });
     } else if (dayPct <= THRESHOLDS.DAY_DROP_MEDIUM) {
       alerts.push({
         type: "price_alert", severity: "medium",
         title: `${ticker} down ${dayPct.toFixed(1)}% today`,
-        summary: `${ticker} fell ${dayPct.toFixed(1)}% to $${priceData.price.toFixed(2)}. Monitor for continuation.`,
+        summary: `${ticker} is down ${dayPct.toFixed(1)}% today. Could be noise, but worth checking for news or market narrative shift.`,
       });
     }
 
-    // Big daily spike (could be news-driven)
     if (dayPct >= THRESHOLDS.DAY_SPIKE_HIGH) {
       alerts.push({
         type: "thesis_evolution", severity: "medium",
-        title: `${ticker} surged +${dayPct.toFixed(1)}% today`,
+        title: `${ticker} surged ${dayPct.toFixed(1)}% today`,
         summary: `${ticker} up ${dayPct.toFixed(1)}% to $${priceData.price.toFixed(2)}. Check if this changes the thesis or presents a profit-taking opportunity.`,
       });
     }
 
-    // From entry performance
-    if (fromEntry !== null) {
+    if (position.entryPrice && position.entryPrice > 0) {
+      const fromEntry = ((priceData.price - position.entryPrice) / position.entryPrice) * 100;
       if (fromEntry <= THRESHOLDS.FROM_ENTRY_CRITICAL) {
         alerts.push({
           type: "thesis_risk", severity: "critical",
@@ -203,87 +240,88 @@ function analyzePosition(position, priceData, keyStats, news) {
         alerts.push({
           type: "thesis_risk", severity: "high",
           title: `${ticker} down ${fromEntry.toFixed(1)}% from entry`,
-          summary: `Position is ${fromEntry.toFixed(1)}% underwater at $${priceData.price.toFixed(2)} vs $${position.entryPrice} entry.`,
+          summary: `${ticker} is materially below your entry. Time to check if this is conviction opportunity or thesis break.`,
         });
       }
     }
 
-    // Near 52-week low
-    if (distFromLow !== null && distFromLow <= THRESHOLDS.NEAR_52WK_LOW_PCT) {
-      alerts.push({
-        type: "price_alert", severity: "medium",
-        title: `${ticker} within ${distFromLow.toFixed(0)}% of 52-week low`,
-        summary: `${ticker} at $${priceData.price.toFixed(2)} is near its 52-week low of $${priceData.fiftyTwoWeekLow.toFixed(2)}. Could be a buying opportunity or a sign of deterioration.`,
-      });
+    if (priceData.fiftyTwoWeekLow) {
+      const aboveLowPct = ((priceData.price - priceData.fiftyTwoWeekLow) / priceData.fiftyTwoWeekLow) * 100;
+      if (aboveLowPct <= THRESHOLDS.NEAR_52WK_LOW_PCT) {
+        alerts.push({
+          type: "price_alert", severity: "medium",
+          title: `${ticker} near 52-week low`,
+          summary: `${ticker} at $${priceData.price.toFixed(2)} is near its 52-week low of $${priceData.fiftyTwoWeekLow.toFixed(2)}. Could be a buying opportunity or a sign of deterioration.`,
+        });
+      }
     }
 
-    // Near analyst target
-    if (keyStats?.targetMeanPrice && priceData.price >= keyStats.targetMeanPrice * THRESHOLDS.HIT_ANALYST_TARGET) {
+    if (position.entryPrice && priceData.price > position.entryPrice * 1.5) {
       alerts.push({
         type: "thesis_evolution", severity: "low",
-        title: `${ticker} approaching analyst target ($${keyStats.targetMeanPrice.toFixed(2)})`,
-        summary: `${ticker} at $${priceData.price.toFixed(2)} is within 5% of the mean analyst target of $${keyStats.targetMeanPrice.toFixed(2)}. Consider whether to hold for higher targets ($${keyStats.targetHighPrice?.toFixed(2) || "?"}) or take profits.`,
+        title: `${ticker} up >50% from entry`,
+        summary: `${ticker} has appreciated significantly from entry. Re-underwrite upside vs. risk from here rather than anchoring to the original thesis.`,
       });
     }
   }
 
-  // ── Short Interest ──
-  if (keyStats?.shortPercentOfFloat) {
+  // 2. Short interest / market structure
+  if (keyStats?.shortPercentOfFloat != null) {
     const shortPct = keyStats.shortPercentOfFloat * 100;
     if (shortPct >= THRESHOLDS.SHORT_INTEREST_CRITICAL) {
       alerts.push({
         type: "thesis_risk", severity: "high",
-        title: `${ticker} short interest at ${shortPct.toFixed(1)}% of float`,
-        summary: `${ticker} has ${shortPct.toFixed(1)}% of float sold short (${keyStats.shortRatio?.toFixed(1) || "?"} days to cover). This is extremely elevated and signals institutional bearishness. ${keyStats.sharesShortPriorMonth && keyStats.sharesShort > keyStats.sharesShortPriorMonth ? "Short interest is INCREASING month over month." : ""}`,
+        title: `${ticker} short interest elevated at ${shortPct.toFixed(1)}%`,
+        summary: `${ticker} short interest is extremely high. That can create squeeze upside, but also signals market skepticism you should understand.`,
       });
     } else if (shortPct >= THRESHOLDS.SHORT_INTEREST_HIGH) {
       alerts.push({
         type: "thesis_risk", severity: "medium",
-        title: `${ticker} elevated short interest: ${shortPct.toFixed(1)}%`,
-        summary: `Short interest at ${shortPct.toFixed(1)}% of float. Days to cover: ${keyStats.shortRatio?.toFixed(1) || "?"}. Monitor for squeeze potential or further deterioration.`,
+        title: `${ticker} short interest notable at ${shortPct.toFixed(1)}%`,
+        summary: `${ticker} has meaningful short interest. Worth checking the bear case directly.`,
       });
     }
   }
 
-  // ── News Analysis ──
-  if (news && news.length > 0) {
-    let negativeCount = 0;
-    let positiveCount = 0;
+  // 3. News sentiment scan
+  if (news?.length > 0) {
     const negativeHeadlines = [];
     const positiveHeadlines = [];
 
     for (const article of news) {
-      const lower = article.title.toLowerCase();
-      const isNeg = NEGATIVE_KEYWORDS.some(kw => lower.includes(kw));
-      const isPos = POSITIVE_KEYWORDS.some(kw => lower.includes(kw));
-      if (isNeg) { negativeCount++; negativeHeadlines.push(article.title); }
-      if (isPos) { positiveCount++; positiveHeadlines.push(article.title); }
+      const title = article.title.toLowerCase();
+      if (NEGATIVE_KEYWORDS.some(word => title.includes(word))) {
+        negativeHeadlines.push(article.title);
+      }
+      if (POSITIVE_KEYWORDS.some(word => title.includes(word))) {
+        positiveHeadlines.push(article.title);
+      }
     }
 
-    if (negativeCount >= THRESHOLDS.NEGATIVE_NEWS_THRESHOLD) {
+    if (negativeHeadlines.length >= THRESHOLDS.NEGATIVE_NEWS_THRESHOLD) {
       alerts.push({
         type: "thesis_risk", severity: "high",
-        title: `${ticker}: ${negativeCount} negative headlines in 7 days`,
+        title: `${ticker} has cluster of negative headlines`,
         summary: `Multiple negative news articles detected:\n${negativeHeadlines.slice(0, 3).map(h => `• ${h}`).join("\n")}\n\nThis pattern may indicate thesis deterioration.`,
       });
-    } else if (negativeCount >= 1) {
+    } else if (negativeHeadlines.length > 0) {
       alerts.push({
         type: "thesis_risk", severity: "low",
-        title: `${ticker}: negative news detected`,
-        summary: `${negativeCount} concerning headline(s):\n${negativeHeadlines.slice(0, 2).map(h => `• ${h}`).join("\n")}`,
+        title: `${ticker} has ${negativeHeadlines.length} negative headline(s)`,
+        summary: negativeHeadlines.slice(0, 3).join("\n"),
       });
     }
 
-    if (positiveCount >= 2) {
+    if (positiveHeadlines.length >= 2) {
       alerts.push({
         type: "thesis_evolution", severity: "low",
-        title: `${ticker}: positive momentum in news`,
-        summary: `${positiveCount} bullish headline(s):\n${positiveHeadlines.slice(0, 3).map(h => `• ${h}`).join("\n")}`,
+        title: `${ticker} has constructive news flow`,
+        summary: positiveHeadlines.slice(0, 3).join("\n"),
       });
     }
   }
 
-  // ── Thesis Freshness ──
+  // 4. Thesis staleness alerts
   if (position.thesisGeneratedAt) {
     const daysSinceThesis = (Date.now() - position.thesisGeneratedAt) / (1000 * 60 * 60 * 24);
     if (daysSinceThesis >= THRESHOLDS.THESIS_VERY_STALE_DAYS) {
@@ -309,131 +347,211 @@ function analyzePosition(position, priceData, keyStats, news) {
 async function getRecentAlerts(ticker) {
   try {
     const alerts = await convexQuery("investments:listAlerts", {});
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
     return alerts.filter(a => a.ticker === ticker && a.createdAt > oneDayAgo);
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 function isDuplicate(alert, recentAlerts) {
   return recentAlerts.some(existing =>
     existing.alertType === alert.type &&
     existing.title === alert.title &&
-    !existing.acknowledged
+    existing.severity === alert.severity
   );
+}
+
+async function sendTelegramAlert(alerts) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || alerts.length === 0) return { status: "skipped" };
+
+  const lines = [
+    `🚨 Investment monitor: ${alerts.length} high-priority alert${alerts.length === 1 ? "" : "s"}`,
+    "",
+    ...alerts.slice(0, 8).map((alert) => `• ${alert.ticker}: ${alert.title}`),
+  ];
+
+  if (alerts.length > 8) {
+    lines.push(`• ...and ${alerts.length - 8} more`);
+  }
+
+  const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(15_000),
+    body: JSON.stringify({
+      chat_id: TELEGRAM_CHAT_ID,
+      text: lines.join("\n"),
+      ...(Number.isFinite(TELEGRAM_THREAD_ID) ? { message_thread_id: TELEGRAM_THREAD_ID } : {}),
+      disable_web_page_preview: true,
+    }),
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.ok) {
+    throw new Error(`telegram send failed: ${res.status} ${data?.description || "unknown error"}`);
+  }
+
+  return { status: "sent", messageId: data.result?.message_id };
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
+  console.log("\n📈 Investment Monitor V2");
+  console.log("─".repeat(50));
+
   const positions = await convexQuery("investments:listPositions", {});
   const active = positions.filter(p => p.status === "active");
 
   if (active.length === 0) {
     console.log("No active positions to monitor.");
-    process.exit(0);
+    return;
   }
 
   console.log(`📡 Monitoring ${active.length} positions (${active.filter(p => p.portfolioType === "high_risk").length} high risk, ${active.filter(p => p.portfolioType === "low_risk").length} low risk)\n`);
 
   const allNewAlerts = [];
   const summary = [];
+  const refreshedTheses = [];
+  const softFailures = [];
 
   for (const pos of active) {
-    // Fetch all data in parallel
-    const [priceData, keyStats, news] = await Promise.all([
-      fetchPrice(pos.ticker),
-      fetchKeyStats(pos.ticker),
-      fetchRecentNews(pos.ticker),
-    ]);
+    try {
+      const [priceData, keyStats, news] = await Promise.all([
+        fetchPrice(pos.ticker),
+        fetchKeyStats(pos.ticker),
+        fetchRecentNews(pos.ticker),
+      ]);
 
-    // Analyze
-    const alerts = analyzePosition(pos, priceData, keyStats, news);
-    
-    // Price summary line
-    const dayPct = priceData?.dayChangePct;
-    const fromEntry = pos.entryPrice && priceData
-      ? ((priceData.price - pos.entryPrice) / pos.entryPrice * 100).toFixed(1)
-      : null;
-    const emoji = dayPct > 2 ? "🟢" : dayPct < -2 ? "🔴" : "⚪";
-    console.log(`${emoji} ${pos.ticker}: $${priceData?.price?.toFixed(2) || "N/A"} (${dayPct ? (dayPct >= 0 ? "+" : "") + dayPct.toFixed(1) + "%" : "?"} today${fromEntry ? `, ${fromEntry}% from entry` : ""})`);
+      const alerts = analyzePosition(pos, priceData, keyStats, news);
 
-    // Deduplicate against recent alerts
-    const recentAlerts = await getRecentAlerts(pos.ticker);
-    const newAlerts = alerts.filter(a => !isDuplicate(a, recentAlerts));
+      const dayPct = priceData?.dayChangePct;
+      const fromEntry = pos.entryPrice && priceData
+        ? ((priceData.price - pos.entryPrice) / pos.entryPrice * 100).toFixed(1)
+        : null;
+      const emoji = dayPct > 2 ? "🟢" : dayPct < -2 ? "🔴" : "⚪";
+      console.log(`${emoji} ${pos.ticker}: $${priceData?.price?.toFixed(2) || "N/A"} (${dayPct ? (dayPct >= 0 ? "+" : "") + dayPct.toFixed(1) + "%" : "?"} today${fromEntry ? `, ${fromEntry}% from entry` : ""})`);
 
-    if (newAlerts.length > 0) {
-      console.log(`  ⚠️ ${newAlerts.length} new alert(s):`);
-      for (const alert of newAlerts) {
-        console.log(`    [${alert.severity.toUpperCase()}] ${alert.title}`);
-        
-        // Save to Convex
-        try {
-          await convexMutation("investments:createAlertPublic", {
-            positionId: pos._id,
-            ticker: pos.ticker,
-            alertType: alert.type,
-            severity: alert.severity,
-            title: alert.title,
-            summary: alert.summary,
-            sources: [],
-          });
-        } catch (e) {
-          console.log(`    ❌ Failed to save alert: ${e.message}`);
+      const recentAlerts = await getRecentAlerts(pos.ticker);
+      const newAlerts = alerts.filter(a => !isDuplicate(a, recentAlerts));
+
+      if (newAlerts.length > 0) {
+        console.log(`  ⚠️ ${newAlerts.length} new alert(s):`);
+        for (const alert of newAlerts) {
+          console.log(`    [${alert.severity.toUpperCase()}] ${alert.title}`);
+
+          try {
+            await convexMutation("investments:createAlertPublic", {
+              positionId: pos._id,
+              ticker: pos.ticker,
+              alertType: alert.type,
+              severity: alert.severity,
+              title: alert.title,
+              summary: alert.summary,
+              sources: [],
+            });
+          } catch (e) {
+            console.log(`    ❌ Failed to save alert: ${e.message}`);
+            softFailures.push({ stage: "alert_write", ticker: pos.ticker, message: e.message });
+          }
+
+          allNewAlerts.push({ ...alert, ticker: pos.ticker });
         }
-
-        allNewAlerts.push({ ...alert, ticker: pos.ticker });
       }
+
+      for (const alert of newAlerts) {
+        if (alert.severity === "high" || alert.severity === "critical") {
+          summary.push(`🚨 [${alert.severity.toUpperCase()}] ${alert.title}`);
+        }
+      }
+
+      const refreshReason = getRefreshReason(pos, alerts);
+      if (refreshReason) {
+        try {
+          const data = await requestThesisRefresh(pos, refreshReason);
+          refreshedTheses.push(`${pos.ticker} (${refreshReason})`);
+          console.log(`  🔄 Thesis refresh requested: ${pos.ticker} — ${refreshReason} (${data.status || "ok"})`);
+        } catch (e) {
+          console.log(`  ❌ Thesis refresh failed for ${pos.ticker}: ${e.message}`);
+          softFailures.push({ stage: "thesis_refresh", ticker: pos.ticker, message: e.message });
+        }
+      }
+    } catch (e) {
+      console.log(`❌ ${pos.ticker}: monitor failed — ${e.message}`);
+      softFailures.push({ stage: "position_monitor", ticker: pos.ticker, message: e.message });
     }
 
-    // Build summary for high/critical alerts
-    for (const alert of newAlerts) {
-      if (alert.severity === "high" || alert.severity === "critical") {
-        summary.push(`🚨 [${alert.severity.toUpperCase()}] ${alert.title}`);
-      }
-    }
-
-    // Small delay to avoid hammering Yahoo
     await new Promise(r => setTimeout(r, 300));
   }
 
-  // ── Summary Output ──
   console.log(`\n──────────────────────────────────`);
   console.log(`📊 Monitor complete: ${active.length} positions checked, ${allNewAlerts.length} new alerts`);
-  
+
+  if (refreshedTheses.length > 0) {
+    console.log(`🧠 Thesis refreshes requested: ${refreshedTheses.join(", ")}`);
+  }
+
   if (summary.length > 0) {
     console.log(`\n🚨 HIGH/CRITICAL ALERTS (need Telegram notification):`);
     for (const s of summary) console.log(s);
-    
-    // Output structured data for the calling agent to send via Telegram
+
+    const priorityAlerts = allNewAlerts.filter(a => a.severity === "high" || a.severity === "critical");
+
     console.log(`\n--- TELEGRAM_ALERT ---`);
     console.log(JSON.stringify({
       type: "investment_alerts",
       count: summary.length,
-      alerts: allNewAlerts.filter(a => a.severity === "high" || a.severity === "critical"),
+      alerts: priorityAlerts,
     }));
     console.log(`--- END_TELEGRAM_ALERT ---`);
+
+    try {
+      const telegramResult = await sendTelegramAlert(priorityAlerts);
+      if (telegramResult.status === "sent") {
+        console.log(`📬 Telegram alert delivered (message ${telegramResult.messageId ?? "ok"})`);
+      } else {
+        console.log(`📭 Telegram alert delivery skipped (missing config)`);
+      }
+    } catch (e) {
+      console.log(`❌ Telegram alert delivery failed: ${e.message}`);
+      softFailures.push({ stage: "telegram_alert", ticker: null, message: e.message });
+    }
   } else {
     console.log(`✅ No high-priority alerts. All positions within normal parameters.`);
   }
 
-  // Also update opportunity prices while we're here
   try {
     const opps = await convexQuery("investments:listAllOpportunitiesTracked", {});
+    let updatedOpportunityCount = 0;
     for (const opp of opps.filter(o => o.status === "active")) {
-      const price = await fetchPrice(opp.ticker);
-      if (price && opp.priceAtRecommendation) {
-        const returnPct = ((price.price - opp.priceAtRecommendation) / opp.priceAtRecommendation * 100);
-        await convexMutation("investments:patchOpportunity", {
-          id: opp._id,
-          currentPrice: price.price,
-          returnPct: Math.round(returnPct * 100) / 100,
-          priceUpdatedAt: Date.now(),
-        });
+      try {
+        const price = await fetchPrice(opp.ticker);
+        if (price && opp.priceAtRecommendation) {
+          const returnPct = ((price.price - opp.priceAtRecommendation) / opp.priceAtRecommendation * 100);
+          await convexMutation("investments:patchOpportunity", {
+            id: opp._id,
+            currentPrice: price.price,
+            returnPct: Math.round(returnPct * 100) / 100,
+            priceUpdatedAt: Date.now(),
+          });
+          updatedOpportunityCount += 1;
+        }
+      } catch (e) {
+        console.log(`  ⚠️ Opportunity update failed for ${opp.ticker}: ${e.message}`);
+        softFailures.push({ stage: "opportunity_update", ticker: opp.ticker, message: e.message });
       }
     }
-    console.log(`\n📈 Updated ${opps.filter(o => o.status === "active").length} opportunity prices`);
+    console.log(`\n📈 Updated ${updatedOpportunityCount} opportunity prices`);
   } catch (e) {
     console.log(`\n⚠️ Opportunity price update failed: ${e.message}`);
+    softFailures.push({ stage: "opportunity_update", ticker: null, message: e.message });
+  }
+
+  if (softFailures.length > 0) {
+    console.log(`\n⚠️ Monitor completed with ${softFailures.length} partial failure(s)`);
+    console.log(JSON.stringify({ type: "investment_monitor_partial_failures", failures: softFailures }, null, 2));
+    process.exitCode = 1;
   }
 }
 

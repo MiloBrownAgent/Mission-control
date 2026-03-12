@@ -4,6 +4,7 @@ const CONVEX_URL = "https://proper-rat-443.convex.cloud";
 const TZ = "America/Chicago";
 const MAX_PICKS = 3;
 const EXCLUDED = new Set(["PLTR", "META"]);
+const DRY_RUN = process.argv.includes("--dry-run");
 
 const FALLBACKS = [
   {
@@ -84,6 +85,7 @@ async function convex(kind, path, args = {}) {
   const res = await fetch(`${CONVEX_URL}/api/${kind}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20_000),
     body: JSON.stringify({ path, args }),
   });
   if (!res.ok) throw new Error(`${kind} ${path} failed: ${res.status}`);
@@ -105,7 +107,10 @@ function chicagoDateKey(ts = Date.now()) {
 
 async function fetchPrice(ticker) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=5d`;
-  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0" },
+    signal: AbortSignal.timeout(15_000),
+  });
   if (!res.ok) throw new Error(`Price fetch failed for ${ticker}: ${res.status}`);
   const data = await res.json();
   const result = data?.chart?.result?.[0];
@@ -114,79 +119,123 @@ async function fetchPrice(ticker) {
   return Number(meta.regularMarketPrice);
 }
 
-function uniqueLatestByTicker(opps) {
+function normalizeTicker(ticker) {
+  return String(ticker || "").trim().toUpperCase();
+}
+
+function uniqueLatestByTicker(opportunities) {
   const seen = new Set();
-  const list = [];
-  for (const opp of opps) {
-    if (seen.has(opp.ticker)) continue;
-    seen.add(opp.ticker);
-    list.push(opp);
+  const unique = [];
+  for (const opp of opportunities || []) {
+    const ticker = normalizeTicker(opp.ticker);
+    if (!ticker || seen.has(ticker)) continue;
+    seen.add(ticker);
+    unique.push({ ...opp, ticker });
   }
-  return list;
+  return unique;
+}
+
+function buildUpsertPayload(template, now, livePrice) {
+  const priceAtRecommendation = template.priceAtRecommendation ?? template.currentPrice ?? livePrice;
+  const returnPct = priceAtRecommendation
+    ? Math.round((((livePrice - priceAtRecommendation) / priceAtRecommendation) * 100) * 100) / 100
+    : undefined;
+
+  return {
+    ticker: normalizeTicker(template.ticker),
+    name: template.name,
+    opportunityType: template.opportunityType,
+    thesis: template.thesis,
+    sources: (template.sources || []).slice(0, 5),
+    expectedUpside: template.expectedUpside,
+    catalysts: template.catalysts,
+    risks: template.risks,
+    timeHorizon: template.timeHorizon,
+    moralScreenPass: template.moralScreenPass !== false,
+    priceAtRecommendation,
+    currentPrice: livePrice,
+    priceUpdatedAt: now,
+    returnPct,
+    status: template.status || "active",
+  };
+}
+
+async function upsertOpportunity(template, now) {
+  const livePrice = await fetchPrice(template.ticker);
+  const payload = buildUpsertPayload(template, now, livePrice);
+
+  if (DRY_RUN) {
+    return {
+      id: template._id || null,
+      ...payload,
+      dryRun: true,
+    };
+  }
+
+  const id = await mutation("investments:createOpportunityPublic", payload);
+  return { id, ...payload };
+}
+
+async function settleUpserts(templates, now, kind) {
+  const successes = [];
+  const failures = [];
+
+  for (const template of templates) {
+    try {
+      successes.push(await upsertOpportunity(template, now));
+    } catch (error) {
+      failures.push({
+        kind,
+        ticker: normalizeTicker(template.ticker),
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return { successes, failures };
 }
 
 async function main() {
   const now = Date.now();
   const todayKey = chicagoDateKey(now);
-  const existing = await query("investments:listAllOpportunitiesTracked", {});
+  const existing = uniqueLatestByTicker(await query("investments:listAllOpportunitiesTracked", {}));
 
-  const todays = existing.filter((opp) => chicagoDateKey(opp.createdAt) === todayKey);
-  const activeTemplates = uniqueLatestByTicker(
-    existing.filter((opp) => opp.status !== "expired" && !EXCLUDED.has(opp.ticker) && opp.moralScreenPass !== false)
-  );
+  const activeExisting = existing.filter((opp) => (
+    opp.status !== "expired" &&
+    !EXCLUDED.has(normalizeTicker(opp.ticker)) &&
+    opp.moralScreenPass !== false
+  ));
 
-  const templates = (activeTemplates.length >= MAX_PICKS ? activeTemplates.slice(0, MAX_PICKS) : [
-    ...activeTemplates,
-    ...FALLBACKS.filter((candidate) => !activeTemplates.some((opp) => opp.ticker === candidate.ticker)),
-  ].slice(0, MAX_PICKS));
+  const existingByTicker = new Map(activeExisting.map((opp) => [normalizeTicker(opp.ticker), opp]));
 
-  if (templates.length === 0) throw new Error("No opportunity templates available");
+  const { successes: refreshResults, failures: refreshFailures } = await settleUpserts(activeExisting, now, "refresh");
 
-  const results = [];
-  for (const template of templates) {
-    const livePrice = await fetchPrice(template.ticker);
-    const priceAtRecommendation = template.priceAtRecommendation ?? template.currentPrice ?? livePrice;
-    const returnPct = priceAtRecommendation
-      ? Math.round((((livePrice - priceAtRecommendation) / priceAtRecommendation) * 100) * 100) / 100
-      : undefined;
+  const newCandidates = FALLBACKS
+    .filter((candidate) => !EXCLUDED.has(normalizeTicker(candidate.ticker)))
+    .filter((candidate) => !existingByTicker.has(normalizeTicker(candidate.ticker)))
+    .slice(0, MAX_PICKS);
 
-    const id = await mutation("investments:createOpportunityPublic", {
-      ticker: template.ticker,
-      name: template.name,
-      opportunityType: template.opportunityType,
-      thesis: template.thesis,
-      sources: (template.sources || []).slice(0, 5),
-      expectedUpside: template.expectedUpside,
-      catalysts: template.catalysts,
-      risks: template.risks,
-      timeHorizon: template.timeHorizon,
-      moralScreenPass: template.moralScreenPass !== false,
-      createdAt: now,
-      priceAtRecommendation,
-      currentPrice: livePrice,
-      priceUpdatedAt: now,
-      returnPct,
-      status: template.status || "active",
-    });
+  const { successes: newResults, failures: newFailures } = await settleUpserts(newCandidates, now, "new");
+  const failures = [...refreshFailures, ...newFailures];
 
-    results.push({
-      id,
-      ticker: template.ticker,
-      name: template.name,
-      currentPrice: livePrice,
-      priceAtRecommendation,
-      returnPct,
-      reusedTemplate: Boolean(template._id),
-      alreadyExistedToday: todays.some((opp) => opp.ticker === template.ticker),
-    });
+  if (refreshResults.length === 0 && newResults.length === 0) {
+    throw new Error(`Opportunity scan produced no successful upserts${failures.length ? `; failures: ${failures.map((f) => `${f.ticker} (${f.message})`).join(", ")}` : ""}`);
   }
 
   console.log(JSON.stringify({
     ok: true,
+    dryRun: DRY_RUN,
     date: todayKey,
-    createdOrUpdated: results.length,
-    tickers: results.map((r) => r.ticker),
-    results,
+    refreshedExisting: refreshResults.length,
+    surfacedNew: newResults.length,
+    skippedBecauseAlreadyKnown: FALLBACKS
+      .map((candidate) => normalizeTicker(candidate.ticker))
+      .filter((ticker) => existingByTicker.has(ticker)),
+    refreshedTickers: refreshResults.map((r) => r.ticker),
+    newTickers: newResults.map((r) => r.ticker),
+    failures,
+    refreshResults,
+    newResults,
   }, null, 2));
 }
 

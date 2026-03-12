@@ -24,12 +24,19 @@ Every thesis is evaluated on four axes:
 ### Thesis Generation Pipeline
 For every ticker added to the system:
 
-1. Yahoo Finance API — pulls current price, 52-week range, market cap, volume, beta
-2. Yahoo Profile — sector, industry, gross margins, P/E, PEG ratio, short interest, insider ownership, institutional ownership, analyst price targets
-3. Yahoo News RSS — pulls last 15 articles within 7 days
-4. Brave Search — news and analyst coverage (when API key is configured)
-5. SEC EDGAR — recent filings: 8-K (material events), 10-K (annual), 10-Q (quarterly), S-3 (shelf offerings), SC 13G (institutional stakes) from the last 90 days
-6. Deep web search — 5 targeted queries for analyst opinions, competitive landscape, insider activity
+1. Yahoo Finance chart + quoteSummary/price — pulls current price, 52-week range, exchange, currency, and raw identity fields
+2. Verified-facts resolver — deterministically locks critical numeric facts before the model writes any narrative:
+   - direct market cap from `quoteSummary.price.marketCap`
+   - else regularMarketPrice × sharesOutstanding
+   - else regularMarketPrice × impliedSharesOutstanding
+   - else validation fails and the thesis cannot save as final
+3. Pre-save validation gate — ticker identity, company identity, current price, and market cap must all verify
+4. Yahoo Profile — sector, industry, gross margins, P/E, PEG ratio, short interest, insider ownership, institutional ownership, analyst price targets
+5. Yahoo News RSS — pulls last 15 articles within 7 days
+6. Brave Search — news and analyst coverage (when API key is configured)
+7. SEC EDGAR — recent filings: 8-K (material events), 10-K (annual), 10-Q (quarterly), S-3 (shelf offerings), SC 13G (institutional stakes) from the last 90 days
+8. Deep web search — 5 targeted queries for analyst opinions, competitive landscape, insider activity
+9. Post-generation sanity check — hard numbers in the thesis are compared back to verified facts. If market cap/current price drift materially, the thesis is stored only as PARTIAL instead of final
 
 ### Article Quality Scoring
 Every news article is scored on three dimensions (1-5 scale):
@@ -356,7 +363,12 @@ Every recurring job that powers the investment system. All times are Central Tim
 ### Investment Opportunity Scanner
 - Schedule: Every weekday at 8:00 AM CT
 - Cron ID: `ab0afdeb-3caf-45a1-ad86-bffe14e4e3c3`
-- What it does: Scans for new Pitzy Model opportunities — insider buying clusters, activist filings, merger arb, valuation dislocations. Updates the Opportunities section on the Home tab.
+- What it does: Scans for new Pitzy Model opportunities — insider buying clusters, activist filings, merger arb, valuation dislocations. Updates the Opportunities section on the Home tab and keeps today's opportunity slate populated.
+
+### End-of-Day Investment Roundup
+- Schedule: Intended for weekdays after the close (path added in repo; wire your OpenClaw cron to this script if not already scheduled)
+- Script: `scripts/investment-eod-roundup.js`
+- What it does: Writes a same-day JSON roundup to `logs/`, records an activity-log checkpoint, and flags any partial/missing theses that still need attention before the next session.
 
 ### Portfolio Check (30-min)
 - Schedule: Every 30 minutes, Mon-Fri 9:00 AM – 2:00 PM CT
@@ -374,7 +386,7 @@ These run on Convex's infrastructure (not the Mac):
 These fire on specific events, not on a schedule:
 
 - **New Position Notification**: When `addPosition` mutation fires in Convex → sends Telegram message to Milo & Team group (topic 6) → Milo generates thesis
-- **Thesis Generation**: Triggered by new position → Convex action calls Vercel API → research data collected → agent writes thesis
+- **Thesis Generation**: Triggered by new position or refresh request → Convex action calls Vercel API → verified facts are locked first → research data collected → model writes narrative → post-generation sanity gate decides FINAL vs PARTIAL save
 - **Alert Creation**: Triggered by monitor script → creates alert in Convex → high/critical alerts notify via Telegram
 
 ### Moral Screens (Applied Everywhere)

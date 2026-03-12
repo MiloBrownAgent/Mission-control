@@ -54,6 +54,7 @@ const sections = [
         subtitle: "Thesis Structure (10-Section Institutional Format)",
         items: [
           "1. Position Summary — ticker, entry, current price, P&L, shares, portfolio weight",
+          "Critical numeric facts (especially current price and market cap) come from a deterministic verified-facts layer before the model writes any narrative",
           "2. Bull Case — specific catalysts with hard data points, no generic statements",
           "3. Peer Comparable Analysis — valuation vs 5 direct competitors (P/E, EV/Rev, EV/EBITDA, margins, growth). Is the premium/discount justified?",
           "4. Simplified DCF — 3-scenario model (bear/base/bull): revenue projection → FCF → terminal value → per-share fair value. Real math, 10% base discount rate.",
@@ -436,7 +437,7 @@ Positive: upgrade, beat estimate, raised guidance, partnership, contract win, FD
     content: [
       {
         subtitle: "Investment Monitor",
-        text: "Every 15 minutes, Mon-Fri 9:00 AM – 4:00 PM ET. Checks all active positions for price moves, news, short interest, thesis staleness. Creates alerts. Sends Telegram for high/critical. Updates opportunity prices.",
+        text: "Every 15 minutes, Mon-Fri 9:00 AM – 4:00 PM ET. Checks all active positions for price moves, news, short interest, thesis staleness. Creates alerts. Sends Telegram for high/critical. Refreshes theses through the hardened verified-facts pipeline. Updates opportunity prices.",
       },
       {
         subtitle: "Sunday Investment Memo",
@@ -444,7 +445,7 @@ Positive: upgrade, beat estimate, raised guidance, partnership, contract win, FD
       },
       {
         subtitle: "Investment Opportunity Scanner",
-        text: "Every weekday at 8:00 AM CT. Scans for new Pitzy Model opportunities — insider buying clusters, activist filings, merger arb, valuation dislocations.",
+        text: "Every weekday at 8:00 AM CT. Scans for new Pitzy Model opportunities — insider buying clusters, activist filings, merger arb, valuation dislocations. Keeps today's opportunity slate populated for the Home tab.",
       },
       {
         subtitle: "Portfolio Check",

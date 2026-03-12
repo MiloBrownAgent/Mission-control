@@ -7,6 +7,7 @@ async function convexCall(kind, path, args = {}) {
   const res = await fetch(`${API_BASE}/api/${kind}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20_000),
     body: JSON.stringify({ path, args }),
   });
   if (!res.ok) {
@@ -25,7 +26,10 @@ const mutation = (path, args) => convexCall("mutation", path, args);
 
 async function yahooMeta(symbol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`;
-  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0" },
+    signal: AbortSignal.timeout(15_000),
+  });
   if (!res.ok) throw new Error(`Yahoo fetch failed for ${symbol}: ${res.status}`);
   const data = await res.json();
   const meta = data?.chart?.result?.[0]?.meta;
