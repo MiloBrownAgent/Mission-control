@@ -620,6 +620,53 @@ export const listOpportunitiesRaw = query({
   },
 });
 
+export const deleteOpportunityDuplicates = mutation({
+  args: {
+    canonicalId: v.id("investmentOpportunities"),
+    duplicateIds: v.array(v.id("investmentOpportunities")),
+  },
+  handler: async (ctx, args) => {
+    const canonical = await ctx.db.get(args.canonicalId);
+    if (!canonical) throw new Error("Canonical opportunity not found");
+
+    const duplicateRows = await Promise.all(args.duplicateIds.map((id) => ctx.db.get(id)));
+    const missing = duplicateRows.find((row) => !row);
+    if (missing === undefined && duplicateRows.length === 0) {
+      return { deleted: 0, ticker: canonical.ticker };
+    }
+    if (duplicateRows.some((row) => !row)) {
+      throw new Error("One or more duplicate opportunity rows were not found");
+    }
+
+    const canonicalTicker = normalizeOpportunityTicker(canonical.ticker);
+    for (const row of duplicateRows) {
+      if (!row) continue;
+      if (normalizeOpportunityTicker(row.ticker) !== canonicalTicker) {
+        throw new Error(`Ticker mismatch while deduping ${canonicalTicker}`);
+      }
+      if (String(row._id) === String(args.canonicalId)) {
+        throw new Error("Canonical row cannot also be deleted");
+      }
+    }
+
+    for (const row of duplicateRows) {
+      if (!row) continue;
+      await ctx.db.delete(row._id);
+    }
+
+    await ctx.db.patch(args.canonicalId, {
+      firstSeenAt: canonical.firstSeenAt ?? canonical.createdAt,
+      lastRefreshedAt: Date.now(),
+    });
+
+    return {
+      deleted: duplicateRows.length,
+      ticker: canonicalTicker,
+      canonicalId: args.canonicalId,
+    };
+  },
+});
+
 function normalizeNotificationText(value?: string) {
   return (value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 }
