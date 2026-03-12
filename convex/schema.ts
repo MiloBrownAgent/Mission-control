@@ -587,6 +587,13 @@ export default defineSchema({
     .index("by_ticker", ["ticker"])
     .index("by_created", ["createdAt"]),
 
+  investmentUpdateReads: defineTable({
+    updateKey: v.string(),
+    readAt: v.number(),
+  })
+    .index("by_update_key", ["updateKey"])
+    .index("by_read_at", ["readAt"]),
+
   investmentWeeklySummaries: defineTable({
     weekOf: v.string(),
     summary: v.string(),

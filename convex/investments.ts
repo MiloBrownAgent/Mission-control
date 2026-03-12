@@ -3,6 +3,12 @@ import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
+type PositionDoc = Doc<"investmentPositions">;
+type AlertDoc = Doc<"investmentAlerts">;
+type OpportunityDoc = Doc<"investmentOpportunities">;
+type EventScanDoc = Doc<"eventScans">;
+type UpdateReadDoc = Doc<"investmentUpdateReads">;
+
 // ── Positions ──────────────────────────────────────
 
 export const listPositions = query({
@@ -413,8 +419,6 @@ export const deleteAlert = mutation({
 
 // ── Opportunities ──────────────────────────────────────
 
-type OpportunityDoc = Doc<"investmentOpportunities">;
-
 function normalizeOpportunityTicker(ticker: string) {
   return ticker.trim().toUpperCase();
 }
@@ -613,6 +617,170 @@ export const listOpportunitiesRaw = query({
       .withIndex("by_created")
       .order("desc")
       .collect();
+  },
+});
+
+function normalizeNotificationText(value?: string) {
+  return (value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function clipNotificationText(value?: string, maxLength = 220) {
+  if (!value) return "";
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 1)}…`;
+}
+
+function dedupeEventScans(events: EventScanDoc[]) {
+  const merged = new Map<string, EventScanDoc>();
+
+  for (const event of events) {
+    const signature = [
+      normalizeOpportunityTicker(event.ticker),
+      normalizeNotificationText(event.eventType),
+      normalizeNotificationText(event.title),
+      normalizeNotificationText(event.summary),
+    ].join("|");
+
+    const existing = merged.get(signature);
+    if (!existing || event.detectedAt > existing.detectedAt) {
+      merged.set(signature, {
+        ...event,
+        ticker: normalizeOpportunityTicker(event.ticker),
+      });
+    }
+  }
+
+  return Array.from(merged.values()).sort((a, b) => b.detectedAt - a.detectedAt);
+}
+
+function buildNotificationUpdates(args: {
+  alerts: AlertDoc[];
+  opportunities: OpportunityDoc[];
+  positions: PositionDoc[];
+  eventScans: EventScanDoc[];
+  readMarks: UpdateReadDoc[];
+}) {
+  const readMarksByKey = new Map(args.readMarks.map((mark) => [mark.updateKey, mark.readAt]));
+
+  const items = [
+    ...args.alerts.map((alert) => ({
+      updateKey: `alert:${String(alert._id)}`,
+      kind: "alert" as const,
+      ticker: normalizeOpportunityTicker(alert.ticker),
+      title: alert.title,
+      summary: clipNotificationText(alert.summary),
+      severity: alert.severity,
+      createdAt: alert.createdAt,
+    })),
+    ...mergeOpportunitiesByTicker(args.opportunities).map((opportunity) => {
+      const createdAt = opportunity.firstSeenAt ?? opportunity.createdAt;
+      return {
+        updateKey: `opportunity:${opportunity.ticker}:${createdAt}`,
+        kind: "opportunity" as const,
+        ticker: opportunity.ticker,
+        title: `${opportunity.ticker} — ${opportunity.name}`,
+        summary: clipNotificationText(
+          opportunity.expectedUpside
+            ? `${opportunity.expectedUpside} upside · ${opportunity.opportunityType.replace(/_/g, " ")}`
+            : opportunity.opportunityType.replace(/_/g, " ")
+        ),
+        createdAt,
+      };
+    }),
+    ...args.positions
+      .filter((position) => Boolean(position.thesisGeneratedAt))
+      .map((position) => ({
+        updateKey: `thesis:${String(position._id)}:${position.thesisGeneratedAt}`,
+        kind: "thesis_refresh" as const,
+        ticker: normalizeOpportunityTicker(position.ticker),
+        title: `${position.ticker} thesis refreshed`,
+        summary: clipNotificationText(position.thesis?.split("\n").filter(Boolean)[0] ?? `${position.name} thesis updated.`),
+        createdAt: position.thesisGeneratedAt ?? 0,
+      })),
+    ...dedupeEventScans(args.eventScans).map((eventScan) => ({
+      updateKey: `event:${eventScan.ticker}:${normalizeNotificationText(eventScan.eventType)}:${normalizeNotificationText(eventScan.title)}`,
+      kind: "event_scan" as const,
+      ticker: eventScan.ticker,
+      title: eventScan.title,
+      summary: clipNotificationText(eventScan.summary),
+      createdAt: eventScan.detectedAt,
+    })),
+  ].sort((a, b) => b.createdAt - a.createdAt);
+
+  return items.map((item) => ({
+    ...item,
+    unread: (readMarksByKey.get(item.updateKey) ?? 0) < item.createdAt,
+  }));
+}
+
+export const listNotificationUpdates = query({
+  args: {
+    limit: v.optional(v.number()),
+    unreadOnly: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const [alerts, opportunities, positions, eventScans, readMarks] = await Promise.all([
+      ctx.db.query("investmentAlerts").order("desc").collect(),
+      ctx.db.query("investmentOpportunities").withIndex("by_created").order("desc").collect(),
+      ctx.db.query("investmentPositions").collect(),
+      ctx.db.query("eventScans").withIndex("by_detected").order("desc").collect(),
+      ctx.db.query("investmentUpdateReads").collect(),
+    ]);
+
+    let items = buildNotificationUpdates({ alerts, opportunities, positions, eventScans, readMarks });
+    if (args.unreadOnly) {
+      items = items.filter((item) => item.unread);
+    }
+
+    return {
+      items: items.slice(0, args.limit ?? 50),
+      unreadCount: items.filter((item) => item.unread).length,
+    };
+  },
+});
+
+export const markNotificationRead = mutation({
+  args: { updateKey: v.string() },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("investmentUpdateReads")
+      .withIndex("by_update_key", (q) => q.eq("updateKey", args.updateKey))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { readAt: now });
+      return existing._id;
+    }
+
+    return ctx.db.insert("investmentUpdateReads", {
+      updateKey: args.updateKey,
+      readAt: now,
+    });
+  },
+});
+
+export const markAllNotificationUpdatesRead = mutation({
+  args: { updateKeys: v.array(v.string()) },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const uniqueKeys = Array.from(new Set(args.updateKeys.filter(Boolean)));
+
+    for (const updateKey of uniqueKeys) {
+      const existing = await ctx.db
+        .query("investmentUpdateReads")
+        .withIndex("by_update_key", (q) => q.eq("updateKey", updateKey))
+        .first();
+
+      if (existing) {
+        await ctx.db.patch(existing._id, { readAt: now });
+      } else {
+        await ctx.db.insert("investmentUpdateReads", { updateKey, readAt: now });
+      }
+    }
+
+    return { marked: uniqueKeys.length };
   },
 });
 

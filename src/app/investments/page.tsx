@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import type { Doc } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
-import { useState, useMemo, createContext, useContext } from "react";
+import { useState, useMemo, createContext, useContext, useEffect, useRef } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -110,11 +110,41 @@ export default function InvestmentsPage() {
     if (typeof window !== "undefined") return localStorage.getItem("investment-privacy") === "true";
     return false;
   });
+  const notificationFeed = useQuery(api.investments.listNotificationUpdates, { limit: 40 });
+  const markNotificationRead = useMutation(api.investments.markNotificationRead);
+  const markAllNotificationUpdatesRead = useMutation(api.investments.markAllNotificationUpdatesRead);
+  const [showUpdatesPanel, setShowUpdatesPanel] = useState(false);
+  const updatesPanelRef = useRef<HTMLDivElement | null>(null);
+
   const togglePrivacy = () => {
     const next = !privacyMode;
     setPrivacyMode(next);
     if (typeof window !== "undefined") localStorage.setItem("investment-privacy", String(next));
   };
+
+  useEffect(() => {
+    if (!showUpdatesPanel) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!updatesPanelRef.current?.contains(event.target as Node)) {
+        setShowUpdatesPanel(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowUpdatesPanel(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [showUpdatesPanel]);
+
+  const unreadNotificationCount = notificationFeed?.unreadCount ?? 0;
+  const notificationItems = notificationFeed?.items ?? [];
 
   return (
     <PrivacyContext.Provider value={privacyMode}>
@@ -130,6 +160,40 @@ export default function InvestmentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="relative" ref={updatesPanelRef}>
+            <button
+              onClick={() => setShowUpdatesPanel((open) => !open)}
+              className={cn(
+                "relative flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                showUpdatesPanel
+                  ? "border-[#B8956A]/40 bg-[#B8956A]/10 text-[#E8E4DF]"
+                  : "border-[#1A1816] text-[#6B6560] hover:border-[#6B6560] hover:text-[#E8E4DF] hover:bg-[#1A1816]"
+              )}
+              title="Open investment updates"
+              aria-label={`Investment updates${unreadNotificationCount > 0 ? `, ${unreadNotificationCount} unread` : ""}`}
+            >
+              <span className="relative inline-flex">
+                <Bell className="h-4 w-4" />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[#0D0C0A]" />
+                )}
+              </span>
+              <span className="hidden sm:inline">Updates</span>
+              {unreadNotificationCount > 0 && (
+                <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold text-red-400">
+                  {unreadNotificationCount}
+                </span>
+              )}
+            </button>
+            {showUpdatesPanel && (
+              <UpdatesPanel
+                items={notificationItems}
+                unreadCount={unreadNotificationCount}
+                onMarkRead={(updateKey) => markNotificationRead({ updateKey })}
+                onMarkAllRead={() => markAllNotificationUpdatesRead({ updateKeys: notificationItems.filter((item) => item.unread).map((item) => item.updateKey) })}
+              />
+            )}
+          </div>
           <button
             onClick={togglePrivacy}
             className={cn(
@@ -245,6 +309,139 @@ function HomeTab() {
         </div>
         <OpportunitiesView />
       </section>
+
+      {/* Alerts */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle className="h-4 w-4 text-[#B8956A]" />
+          <h2 className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Alerts</h2>
+        </div>
+        <HomeAlertsView />
+      </section>
+    </div>
+  );
+}
+
+function UpdatesPanel({
+  items,
+  unreadCount,
+  onMarkRead,
+  onMarkAllRead,
+}: {
+  items: Array<{
+    updateKey: string;
+    kind: "alert" | "opportunity" | "thesis_refresh" | "event_scan";
+    ticker?: string;
+    title: string;
+    summary: string;
+    severity?: "low" | "medium" | "high" | "critical";
+    createdAt: number;
+    unread: boolean;
+  }>;
+  unreadCount: number;
+  onMarkRead: (updateKey: string) => Promise<unknown>;
+  onMarkAllRead: () => Promise<unknown>;
+}) {
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [markingAll, setMarkingAll] = useState(false);
+
+  const kindLabel = (kind: "alert" | "opportunity" | "thesis_refresh" | "event_scan") => {
+    switch (kind) {
+      case "alert":
+        return "Alert";
+      case "opportunity":
+        return "Opportunity";
+      case "thesis_refresh":
+        return "Thesis";
+      case "event_scan":
+        return "Scanner";
+    }
+  };
+
+  return (
+    <div className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-[min(30rem,calc(100vw-2rem))] rounded-2xl border border-[#1A1816] bg-[#0D0C0A] shadow-2xl shadow-black/40">
+      <div className="flex items-center justify-between border-b border-[#1A1816] px-5 py-4">
+        <div>
+          <p className="text-sm font-semibold text-[#E8E4DF]">Updates feed</p>
+          <p className="mt-1 text-xs text-[#6B6560]">
+            {unreadCount > 0 ? `${unreadCount} unread across alerts, opportunities, theses, and scanner events.` : "All caught up."}
+          </p>
+        </div>
+        <button
+          onClick={async () => {
+            if (markingAll || unreadCount === 0) return;
+            setMarkingAll(true);
+            try {
+              await onMarkAllRead();
+            } finally {
+              setMarkingAll(false);
+            }
+          }}
+          disabled={markingAll || unreadCount === 0}
+          className="rounded-lg border border-[#1A1816] px-3 py-1.5 text-xs text-[#E8E4DF] hover:bg-[#1A1816] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {markingAll ? "Marking…" : "Mark all read"}
+        </button>
+      </div>
+      <div className="max-h-[28rem] divide-y divide-[#1A1816] overflow-y-auto">
+        {items.length === 0 ? (
+          <div className="px-5 py-10 text-center text-sm text-[#6B6560]">
+            No updates yet.
+          </div>
+        ) : (
+          items.map((item) => (
+            <div key={item.updateKey} className={cn("px-5 py-4", item.unread && "bg-[#1A1816]/30")}>
+              <div className="flex items-start gap-3">
+                <div
+                  className={cn(
+                    "mt-0.5 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]",
+                    item.kind === "alert"
+                      ? item.severity === "critical"
+                        ? "bg-red-500/10 text-red-400"
+                        : item.severity === "high"
+                          ? "bg-orange-500/10 text-orange-400"
+                          : item.severity === "medium"
+                            ? "bg-yellow-500/10 text-yellow-400"
+                            : "bg-blue-500/10 text-blue-400"
+                      : item.kind === "opportunity"
+                        ? "bg-green-500/10 text-green-400"
+                        : item.kind === "thesis_refresh"
+                          ? "bg-purple-500/10 text-purple-300"
+                          : "bg-cyan-500/10 text-cyan-300"
+                  )}
+                >
+                  {kindLabel(item.kind)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {item.ticker && <span className="text-xs font-semibold text-[#B8956A]">{item.ticker}</span>}
+                    <span className="text-sm font-medium text-[#E8E4DF]">{item.title}</span>
+                    <span className="text-[10px] text-[#6B6560]">
+                      {new Date(item.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-[#6B6560]">{item.summary}</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!item.unread || busyKey === item.updateKey) return;
+                    setBusyKey(item.updateKey);
+                    try {
+                      await onMarkRead(item.updateKey);
+                    } finally {
+                      setBusyKey(null);
+                    }
+                  }}
+                  disabled={!item.unread || busyKey === item.updateKey}
+                  className="rounded-md border border-[#1A1816] px-2.5 py-1 text-[11px] text-[#E8E4DF] hover:bg-[#1A1816] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {item.unread ? (busyKey === item.updateKey ? "…" : "Mark read") : "Read"}
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -572,8 +769,6 @@ function MorningBriefing() {
   const briefing = useQuery(api.signals.getBriefingByDate, { date: today });
   const latestBriefing = useQuery(api.signals.getLatestBriefing);
   const macro = useQuery(api.signals.getLatestMacro);
-  const opportunities = useQuery(api.investments.listOpportunities, { limit: 3 });
-  const alerts = useQuery(api.investments.listAlerts, { limit: 5 });
   const data = briefing ?? latestBriefing;
 
   const sectionTypes = ["Overnight Developments", "SEC Filings", "Insider Transactions", "Unusual Activity", "Macro Events"];
@@ -586,69 +781,30 @@ function MorningBriefing() {
   };
 
   if (!data) {
-    const fallbackItems = [
-      ...(alerts ?? []).slice(0, 2).map((alert) => ({
-        label: alert.alertType === "thesis_risk" ? "Thesis risk" : "Alert",
-        title: alert.title,
-        summary: alert.summary,
-        importance: alert.severity === "critical" || alert.severity === "high" ? "high" : alert.severity === "medium" ? "medium" : "low",
-      })),
-      ...(opportunities ?? []).slice(0, 2).map((opp) => ({
-        label: "Opportunity",
-        title: `${opp.ticker} — ${opp.name}`,
-        summary: opp.expectedUpside ? `${opp.expectedUpside} upside · ${opp.opportunityType.replace(/_/g, " ")}` : opp.opportunityType.replace(/_/g, " "),
-        importance: "medium" as const,
-      })),
-    ].slice(0, 4);
-
     const macroNotes = [
       macro?.vix != null ? `VIX ${macro.vix}${macro.vixTrend ? ` · ${macro.vixTrend}` : ""}` : null,
       macro?.dxy != null ? `DXY ${macro.dxy}${macro.dxyTrend ? ` · ${macro.dxyTrend}` : ""}` : null,
       macro?.yieldCurveStatus ? `Yield curve ${macro.yieldCurveStatus}${macro.yield2y10ySpread != null ? ` · ${macro.yield2y10ySpread}bps` : ""}` : null,
     ].filter(Boolean) as string[];
 
-    if (fallbackItems.length === 0 && macroNotes.length === 0) {
-      return (
-        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-16 text-center">
-          <Clock className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
-          <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Morning Briefing</p>
-          <p className="text-sm text-[#6B6560] mt-2">Generates at 6:00 AM CT</p>
-          <p className="text-xs text-[#6B6560] mt-1">If the saved briefing is late, this card now falls back to live opportunities and alerts automatically.</p>
-        </div>
-      );
-    }
-
     return (
       <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
         <div className="border-b border-[#1A1816] px-5 py-3 flex items-center justify-between gap-3">
           <div>
-            <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Live fallback</p>
-            <p className="text-xs text-[#6B6560] mt-1">No saved morning briefing yet — showing current signals instead.</p>
+            <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Morning Briefing pending</p>
+            <p className="text-xs text-[#6B6560] mt-1">Saved briefing is not ready yet. Opportunities and alerts stay in their own sections below.</p>
           </div>
-          <span className="rounded-full px-3 py-1 text-xs font-medium text-yellow-400 bg-yellow-500/10">Fallback</span>
+          <span className="rounded-full px-3 py-1 text-xs font-medium text-yellow-400 bg-yellow-500/10">Waiting</span>
         </div>
 
-        <div className="divide-y divide-[#1A1816]">
-          {fallbackItems.map((item, i) => (
-            <div key={i} className="px-5 py-3 flex items-start gap-3">
-              <ImportanceBadge importance={item.importance} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-[#B8956A]">{item.label}</span>
-                  <span className="text-sm font-medium text-[#E8E4DF]">{item.title}</span>
-                </div>
-                <p className="mt-0.5 text-sm text-[#6B6560]">{item.summary}</p>
-              </div>
-            </div>
-          ))}
+        <div className="px-5 py-8 text-center">
+          <Clock className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
+          <p className="text-sm text-[#6B6560]">Generates at 6:00 AM CT</p>
           {macroNotes.length > 0 && (
-            <div className="px-5 py-3">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[#B8956A] mb-2">Macro pulse</p>
-              <div className="flex flex-wrap gap-2">
-                {macroNotes.map((note) => (
-                  <span key={note} className="rounded-full bg-[#1A1816] px-3 py-1 text-xs text-[#E8E4DF]">{note}</span>
-                ))}
-              </div>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {macroNotes.map((note) => (
+                <span key={note} className="rounded-full bg-[#1A1816] px-3 py-1 text-xs text-[#E8E4DF]">{note}</span>
+              ))}
             </div>
           )}
         </div>
@@ -713,8 +869,6 @@ function ImportanceBadge({ importance }: { importance: string }) {
 
 function EventScanner() {
   const events = useQuery(api.signals.listEventScans, { status: "active", limit: 50 });
-  const fallbackOpportunities = useQuery(api.investments.listOpportunities, { limit: 3 });
-  const fallbackAlerts = useQuery(api.investments.listAlerts, { limit: 3 });
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sectorFilter, setSectorFilter] = useState<string>("all");
 
@@ -734,62 +888,12 @@ function EventScanner() {
   }, [events]);
 
   if (!events || events.length === 0) {
-    const fallbackSignals = [
-      ...(fallbackAlerts ?? []).slice(0, 3).map((alert) => ({
-        key: alert._id,
-        kind: "Alert",
-        title: alert.title,
-        summary: alert.summary,
-        meta: alert.ticker,
-      })),
-      ...(fallbackOpportunities ?? []).slice(0, 3).map((opp) => ({
-        key: opp._id,
-        kind: "Opportunity",
-        title: `${opp.ticker} — ${opp.name}`,
-        summary: opp.expectedUpside ? `${opp.expectedUpside} upside · ${opp.opportunityType.replace(/_/g, " ")}` : opp.opportunityType.replace(/_/g, " "),
-        meta: opp.timeHorizon ?? undefined,
-      })),
-    ].slice(0, 6);
-
-    if (fallbackSignals.length === 0) {
-      return (
-        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-16 text-center">
-          <Search className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
-          <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Event Scanner</p>
-          <p className="text-sm text-[#6B6560] mt-2">Runs continuously during market hours</p>
-          <p className="text-xs text-[#6B6560] mt-1">Tracks insider clusters, activist filings, merger arb, FDA calendar, earnings whispers</p>
-        </div>
-      );
-    }
-
     return (
-      <div className="space-y-4">
-        <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-3 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-[#E8E4DF]">Live fallback</p>
-            <p className="text-xs text-[#6B6560] mt-1">Dedicated event feed is empty — showing current alerts and opportunities.</p>
-          </div>
-          <span className="rounded-full px-3 py-1 text-xs font-medium text-yellow-400 bg-yellow-500/10">Fallback</span>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {fallbackSignals.map((signal) => (
-            <div key={signal.key} className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="rounded-full bg-[#B8956A]/10 px-2.5 py-0.5 text-[10px] font-medium text-[#B8956A]">
-                  {signal.kind}
-                </span>
-                {signal.meta && (
-                  <span className="rounded-full bg-[#1A1816] px-2 py-0.5 text-[10px] text-[#6B6560]">
-                    {signal.meta}
-                  </span>
-                )}
-              </div>
-              <div className="text-sm font-medium text-[#E8E4DF]">{signal.title}</div>
-              <p className="mt-2 text-sm text-[#6B6560]">{signal.summary}</p>
-            </div>
-          ))}
-        </div>
+      <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-16 text-center">
+        <Search className="mx-auto h-10 w-10 text-[#6B6560] mb-4" />
+        <p className="text-lg font-semibold text-[#E8E4DF] font-[family-name:var(--font-syne)]">Event Scanner</p>
+        <p className="text-sm text-[#6B6560] mt-2">Runs continuously during market hours</p>
+        <p className="text-xs text-[#6B6560] mt-1">No active event-scan updates yet. Opportunities and alerts remain separated below.</p>
       </div>
     );
   }
@@ -1883,6 +1987,53 @@ function PositionDetail({
             ))
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function HomeAlertsView() {
+  const alerts = useQuery(api.investments.listAlerts, { limit: 10 });
+
+  return (
+    <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] overflow-hidden">
+      <div className="divide-y divide-[#1A1816] max-h-[32rem] overflow-y-auto">
+        {(!alerts || alerts.length === 0) ? (
+          <div className="px-5 py-12 text-center text-sm text-[#6B6560]">
+            No alerts yet. Monitoring will populate this section when risks or thesis changes hit.
+          </div>
+        ) : (
+          alerts.map((alert) => (
+            <div key={alert._id} className={cn("px-5 py-4", !alert.acknowledged && "bg-[#1A1816]/20")}>
+              <div className="flex items-start gap-3">
+                <div
+                  className={cn(
+                    "mt-0.5 rounded-full p-1",
+                    alert.severity === "critical"
+                      ? "bg-red-500/10 text-red-400"
+                      : alert.severity === "high"
+                        ? "bg-orange-500/10 text-orange-400"
+                        : alert.severity === "medium"
+                          ? "bg-yellow-500/10 text-yellow-400"
+                          : "bg-blue-500/10 text-blue-400"
+                  )}
+                >
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold text-[#B8956A]">{alert.ticker}</span>
+                    <span className="text-sm font-medium text-[#E8E4DF]">{alert.title}</span>
+                    <span className="text-[10px] text-[#6B6560]">
+                      {new Date(alert.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-[#6B6560]">{alert.summary}</p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
