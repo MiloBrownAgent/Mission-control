@@ -17,6 +17,7 @@ import type * as clientLinks from "../clientLinks.js";
 import type * as clients from "../clients.js";
 import type * as contacts from "../contacts.js";
 import type * as content from "../content.js";
+import type * as cre from "../cre.js";
 import type * as crmContacts from "../crmContacts.js";
 import type * as crons from "../crons.js";
 import type * as daycareReports from "../daycareReports.js";
@@ -61,6 +62,7 @@ declare const fullApi: ApiFromModules<{
   clients: typeof clients;
   contacts: typeof contacts;
   content: typeof content;
+  cre: typeof cre;
   crmContacts: typeof crmContacts;
   crons: typeof crons;
   daycareReports: typeof daycareReports;

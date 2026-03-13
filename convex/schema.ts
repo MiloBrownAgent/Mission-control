@@ -710,4 +710,100 @@ export default defineSchema({
     exitReason: v.optional(v.string()),
     closedAt: v.number(),
   }).index("by_closed", ["closedAt"]).index("by_ticker", ["ticker"]),
+
+  // ── CRE Scanner ──────────────────────────────────────────
+
+  creProperties: defineTable({
+    address: v.string(),
+    city: v.string(),
+    state: v.string(),
+    propertyType: v.union(
+      v.literal("office"),
+      v.literal("retail"),
+      v.literal("industrial"),
+      v.literal("multifamily"),
+      v.literal("mixed_use"),
+      v.literal("land"),
+      v.literal("special_purpose")
+    ),
+    askPrice: v.number(),
+    pricePerSF: v.optional(v.number()),
+    squareFeet: v.optional(v.number()),
+    lotSize: v.optional(v.string()),
+    units: v.optional(v.number()),
+    capRate: v.optional(v.number()),
+    yearBuilt: v.optional(v.number()),
+    zoning: v.optional(v.string()),
+    assessedValue: v.optional(v.number()),
+    assessedValueSource: v.optional(v.string()),
+    listingDate: v.optional(v.string()),
+    daysOnMarket: v.optional(v.number()),
+    source: v.string(),
+    sourceUrl: v.optional(v.string()),
+    allSources: v.optional(v.array(v.object({
+      source: v.string(),
+      url: v.string(),
+      firstSeen: v.number(),
+    }))),
+    score: v.number(),
+    scoreJustification: v.optional(v.string()),
+    investmentMemo: v.optional(v.string()),
+    comps: v.optional(v.array(v.object({
+      address: v.string(),
+      price: v.number(),
+      pricePerSF: v.optional(v.number()),
+      squareFeet: v.optional(v.number()),
+      type: v.string(),
+      date: v.optional(v.string()),
+      distance: v.optional(v.string()),
+      source: v.optional(v.string()),
+      sourceUrl: v.optional(v.string()),
+    }))),
+    status: v.union(
+      v.literal("active"),
+      v.literal("updated"),
+      v.literal("price_drop"),
+      v.literal("off_market"),
+      v.literal("watchlisted")
+    ),
+    previousPrice: v.optional(v.number()),
+    priceHistory: v.optional(v.array(v.object({
+      price: v.number(),
+      date: v.string(),
+      source: v.optional(v.string()),
+    }))),
+    flags: v.optional(v.array(v.string())),
+    riskFlags: v.optional(v.array(v.string())),
+    imageUrl: v.optional(v.string()),
+    description: v.optional(v.string()),
+    listingAgent: v.optional(v.string()),
+    listingBrokerage: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    removedAt: v.optional(v.number()),
+  })
+    .index("by_city", ["city"])
+    .index("by_status", ["status"])
+    .index("by_score", ["score"])
+    .index("by_type", ["propertyType"])
+    .index("by_source", ["source"])
+    .index("by_created", ["createdAt"])
+    .index("by_address", ["address"])
+    .searchIndex("search_properties", {
+      searchField: "address",
+      filterFields: ["city", "propertyType", "status"],
+    }),
+
+  creWatchlist: defineTable({
+    propertyId: v.id("creProperties"),
+    notes: v.optional(v.string()),
+    addedAt: v.number(),
+  }).index("by_property", ["propertyId"]),
+
+  creUpdateReads: defineTable({
+    updateKey: v.string(),
+    readAt: v.number(),
+  })
+    .index("by_update_key", ["updateKey"])
+    .index("by_read_at", ["readAt"]),
 });

@@ -19,6 +19,7 @@ import {
   TrendingUp,
   LayoutGrid,
   Wallet,
+  Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -26,6 +27,7 @@ import { useState } from "react";
 const workNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Investments", href: "/investments", icon: TrendingUp },
+  { name: "CRE Scanner", href: "/cre", icon: Landmark },
   { name: "Tasks", href: "/tasks", icon: ListTodo },
   { name: "Calendar", href: "/calendar", icon: CalendarDays },
   { name: "CRM", href: "/crm", icon: Target },
