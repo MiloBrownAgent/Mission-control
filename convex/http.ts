@@ -33,7 +33,8 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     const auth = request.headers.get("Authorization");
     const token = auth?.replace("Bearer ", "");
-    if (!token) {
+    const expectedToken = process.env.CRE_INGEST_TOKEN;
+    if (!token || (expectedToken && token !== expectedToken)) {
       return new Response("Unauthorized", { status: 401 });
     }
 

@@ -16,7 +16,14 @@ echo "=== CRE Scanner Run: $(date) ==="
 # Source environment
 source ~/.zshrc 2>/dev/null || true
 
-# Set required env vars (override in shell env to override defaults)
+# Load CRE scanner env vars
+if [ -f "$SCRIPT_DIR/.env" ]; then
+  set -a
+  source "$SCRIPT_DIR/.env"
+  set +a
+fi
+
+# Fallback defaults
 export CONVEX_URL="${CONVEX_URL:-https://proper-rat-443.convex.cloud}"
 export CONVEX_CRE_TOKEN="${CONVEX_CRE_TOKEN:-cre-ingest-token}"
 
