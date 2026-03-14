@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { Geist, Geist_Mono, Cormorant_Garamond, Syne } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
+import { ConvexErrorBoundary } from "@/components/convex-error-boundary";
 import { AppShell } from "@/components/app-shell";
 import { CommandPalette } from "@/components/command-palette";
 
@@ -74,10 +75,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} ${syne.variable} font-sans antialiased`}
       >
         <ConvexClientProvider>
-          <CommandPalette />
-          <AppShell>
-            {children}
-          </AppShell>
+          <ConvexErrorBoundary>
+            <CommandPalette />
+            <AppShell>
+              {children}
+            </AppShell>
+          </ConvexErrorBoundary>
         </ConvexClientProvider>
       </body>
     </html>

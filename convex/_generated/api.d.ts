@@ -14,6 +14,7 @@ import type * as bloodwork from "../bloodwork.js";
 import type * as btcSignals from "../btcSignals.js";
 import type * as classBookings from "../classBookings.js";
 import type * as cleaningTasks from "../cleaningTasks.js";
+import type * as cleanup from "../cleanup.js";
 import type * as clientLinks from "../clientLinks.js";
 import type * as clients from "../clients.js";
 import type * as compounds from "../compounds.js";
@@ -67,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   btcSignals: typeof btcSignals;
   classBookings: typeof classBookings;
   cleaningTasks: typeof cleaningTasks;
+  cleanup: typeof cleanup;
   clientLinks: typeof clientLinks;
   clients: typeof clients;
   compounds: typeof compounds;
