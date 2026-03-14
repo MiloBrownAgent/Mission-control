@@ -24,7 +24,7 @@ if [ -f "$SCRIPT_DIR/.env" ]; then
 fi
 
 # Fallback defaults
-export CONVEX_URL="${CONVEX_URL:-https://proper-rat-443.convex.cloud}"
+export CONVEX_URL="${CONVEX_URL:-https://proper-rat-443.convex.site}"
 export CONVEX_CRE_TOKEN="${CONVEX_CRE_TOKEN:-cre-ingest-token}"
 
 # Pull Anthropic API key from OpenClaw auth profiles if not set
