@@ -7,6 +7,12 @@ logger = logging.getLogger(__name__)
 
 CDP_URL = "http://127.0.0.1:18800"
 
+# LoopNet uses "saint" not "st" in URL slugs
+CITY_SLUG_OVERRIDES = {
+    "st. paul": "saint-paul",
+    "st paul": "saint-paul",
+}
+
 
 def scrape(cities: list[str], max_price: int) -> list[dict]:
     """Scrape LoopNet via OpenClaw's managed browser (CDP)."""
@@ -24,7 +30,9 @@ def scrape(cities: list[str], max_price: int) -> list[dict]:
 
         for city in cities:
             try:
-                city_slug = city.lower().replace(" ", "-").replace(".", "")
+                city_key = city.lower().replace(".", "").strip()
+                city_slug = CITY_SLUG_OVERRIDES.get(city_key,
+                    city.lower().replace(" ", "-").replace(".", ""))
                 url = f"https://www.loopnet.com/search/commercial-real-estate/{city_slug}-mn/for-sale/"
 
                 logger.info(f"Scraping LoopNet for {city} via CDP...")

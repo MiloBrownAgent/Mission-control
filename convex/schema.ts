@@ -806,4 +806,92 @@ export default defineSchema({
   })
     .index("by_update_key", ["updateKey"])
     .index("by_read_at", ["readAt"]),
+
+  // ── Health Dashboard (dave-health) ──────────────────────────────────────────
+
+  compounds: defineTable({
+    name: v.string(),
+    dose: v.string(),
+    frequency: v.string(),
+    route: v.string(),
+    startDate: v.string(),
+    endDate: v.optional(v.string()),
+    status: v.union(v.literal("active"), v.literal("planned"), v.literal("paused"), v.literal("discontinued")),
+    notes: v.optional(v.string()),
+    sortOrder: v.optional(v.number()),
+  }),
+
+  workouts: defineTable({
+    date: v.string(),
+    type: v.union(v.literal("lift"), v.literal("cardio"), v.literal("other")),
+    duration: v.number(),
+    exercises: v.optional(v.array(v.string())),
+    notes: v.optional(v.string()),
+  }),
+
+  vitals: defineTable({
+    date: v.string(),
+    weight: v.optional(v.number()),
+    bodyComp: v.optional(v.number()),
+    energy: v.optional(v.number()),
+    sleepQuality: v.optional(v.number()),
+    mood: v.optional(v.number()),
+    appetite: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  }),
+
+  bloodwork: defineTable({
+    date: v.string(),
+    panelName: v.string(),
+    markers: v.array(
+      v.object({
+        name: v.string(),
+        value: v.number(),
+        unit: v.string(),
+        refRangeLow: v.optional(v.number()),
+        refRangeHigh: v.optional(v.number()),
+        flagged: v.boolean(),
+      })
+    ),
+    notes: v.optional(v.string()),
+  }),
+
+  protocolNotes: defineTable({
+    date: v.string(),
+    phase: v.string(),
+    note: v.string(),
+  }),
+
+  investmentAccounts: defineTable({
+    name: v.string(),
+    type: v.string(),
+    accountNumber: v.string(),
+    institution: v.string(),
+    advisor: v.optional(v.string()),
+    totalValue: v.number(),
+    asOfDate: v.string(),
+    taxStatus: v.string(),
+  }).index("by_type", ["type"]),
+
+  investmentHoldings: defineTable({
+    accountNumber: v.string(),
+    ticker: v.string(),
+    name: v.string(),
+    quantity: v.number(),
+    price: v.number(),
+    marketValue: v.number(),
+    estimatedAnnualIncome: v.optional(v.number()),
+    annualYield: v.optional(v.number()),
+    unrealizedGainLoss: v.optional(v.number()),
+    asOfDate: v.string(),
+  }).index("by_account", ["accountNumber"]).index("by_ticker", ["ticker"]),
+
+  livePrices: defineTable({
+    ticker: v.string(),
+    price: v.number(),
+    change: v.number(),
+    changePercent: v.number(),
+    marketState: v.string(),
+    updatedAt: v.string(),
+  }).index("by_ticker", ["ticker"]),
 });
