@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
 import { Geist, Geist_Mono, Cormorant_Garamond, Syne } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
@@ -30,20 +29,15 @@ const syne = Syne({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const headersList = await headers();
-  const host = headersList.get("host") ?? "";
-  const isFamily = host.includes("sweeney.family") || host.includes("home.lookandseen");
-  const mode = isFamily ? "hd" : "mc";
-
   return {
-    title: isFamily ? "Sweeney Home" : "Mission Control",
-    description: isFamily ? "The Sweeney Family" : "Look & Seen work dashboard",
+    title: "Mission Control",
+    description: "Look & Seen work dashboard",
     manifest: `/api/manifest`,
     appleWebApp: {
       capable: true,
-      statusBarStyle: isFamily ? "default" : "black-translucent",
-      title: isFamily ? "Sweeney" : "MC",
-      startupImage: `/api/favicon?mode=${mode}&size=512&v=3`,
+      statusBarStyle: "black-translucent",
+      title: "MC",
+      startupImage: `/api/favicon?mode=mc&size=512&v=3`,
     },
     robots: {
       index: false,
@@ -51,8 +45,8 @@ export async function generateMetadata(): Promise<Metadata> {
       googleBot: { index: false, follow: false },
     },
     icons: {
-      icon: `/api/favicon?mode=${mode}&v=3`,
-      apple: `/api/favicon?mode=${mode}&size=192&v=3`,
+      icon: `/api/favicon?mode=mc&v=3`,
+      apple: `/api/favicon?mode=mc&size=192&v=3`,
     },
     other: {
       "mobile-web-app-capable": "yes",

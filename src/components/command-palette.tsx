@@ -12,7 +12,7 @@ import {
   Users,
   Target,
   Building2,
-  Heart,
+
   TrendingUp,
   Layers,
   UtensilsCrossed,
@@ -24,8 +24,7 @@ const commands = [
   { label: "Tasks", href: "/tasks", icon: ListTodo, group: "Navigation" },
   { label: "Memories", href: "/memories", icon: Brain, group: "Navigation" },
   { label: "Calendar", href: "/calendar", icon: CalendarDays, group: "Navigation" },
-  { label: "Family", href: "/family", icon: Heart, group: "Navigation" },
-  { label: "Meals", href: "/meals", icon: UtensilsCrossed, group: "Navigation" },
+  
   { label: "Finance", href: "/finance", icon: TrendingUp, group: "Navigation" },
   { label: "Projects", href: "/projects", icon: Layers, group: "Navigation" },
   { label: "Content", href: "/content", icon: FileText, group: "Navigation" },

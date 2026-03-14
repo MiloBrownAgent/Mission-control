@@ -202,7 +202,7 @@ export default function DashboardPage() {
   const actionBatch     = useQuery(api.actionItems.getLatestBatch);
   const crmStats        = useQuery(api.clients.dashboardStats);
   const pipelineSummary = useQuery(api.pipeline.summary);
-  const whoopRecovery   = useQuery(api.whoop.getLatestByType, { type: "recovery" });
+  // WHOOP removed — personal health data lives on dts.sweeney.family
 
   const [checkedIds, setCheckedIds]   = useState<Set<string>>(new Set());
   const [submitting, setSubmitting]   = useState(false);
@@ -350,8 +350,7 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* ── WHOOP Recovery ──────────────────────────────────────────────────── */}
-      <WhoopWidget data={whoopRecovery} />
+      {/* WHOOP removed — personal health data on dts.sweeney.family */}
 
       {/* CRM Snapshot removed from home — view full CRM at /crm */}
 
