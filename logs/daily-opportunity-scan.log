@@ -158,3 +158,163 @@
 }
 [2026-03-12 08:00:04] ok: investment-home-refresh
 [2026-03-12 08:00:04] done
+[2026-03-13 08:00:00] start
+[2026-03-13 08:00:00] start: daily-opportunity-scan
+{
+  "ok": true,
+  "dryRun": false,
+  "date": "2026-03-13",
+  "refreshedExisting": 3,
+  "surfacedNew": 0,
+  "skippedBecauseAlreadyKnown": [
+    "RKLB",
+    "SOFI",
+    "NVO"
+  ],
+  "refreshedTickers": [
+    "NVO",
+    "SOFI",
+    "RKLB"
+  ],
+  "newTickers": [],
+  "failures": [],
+  "refreshResults": [
+    {
+      "id": "p579mpqy8ma6m5br87y2nny7ts82q5zq",
+      "ticker": "NVO",
+      "name": "Novo Nordisk",
+      "opportunityType": "catalyst_pullback",
+      "thesis": "Novo Nordisk looks investable here because the market is extrapolating pricing pressure without giving enough credit to demand durability and distribution expansion. The recent Hims relationship is important because it opens an additional channel for GLP-1 demand and supports the view that lower pricing can still coexist with very large volume growth.\n\nThe risk is that margin compression and competitive pressure from Lilly overwhelm the volume story. But if obesity demand remains structurally underpenetrated, Novo is still a high-quality franchise trading below the confidence investors once gave it.",
+      "sources": [
+        {
+          "title": "Reuters: Novo Nordisk to sell Wegovy through Hims platform",
+          "url": "https://www.reuters.com/markets/companies/HIMS.N/"
+        },
+        {
+          "title": "Reuters: Novo to cut US list prices up to 50%",
+          "url": "https://www.reuters.com/business/healthcare-pharmaceuticals/novo-nordisk-cut-prices/"
+        },
+        {
+          "title": "Yahoo Finance: NVO",
+          "url": "https://finance.yahoo.com/quote/NVO/"
+        }
+      ],
+      "expectedUpside": "50-80% (12-18 months)",
+      "catalysts": [
+        "Hims partnership expanding GLP-1 distribution (March 2026)",
+        "International Wegovy expansion",
+        "CagriSema Phase 3 results 2026",
+        "Volume growth offsetting price cuts"
+      ],
+      "risks": [
+        "Margin compression from 50% price cuts",
+        "Eli Lilly competition (Zepbound/Mounjaro)",
+        "Regulatory scrutiny on telehealth GLP-1 prescribing"
+      ],
+      "timeHorizon": "12-18 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 38.75,
+      "currentPrice": 38.02,
+      "priceUpdatedAt": 1773406802985,
+      "returnPct": -1.88,
+      "status": "active"
+    },
+    {
+      "id": "p579emjwmhawz9hhpn5k32xs4x82qyg6",
+      "ticker": "SOFI",
+      "name": "SoFi Technologies",
+      "opportunityType": "growth_inflection",
+      "thesis": "SoFi remains attractive because it is no longer just a “story fintech.” The company has crossed into real profitability while still growing members, deposits, and cross-sell. If management keeps proving the business can compound like a real digital financial institution, the market can continue re-rating the stock upward.\n\nThe risk is that credit or rate conditions turn against the model. This works only if SoFi preserves underwriting discipline while continuing to expand its product ecosystem and high-margin platform revenue.",
+      "sources": [
+        {
+          "title": "SoFi Q4 2025 Earnings Release",
+          "url": "https://investors.sofi.com/"
+        },
+        {
+          "title": "Yahoo Finance: SOFI data",
+          "url": "https://finance.yahoo.com/quote/SOFI/"
+        },
+        {
+          "title": "Reuters: SoFi Technologies profile",
+          "url": "https://www.reuters.com/markets/companies/SOFI.OQ/"
+        }
+      ],
+      "expectedUpside": "40-70% (6-12 months)",
+      "catalysts": [
+        "Continued GAAP profitability quarters",
+        "Galileo platform client wins",
+        "Student loan refinancing volume",
+        "Potential S&P 500 inclusion on sustained profitability"
+      ],
+      "risks": [
+        "Interest rate sensitivity on lending margins",
+        "Recession impact on consumer credit quality",
+        "Regulatory changes to bank charter advantages"
+      ],
+      "timeHorizon": "6-12 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 18.28,
+      "currentPrice": 17.7,
+      "priceUpdatedAt": 1773406802985,
+      "returnPct": -3.17,
+      "status": "active"
+    },
+    {
+      "id": "p579vcacpzc4n05w7jzyg7qcqx82qn83",
+      "ticker": "RKLB",
+      "name": "Rocket Lab USA",
+      "opportunityType": "secular_growth",
+      "thesis": "Rocket Lab is still one of the best infrastructure ways to play the long-term commercialization of space. The company has a real launch business today, a differentiated space-systems business, and a credible path to becoming more strategically important if Neutron executes. That combination makes it more durable than a single-program space speculation.\n\nThe thesis works if Rocket Lab keeps expanding from small launch into a broader aerospace platform with higher-value government and constellation work. The risk is execution slippage on Neutron and the constant need to compete in a sector where SpaceX sets the pace.",
+      "sources": [
+        {
+          "title": "Rocket Lab Investor Relations",
+          "url": "https://www.rocketlabusa.com/investors/"
+        },
+        {
+          "title": "Yahoo Finance: RKLB",
+          "url": "https://finance.yahoo.com/quote/RKLB/"
+        },
+        {
+          "title": "Reuters: Rocket Lab USA",
+          "url": "https://www.reuters.com/markets/companies/RKLB.OQ/"
+        }
+      ],
+      "expectedUpside": "50-100% (12-24 months)",
+      "catalysts": [
+        "Neutron first launch (2026)",
+        "Growing Electron launch cadence",
+        "National security space contracts (NSSL)",
+        "Space components revenue acceleration"
+      ],
+      "risks": [
+        "Neutron development delays",
+        "SpaceX pricing pressure",
+        "Capital-intensive business requires continued funding",
+        "Technical risk on reusable rocket development"
+      ],
+      "timeHorizon": "12-24 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 68.8,
+      "currentPrice": 68.37,
+      "priceUpdatedAt": 1773406802985,
+      "returnPct": -0.62,
+      "status": "active"
+    }
+  ],
+  "newResults": []
+}
+[2026-03-13 08:00:07] ok: daily-opportunity-scan
+[2026-03-13 08:00:07] start: investment-home-refresh
+{
+  "ok": true,
+  "date": "2026-03-13",
+  "briefingCreated": true,
+  "macro": {
+    "vix": 25.74,
+    "dxy": 100.089,
+    "spread": 41
+  },
+  "seededEvents": 0
+}
+[2026-03-13 08:00:11] ok: investment-home-refresh
+[2026-03-13 08:00:11] done

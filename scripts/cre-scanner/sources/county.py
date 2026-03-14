@@ -1,9 +1,13 @@
 """
 County data scrapers: Hennepin & Ramsey sheriff sales, tax forfeitures, assessed values.
+
+Sheriff sale / tax forfeiture pages use Playwright since the county sites may use JS rendering.
+The GIS assessed-value API endpoints use plain requests (they work fine without a browser).
 """
 import re
 import logging
 import requests
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 
 logger = logging.getLogger(__name__)
 
@@ -99,221 +103,168 @@ def _ramsey_assessed_value(address: str) -> int | None:
     return None
 
 
-# ── Hennepin Sheriff Sales ──────────────────────────────────
+# ── Shared Playwright scraper ────────────────────────────────
 
-def _scrape_hennepin_sheriff(max_price: int) -> list[dict]:
-    """Scrape Hennepin County sheriff sale listings."""
+def _playwright_scrape_county(url: str, source: str, default_city: str,
+                               max_price: int, flags: list[str],
+                               description_template: str) -> list[dict]:
+    """
+    Generic county page scraper using Playwright.
+    Attempts to find a data table on the page and extract address/date/price rows.
+    Returns empty list (with a log message) if no usable table data is found.
+    """
     results = []
     try:
-        from scrapling import Fetcher
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                viewport={"width": 1280, "height": 900},
+            )
+            page = context.new_page()
 
-        fetcher = Fetcher(auto_match=True)
-        url = "https://www.hennepin.us/residents/property/sheriff-foreclosure-sales"
-        logger.info("Scraping Hennepin County sheriff sales...")
-        page = fetcher.get(url)
+            logger.info(f"Fetching {source} page: {url}")
+            page.goto(url, wait_until="networkidle", timeout=30000)
+            page.wait_for_timeout(3000)
 
-        # Parse table rows
-        rows = page.css("table tr") or page.css(".field-items li") or []
-        for row in rows[1:]:  # skip header
-            try:
-                cells = row.css("td")
-                if len(cells) < 3:
-                    continue
+            rows_data = page.evaluate("""() => {
+                const rows = [];
 
-                address = cells[0].text.strip() if cells[0] else ""
-                city = cells[1].text.strip() if cells[1] else "Minneapolis"
-                sale_date = cells[2].text.strip() if cells[2] else ""
-                price_text = cells[3].text.strip() if len(cells) > 3 else ""
+                // Try standard HTML tables first
+                const tables = document.querySelectorAll('table');
+                for (const table of tables) {
+                    const trs = table.querySelectorAll('tr');
+                    for (let i = 1; i < trs.length; i++) {  // skip header row
+                        const cells = trs[i].querySelectorAll('td, th');
+                        if (cells.length < 2) continue;
+                        const cellTexts = Array.from(cells).map(c => c.textContent.trim());
+                        rows.push(cellTexts);
+                    }
+                }
 
-                if not address:
-                    continue
+                // If no table rows, try list items / views-rows
+                if (rows.length === 0) {
+                    const items = document.querySelectorAll('.views-row, .field-item, li.property-item');
+                    for (const item of items) {
+                        const text = item.textContent.trim();
+                        if (text) rows.push([text]);
+                    }
+                }
 
-                price = _parse_price(price_text)
-                if price and price > max_price:
-                    continue
+                return rows;
+            }""")
 
-                results.append(
-                    {
+            browser.close()
+
+            if not rows_data:
+                logger.info(f"{source}: no table data found on page — skipping")
+                return []
+
+            for row in rows_data:
+                try:
+                    if not row:
+                        continue
+
+                    # First cell is typically address
+                    address = row[0].strip() if row else ""
+                    if not address or len(address) < 5:
+                        continue
+
+                    city = default_city
+                    sale_date = row[1].strip() if len(row) > 1 else ""
+                    price_text = row[2].strip() if len(row) > 2 else ""
+
+                    # If only one cell, try to parse everything from it
+                    if len(row) == 1:
+                        price_text = row[0]
+                        sale_date = ""
+
+                    price = _parse_price(price_text)
+                    if price and price > max_price:
+                        continue
+
+                    desc = description_template
+                    if sale_date:
+                        desc = f"{description_template} — {sale_date}"
+
+                    results.append({
                         "address": address,
-                        "city": city or "Minneapolis",
+                        "city": city,
                         "state": "MN",
                         "propertyType": "special_purpose",
                         "askPrice": price or 0,
                         "listingDate": sale_date,
-                        "source": "hennepin_sheriff",
+                        "source": source,
                         "sourceUrl": url,
-                        "description": f"Hennepin County Sheriff Sale — {sale_date}",
-                        "flags": ["SHERIFF_SALE", "DISTRESSED"],
-                    }
-                )
-            except Exception as e:
-                logger.debug(f"Failed to parse Hennepin sheriff row: {e}")
+                        "description": desc,
+                        "flags": flags,
+                    })
+                except Exception as e:
+                    logger.debug(f"Failed to parse {source} row: {e}")
 
-        logger.info(f"Hennepin sheriff: {len(results)} properties")
+        logger.info(f"{source}: {len(results)} properties found")
+    except PlaywrightTimeout:
+        logger.error(f"{source}: timed out fetching {url}")
     except Exception as e:
-        logger.error(f"Hennepin sheriff scrape failed: {e}")
+        logger.error(f"{source}: scrape failed: {e}")
+
     return results
+
+
+# ── Hennepin Sheriff Sales ──────────────────────────────────
+
+def _scrape_hennepin_sheriff(max_price: int) -> list[dict]:
+    """Scrape Hennepin County sheriff sale listings."""
+    return _playwright_scrape_county(
+        url="https://www.hennepincounty.gov/residents/property/sheriff-sales",
+        source="hennepin_sheriff",
+        default_city="Minneapolis",
+        max_price=max_price,
+        flags=["SHERIFF_SALE", "DISTRESSED"],
+        description_template="Hennepin County Sheriff Sale",
+    )
 
 
 # ── Hennepin Tax Forfeitures ────────────────────────────────
 
 def _scrape_hennepin_tax(max_price: int) -> list[dict]:
     """Scrape Hennepin County tax forfeiture listings."""
-    results = []
-    try:
-        from scrapling import Fetcher
-
-        fetcher = Fetcher(auto_match=True)
-        url = "https://www.hennepin.us/residents/property/tax-forfeited-land-sale"
-        logger.info("Scraping Hennepin tax forfeitures...")
-        page = fetcher.get(url)
-
-        # Property listings may be in a table or list
-        rows = page.css("table tr") or page.css(".views-row") or []
-        for row in rows[1:]:
-            try:
-                cells = row.css("td")
-                if len(cells) < 2:
-                    continue
-
-                address = cells[0].text.strip()
-                city = cells[1].text.strip() if len(cells) > 1 else "Minneapolis"
-                price_text = cells[2].text.strip() if len(cells) > 2 else ""
-
-                if not address:
-                    continue
-
-                price = _parse_price(price_text)
-                if price and price > max_price:
-                    continue
-
-                results.append(
-                    {
-                        "address": address,
-                        "city": city or "Minneapolis",
-                        "state": "MN",
-                        "propertyType": "special_purpose",
-                        "askPrice": price or 0,
-                        "source": "hennepin_tax",
-                        "sourceUrl": url,
-                        "description": "Hennepin County Tax Forfeited Land",
-                        "flags": ["TAX_FORFEITURE", "DISTRESSED"],
-                    }
-                )
-            except Exception as e:
-                logger.debug(f"Failed to parse Hennepin tax row: {e}")
-
-        logger.info(f"Hennepin tax forfeitures: {len(results)} properties")
-    except Exception as e:
-        logger.error(f"Hennepin tax scrape failed: {e}")
-    return results
+    return _playwright_scrape_county(
+        url="https://www.hennepincounty.gov/residents/property/tax-forfeited-land",
+        source="hennepin_tax",
+        default_city="Minneapolis",
+        max_price=max_price,
+        flags=["TAX_FORFEITURE", "DISTRESSED"],
+        description_template="Hennepin County Tax Forfeited Land",
+    )
 
 
 # ── Ramsey Sheriff Sales ────────────────────────────────────
 
 def _scrape_ramsey_sheriff(max_price: int) -> list[dict]:
     """Scrape Ramsey County sheriff sale listings."""
-    results = []
-    try:
-        from scrapling import Fetcher
-
-        fetcher = Fetcher(auto_match=True)
-        url = "https://www.ramseycounty.us/residents/property/sheriff-sales"
-        logger.info("Scraping Ramsey County sheriff sales...")
-        page = fetcher.get(url)
-
-        rows = page.css("table tr") or page.css(".field-items li") or []
-        for row in rows[1:]:
-            try:
-                cells = row.css("td")
-                if len(cells) < 2:
-                    continue
-
-                address = cells[0].text.strip()
-                sale_date = cells[1].text.strip() if len(cells) > 1 else ""
-                price_text = cells[2].text.strip() if len(cells) > 2 else ""
-
-                if not address:
-                    continue
-
-                price = _parse_price(price_text)
-                if price and price > max_price:
-                    continue
-
-                results.append(
-                    {
-                        "address": address,
-                        "city": "St. Paul",
-                        "state": "MN",
-                        "propertyType": "special_purpose",
-                        "askPrice": price or 0,
-                        "listingDate": sale_date,
-                        "source": "ramsey_sheriff",
-                        "sourceUrl": url,
-                        "description": f"Ramsey County Sheriff Sale — {sale_date}",
-                        "flags": ["SHERIFF_SALE", "DISTRESSED"],
-                    }
-                )
-            except Exception as e:
-                logger.debug(f"Failed to parse Ramsey sheriff row: {e}")
-
-        logger.info(f"Ramsey sheriff: {len(results)} properties")
-    except Exception as e:
-        logger.error(f"Ramsey sheriff scrape failed: {e}")
-    return results
+    return _playwright_scrape_county(
+        url="https://www.ramseycountymn.gov/your-government/county-attorney/civil-division/sheriff-sales",
+        source="ramsey_sheriff",
+        default_city="St. Paul",
+        max_price=max_price,
+        flags=["SHERIFF_SALE", "DISTRESSED"],
+        description_template="Ramsey County Sheriff Sale",
+    )
 
 
 # ── Ramsey Tax Forfeitures ──────────────────────────────────
 
 def _scrape_ramsey_tax(max_price: int) -> list[dict]:
     """Scrape Ramsey County tax forfeiture listings."""
-    results = []
-    try:
-        from scrapling import Fetcher
-
-        fetcher = Fetcher(auto_match=True)
-        url = "https://www.ramseycounty.us/residents/property/tax-forfeited-land"
-        logger.info("Scraping Ramsey tax forfeitures...")
-        page = fetcher.get(url)
-
-        rows = page.css("table tr") or page.css(".views-row") or []
-        for row in rows[1:]:
-            try:
-                cells = row.css("td")
-                if len(cells) < 2:
-                    continue
-
-                address = cells[0].text.strip()
-                city = "St. Paul"
-                price_text = cells[1].text.strip() if len(cells) > 1 else ""
-
-                if not address:
-                    continue
-
-                price = _parse_price(price_text)
-                if price and price > max_price:
-                    continue
-
-                results.append(
-                    {
-                        "address": address,
-                        "city": city,
-                        "state": "MN",
-                        "propertyType": "special_purpose",
-                        "askPrice": price or 0,
-                        "source": "ramsey_tax",
-                        "sourceUrl": url,
-                        "description": "Ramsey County Tax Forfeited Land",
-                        "flags": ["TAX_FORFEITURE", "DISTRESSED"],
-                    }
-                )
-            except Exception as e:
-                logger.debug(f"Failed to parse Ramsey tax row: {e}")
-
-        logger.info(f"Ramsey tax forfeitures: {len(results)} properties")
-    except Exception as e:
-        logger.error(f"Ramsey tax scrape failed: {e}")
-    return results
+    return _playwright_scrape_county(
+        url="https://www.ramseycountymn.gov/residents/property/tax-forfeited-land",
+        source="ramsey_tax",
+        default_city="St. Paul",
+        max_price=max_price,
+        flags=["TAX_FORFEITURE", "DISTRESSED"],
+        description_template="Ramsey County Tax Forfeited Land",
+    )
 
 
 # ── Helpers ─────────────────────────────────────────────────
