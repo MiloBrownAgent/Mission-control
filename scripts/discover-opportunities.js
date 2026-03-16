@@ -460,16 +460,119 @@ async function fetchYahooNews(ticker) {
   } catch { return []; }
 }
 
+async function fetchGoogleNews(ticker, companyName) {
+  try {
+    const query = encodeURIComponent(`${ticker} stock ${companyName || ""} analysis`);
+    const url = `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`;
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const items = xml.split("<item>").slice(1, 8);
+    return items.map((item) => {
+      const titleMatch = item.match(/<title>(.*?)<\/title>/);
+      const linkMatch = item.match(/<link>(.*?)<\/link>/);
+      const sourceMatch = item.match(/<source[^>]*>(.*?)<\/source>/);
+      return {
+        title: (titleMatch?.[1] || "").replace(/&amp;/g, "&").replace(/<[^>]+>/g, ""),
+        url: linkMatch?.[1] || "",
+        source: sourceMatch?.[1] || "Google News",
+      };
+    }).filter((a) => a.title && a.url);
+  } catch { return []; }
+}
+
+async function fetchFinvizSnapshot(ticker) {
+  try {
+    const res = await fetch(`https://finviz.com/quote.ashx?t=${encodeURIComponent(ticker)}`, {
+      headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    // Extract key metrics from Finviz snapshot table
+    const extract = (label) => {
+      const regex = new RegExp(`<td[^>]*class="snapshot-td2-cp"[^>]*>${label}</td>\\s*<td[^>]*class="snapshot-td2"[^>]*><b>([^<]+)</b></td>`, "i");
+      const alt = new RegExp(`>${label}<\\/td>\\s*<td[^>]*><b>([^<]+)<\\/b>`, "i");
+      const match = html.match(regex) || html.match(alt);
+      return match?.[1]?.trim() || null;
+    };
+
+    // Extract recent news from Finviz
+    const newsMatches = html.matchAll(/<a[^>]*class="tab-link-news"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gi);
+    const news = [];
+    for (const nm of newsMatches) {
+      if (news.length >= 5) break;
+      news.push({ title: nm[2].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&"), url: nm[1] });
+    }
+
+    return {
+      perf_week: extract("Perf Week"),
+      perf_month: extract("Perf Month"),
+      perf_quarter: extract("Perf Quarter"),
+      perf_ytd: extract("Perf YTD"),
+      volatility: extract("Volatility"),
+      rsi: extract("RSI \\(14\\)"),
+      target_price: extract("Target Price"),
+      insider_own: extract("Insider Own"),
+      inst_own: extract("Inst Own"),
+      sma20: extract("SMA20"),
+      sma50: extract("SMA50"),
+      sma200: extract("SMA200"),
+      news,
+    };
+  } catch (err) {
+    console.error(`[discover] Finviz fetch failed for ${ticker}: ${err.message}`);
+    return null;
+  }
+}
+
+async function fetchSeekingAlphaNews(ticker) {
+  try {
+    const res = await fetch(`https://seekingalpha.com/api/v3/symbols/${encodeURIComponent(ticker)}/news?filter[since]=0&filter[until]=0&id=${ticker}&include=author&page[size]=5`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+        "Accept": "application/json",
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.data || []).map((a) => ({
+      title: a.attributes?.title || "",
+      url: `https://seekingalpha.com${a.links?.self || ""}`,
+      source: "Seeking Alpha",
+    })).filter((a) => a.title);
+  } catch { return []; }
+}
+
 // ── Thesis Generation via Site API ──
 
 async function generateThesis(candidate, yahooData) {
   const ticker = candidate.ticker;
 
-  // Fetch rich data
-  const [fullData, news] = await Promise.all([
+  // Fetch rich data from MULTIPLE sources in parallel
+  console.error(`[discover] Researching ${ticker} across Yahoo, Google News, Finviz, Seeking Alpha...`);
+  const [fullData, yahooNews, googleNews, finviz, saNews] = await Promise.all([
     fetchFullYahooData(ticker),
     fetchYahooNews(ticker),
+    fetchGoogleNews(ticker, candidate.name),
+    fetchFinvizSnapshot(ticker),
+    fetchSeekingAlphaNews(ticker),
   ]);
+
+  // Merge all news sources, dedup by title similarity
+  const allNews = [];
+  const seenTitles = new Set();
+  for (const article of [...(yahooNews || []), ...(googleNews || []), ...(finviz?.news || []), ...(saNews || [])]) {
+    const key = article.title?.toLowerCase().slice(0, 50);
+    if (key && !seenTitles.has(key)) {
+      seenTitles.add(key);
+      allNews.push(article);
+    }
+  }
+  const news = allNews;
+  console.error(`[discover] ${ticker}: ${allNews.length} unique articles from ${[yahooNews?.length && "Yahoo", googleNews?.length && "Google", finviz?.news?.length && "Finviz", saNews?.length && "SA"].filter(Boolean).join(", ") || "none"}`);
 
   const d = fullData || {};
   const price = yahooData.price || d.price;
@@ -491,10 +594,14 @@ async function generateThesis(candidate, yahooData) {
     `SHORT % OF FLOAT: ${d.shortPctFloatFmt || "N/A"}`,
     `DISCOVERY SIGNALS: ${candidate.signals?.join(", ") || "N/A"}`,
     d.employees ? `EMPLOYEES: ${d.employees.toLocaleString()}` : null,
+    // Finviz technical/performance data
+    finviz?.perf_week ? `PERF WEEK: ${finviz.perf_week} | MONTH: ${finviz.perf_month || "N/A"} | QTR: ${finviz.perf_quarter || "N/A"} | YTD: ${finviz.perf_ytd || "N/A"}` : null,
+    finviz?.rsi ? `RSI(14): ${finviz.rsi} | SMA20: ${finviz.sma20 || "N/A"} | SMA50: ${finviz.sma50 || "N/A"} | SMA200: ${finviz.sma200 || "N/A"}` : null,
+    finviz?.insider_own ? `INSIDER OWN: ${finviz.insider_own} | INSTITUTIONAL OWN: ${finviz.inst_own || "N/A"}` : null,
   ].filter(Boolean).join("\n");
 
   const newsBlock = news.length > 0
-    ? "\nRECENT NEWS:\n" + news.slice(0, 5).map((n) => `- ${n.title}`).join("\n")
+    ? "\nRECENT NEWS & ANALYSIS:\n" + news.slice(0, 8).map((n) => `- ${n.title}${n.source ? ` (${n.source})` : ""}`).join("\n")
     : "";
 
   // Calculate upside to analyst target
