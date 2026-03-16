@@ -1250,11 +1250,12 @@ function InlineMarkdown({ text }: { text: string }) {
 
   while (remaining.length > 0) {
     // Bold: **text**
-    const boldMatch = remaining.match(/^(.*?)\*\*(.+?)\*\*(.*)/s);
+    const boldMatch = remaining.match(/^([\s\S]*?)\*\*([\s\S]+?)\*\*([\s\S]*)/);
     // Italic: *text* (but not inside bold)
-    const italicMatch = remaining.match(/^(.*?)\*(.+?)\*(.*)/s);
+    const italicMatch = remaining.match(/^([\s\S]*?)\*([\s\S]+?)\*([\s\S]*)/);
     // Link: [text](url)
-    const linkMatch = remaining.match(/^(.*?)\[(.+?)\]\((.+?)\)(.*)/s);
+    const linkMatch = remaining.match(/^([\s\S]*?)\[([\s\S]+?)\]\(([\s\S]+?)\)([\s\S]*)/);
+
 
     // Find the earliest match
     type MatchInfo = { type: string; index: number; match: RegExpMatchArray };
