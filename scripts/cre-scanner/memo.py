@@ -1,10 +1,16 @@
 """Generate investment memos for CRE properties using Claude AI with template fallback."""
 import logging
 import json
+import os
+import urllib.request
+import urllib.error
 
 logger = logging.getLogger(__name__)
 
-# Lazy-loaded Anthropic client
+# Site API URL for thesis generation (Vercel-hosted, has its own Anthropic key)
+SITE_URL = os.environ.get("SITE_URL", "https://mc.lookandseen.com")
+
+# Lazy-loaded Anthropic client (direct API - needs standard API key)
 _client = None
 
 
@@ -30,9 +36,17 @@ def _get_client():
 def generate_memo(prop: dict) -> str:
     """
     Generate an investment memo for a property.
-    Tries AI-generated memo first (Claude), falls back to template.
+    Tries: 1) Site API (Vercel Claude), 2) Direct Anthropic, 3) Template fallback.
     """
-    # Try AI memo first
+    # Try site API first (works with OAuth setup)
+    try:
+        site_memo = _generate_site_api_memo(prop)
+        if site_memo:
+            return site_memo
+    except Exception as e:
+        logger.warning(f"Site API memo failed for {prop.get('address', '?')}: {e}")
+
+    # Try direct Anthropic API (needs standard API key)
     try:
         ai_memo = _generate_ai_memo(prop)
         if ai_memo:
@@ -42,6 +56,57 @@ def generate_memo(prop: dict) -> str:
 
     # Fallback to template
     return _generate_template_memo(prop)
+
+
+def _generate_site_api_memo(prop: dict) -> str | None:
+    """Generate memo via the site's CRE memo API endpoint (Vercel-hosted Claude)."""
+    address = prop.get("address", "Unknown")
+    
+    payload = json.dumps({
+        "address": address,
+        "city": prop.get("city", ""),
+        "state": prop.get("state", "MN"),
+        "propertyType": prop.get("propertyType", "unknown"),
+        "askPrice": prop.get("askPrice", 0),
+        "score": prop.get("score", 50),
+        "scoreJustification": prop.get("scoreJustification", ""),
+        "source": prop.get("source", ""),
+        "pricePerSF": prop.get("pricePerSF"),
+        "squareFeet": prop.get("squareFeet"),
+        "capRate": prop.get("capRate"),
+        "units": prop.get("units"),
+        "yearBuilt": prop.get("yearBuilt"),
+        "daysOnMarket": prop.get("daysOnMarket"),
+        "lotSize": prop.get("lotSize"),
+        "assessedValue": prop.get("assessedValue"),
+        "assessedValueSource": prop.get("assessedValueSource"),
+        "sourceUrl": prop.get("sourceUrl"),
+        "description": prop.get("description"),
+        "flags": prop.get("flags"),
+        "riskFlags": prop.get("riskFlags"),
+        "comps": prop.get("comps"),
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        f"{SITE_URL}/api/cre/generate-memo",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            memo = data.get("memo")
+            if memo and len(memo) > 100:
+                return memo
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")[:200] if e.fp else ""
+        logger.warning(f"Site API HTTP {e.code} for {address}: {body}")
+    except Exception as e:
+        logger.warning(f"Site API error for {address}: {e}")
+
+    return None
 
 
 def _generate_ai_memo(prop: dict) -> str | None:
