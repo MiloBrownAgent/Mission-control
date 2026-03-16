@@ -297,7 +297,7 @@ export default function SentimentTab() {
           <div className="rounded-xl border border-[#1A1816] bg-[#0D0C0A] px-5 py-4">
             <p className="text-[10px] text-[#6B6560] leading-relaxed">
               <span className="text-[#B8956A] font-medium">How This Works —</span>{" "}
-              Searches Twitter for ${ticker} cashtag, stock name, and company name, pulling ~100-150 unique tweets via Bird CLI. Each tweet is scored against a keyword lexicon (bullish/bearish/neutral) to compute an aggregate score from -100 (Extreme Fear) to +100 (Extreme Greed).{" "}
+              Pulls social posts and news from StockTwits, Reddit, Yahoo Finance headlines, and Twitter (when available). Each post is scored against a keyword lexicon (bullish/bearish/neutral) to compute an aggregate score from -100 (Extreme Fear) to +100 (Extreme Greed).{" "}
               <span className="text-amber-400">⚠️ Not financial advice.</span>
             </p>
           </div>
