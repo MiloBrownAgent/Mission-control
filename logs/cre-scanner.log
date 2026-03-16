@@ -2,3 +2,5 @@
 === CRE Scanner Run: Sat Mar 14 05:00:02 CDT 2026 ===
 === CRE Scanner Run: Sun Mar 15 05:00:02 CDT 2026 ===
 === CRE Scanner Run: Mon Mar 16 05:00:03 CDT 2026 ===
+=== CRE Scanner Run: Mon Mar 16 07:58:37 CDT 2026 ===
+scripts/cre-scanner/run.sh:31: ANTHROPIC_API_KEY: parameter not set

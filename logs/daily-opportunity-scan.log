@@ -318,3 +318,613 @@
 }
 [2026-03-13 08:00:11] ok: investment-home-refresh
 [2026-03-13 08:00:11] done
+[2026-03-16 08:00:02] start
+[2026-03-16 08:00:02] start: daily-opportunity-scan
+{
+  "ok": true,
+  "dryRun": false,
+  "date": "2026-03-16",
+  "refreshedExisting": 9,
+  "surfacedNew": 0,
+  "skippedBecauseAlreadyKnown": [
+    "RKLB",
+    "SOFI",
+    "NVO"
+  ],
+  "refreshedTickers": [
+    "MS",
+    "S",
+    "PAYP",
+    "NVO",
+    "SOFI",
+    "RKLB",
+    "SMCI",
+    "JOBY",
+    "AEHR"
+  ],
+  "newTickers": [],
+  "failures": [],
+  "refreshResults": [
+    {
+      "id": "p577ag468c0gggn8jr98fmhsc18312mh",
+      "ticker": "MS",
+      "name": "Morgan Stanley",
+      "opportunityType": "contrarian_recovery",
+      "thesis": "POSITION SUMMARY — MS (Morgan Stanley)\nTicker verified as MS. Current price is $154.87. Verified market cap is $245.91B via quoteSummary.price.marketCap. Portfolio type: opportunity. Entry price: $154.87. Shares: N/A. P&L: 0.0%. Time horizon: 3-6 months. Refresh reason: New discovery: trending, undervalued_growth..\n\nBULL CASE — MS is only investable if the verified operating profile keeps improving faster than the market expects. The balance sheet is net-cash positive with $600.39B cash against $513.41B debt.\n\nPEER COMPARABLE ANALYSIS — Peer data did not resolve cleanly in this run, so valuation framing should stay conservative. Subject company verified facts: revenue $70.30B, gross margin 87.1%, operating margin 38.6%, forward P/E 12.6. Use that to decide whether the current valuation is cheap for the quality level or cheap for a reason.\n\nSIMPLIFIED DCF — With revenue at $70.30B and free cash flow at N/A, the clean way to frame value is scenario-based instead of fake precision. BEAR: growth slows hard and valuation compresses. BASE: current growth and margin structure broadly hold. BULL: growth persists and operating leverage expands. The key point is that the present market cap is $245.91B; underwriting should start from that verified value, not from an invented target.\n\nKEY CATALYSTS WITH PROBABILITY WEIGHTING — 1) Execution against the current growth profile (11.0% revenue growth) is the primary upside driver. 2) Balance-sheet durability and cash generation ($600.39B cash, $513.41B debt, N/A FCF) determine whether the company can self-fund its thesis. 3) Market narrative can shift quickly if recent source flow is confirmed by filings and earnings rather than headlines alone.\n\nEARNINGS REVISION MOMENTUM — 0q: 18 analysts | EPS est 2.96 | 30d revisions 0 up / 0 down\n+1q: 18 analysts | EPS est 2.74 | 30d revisions 0 up / 0 down\n0y: 23 analysts | EPS est 11.34 | 30d revisions 0 up / 0 down\n1743379200: beat 18.6%\n1751241600: beat 8.6%\n1759190400: beat 32.6%\n176713920",
+      "sources": [
+        {
+          "title": "Wall Street’s Own Stock Is Getting Hammered on Reddit and Here’s What Investors Are Missing",
+          "url": "https://247wallst.com/investing/2026/03/13/wall-streets-own-stock-is-getting-hammered-on-reddit-and-heres-what-investors-are-missing/?.tsrc=rss"
+        },
+        {
+          "title": "Morgan Stanley Cuts PT on Wyndham Hotels & Resorts (WH) to $85 From $89 – Here’s Why",
+          "url": "https://finance.yahoo.com/news/morgan-stanley-cuts-pt-wyndham-182537808.html?.tsrc=rss"
+        },
+        {
+          "title": "Morgan Stanley ‘most constructive’ on Match Group shares in years",
+          "url": "https://finance.yahoo.com/news/morgan-stanley-most-constructive-match-140044175.html?.tsrc=rss"
+        },
+        {
+          "title": "Morgan Stanley says Fed risks are skewed towards later and more cuts",
+          "url": "https://finance.yahoo.com/news/morgan-stanley-says-fed-risks-135606619.html?.tsrc=rss"
+        },
+        {
+          "title": "Exclusive: Morgan Stanley And BlackRock Limit Withdrawals—Is Private Credit Gating A Crisis Or Market 'Stabilizer'?",
+          "url": "https://finance.yahoo.com/news/exclusive-morgan-stanley-blackrock-limit-173116831.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "26% to analyst mean target",
+      "catalysts": [
+        "trending",
+        "undervalued_growth"
+      ],
+      "risks": [
+        "See full thesis for detailed risk analysis"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 154.87,
+      "currentPrice": 154.87,
+      "priceUpdatedAt": 1773666003113,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p570apptkwhhy80yfhwafhzre58318km",
+      "ticker": "S",
+      "name": "SentinelOne, Inc.",
+      "opportunityType": "momentum_breakout",
+      "thesis": "POSITION SUMMARY — S (SentinelOne, Inc.)\nTicker verified as S. Current price is $14.52. Verified market cap is $4.93B via quoteSummary.price.marketCap. Portfolio type: opportunity. Entry price: $14.52. Shares: N/A. P&L: 0.0%. Time horizon: 3-6 months. Refresh reason: New discovery: trending, top_gainer..\n\nBULL CASE — S is only investable if the verified operating profile keeps improving faster than the market expects. Revenue growth is still strong at 20.2%, which keeps the upside case alive if that pace holds. Free cash flow is positive at $292.21M, so this is not purely a story stock.\n\nPEER COMPARABLE ANALYSIS — Peer data did not resolve cleanly in this run, so valuation framing should stay conservative. Subject company verified facts: revenue $1.00B, gross margin 74.2%, operating margin -28.0%, forward P/E 30.4. Use that to decide whether the current valuation is cheap for the quality level or cheap for a reason.\n\nSIMPLIFIED DCF — With revenue at $1.00B and free cash flow at $292.21M, the clean way to frame value is scenario-based instead of fake precision. BEAR: growth slows hard and valuation compresses. BASE: current growth and margin structure broadly hold. BULL: growth persists and operating leverage expands. The key point is that the present market cap is $4.93B; underwriting should start from that verified value, not from an invented target.\n\nKEY CATALYSTS WITH PROBABILITY WEIGHTING — 1) Execution against the current growth profile (20.2% revenue growth) is the primary upside driver. 2) Balance-sheet durability and cash generation ($628.67M cash, N/A debt, $292.21M FCF) determine whether the company can self-fund its thesis. 3) Market narrative can shift quickly if recent source flow is confirmed by filings and earnings rather than headlines alone.\n\nEARNINGS REVISION MOMENTUM — 0q: 12 analysts | EPS est -0.24 | 30d revisions 0 up / 0 down\n+1q: 12 analysts | EPS est -0.19 | 30d revisions 0 up / 0 down\n0y: 14 analysts | EPS est -0.72 | 30d revisions 0 up / 0",
+      "sources": [
+        {
+          "title": "SentinelOne Q4 earnings beat driven by platform growth, large deals",
+          "url": "https://www.proactiveinvestors.com/companies/news/1088870/sentinelone-q4-earnings-beat-driven-by-platform-growth-large-deals-1088870.html?.tsrc=rss"
+        },
+        {
+          "title": "SentinelOne Inc (S) Q4 2026 Earnings Call Highlights: Record Revenue and Strategic Growth in AI ...",
+          "url": "https://finance.yahoo.com/news/sentinelone-inc-q4-2026-earnings-030706602.html?.tsrc=rss"
+        },
+        {
+          "title": "Crossing US$1 Billion Revenue and Profitability Might Change The Case For Investing In SentinelOne (S)",
+          "url": "https://finance.yahoo.com/news/crossing-us-1-billion-revenue-042222159.html?.tsrc=rss"
+        },
+        {
+          "title": "SentinelOne's Q4 Earnings Beat, Revenues Rise Y/Y, Shares Fall",
+          "url": "https://finance.yahoo.com/news/sentinelones-q4-earnings-beat-revenues-153100247.html?.tsrc=rss"
+        },
+        {
+          "title": "SentinelOne Down 4%, Then Up 3%: Can $1B Revenue Milestone Quell Skepticism?",
+          "url": "https://247wallst.com/investing/2026/03/13/sentinelone-down-4-then-up-3-can-1b-revenue-milestone-quell-skepticism/?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "28% to analyst mean target",
+      "catalysts": [
+        "trending",
+        "top_gainer"
+      ],
+      "risks": [
+        "See full thesis for detailed risk analysis"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 14.52,
+      "currentPrice": 14.52,
+      "priceUpdatedAt": 1773666003113,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p57cgv83kcrmyf7bjpn725ye9d831p98",
+      "ticker": "PAYP",
+      "name": "PayPay Corporation - American D",
+      "opportunityType": "momentum_breakout",
+      "thesis": "POSITION SUMMARY — PAYP (PayPay Corporation)\nTicker verified as PAYP. Current price is $21.14. Verified market cap is $14.13B via quoteSummary.price.marketCap. Portfolio type: opportunity. Entry price: $21.14. Shares: N/A. P&L: 0.0%. Time horizon: 3-6 months. Refresh reason: New discovery: trending, top_gainer..\n\nBULL CASE — PAYP is only investable if the verified operating profile keeps improving faster than the market expects. Revenue growth is still strong at 23.9%, which keeps the upside case alive if that pace holds. The capital structure needs watching: $578.42B debt against $123.64B cash.\n\nPEER COMPARABLE ANALYSIS — Peer data did not resolve cleanly in this run, so valuation framing should stay conservative. Subject company verified facts: revenue $355.53B, gross margin 52.4%, operating margin 24.8%, forward P/E N/A. Use that to decide whether the current valuation is cheap for the quality level or cheap for a reason.\n\nSIMPLIFIED DCF — With revenue at $355.53B and free cash flow at N/A, the clean way to frame value is scenario-based instead of fake precision. BEAR: growth slows hard and valuation compresses. BASE: current growth and margin structure broadly hold. BULL: growth persists and operating leverage expands. The key point is that the present market cap is $14.13B; underwriting should start from that verified value, not from an invented target.\n\nKEY CATALYSTS WITH PROBABILITY WEIGHTING — 1) Execution against the current growth profile (23.9% revenue growth) is the primary upside driver. 2) Balance-sheet durability and cash generation ($123.64B cash, $578.42B debt, N/A FCF) determine whether the company can self-fund its thesis. 3) Market narrative can shift quickly if recent source flow is confirmed by filings and earnings rather than headlines alone.\n\nEARNINGS REVISION MOMENTUM — No clean estimate-revision read came through the feed, so treat earnings-momentum confidence as limited.\nRecent beat/miss history did not resolve cleanly in this run.\n\nMANAGE",
+      "sources": [
+        {
+          "title": "PayPay (PAYP) Valuation Check After Nasdaq Debut Visa Partnership And Index Inclusion",
+          "url": "https://finance.yahoo.com/news/paypay-payp-valuation-check-nasdaq-160806451.html?.tsrc=rss"
+        },
+        {
+          "title": "PayPay Nasdaq Debut And Visa Deal Raise Valuation Questions For Investors",
+          "url": "https://finance.yahoo.com/news/paypay-nasdaq-debut-visa-deal-150929997.html?.tsrc=rss"
+        },
+        {
+          "title": "PayPay (PAYP) Rockets 16% Higher on Dual Listing Ambitions",
+          "url": "https://finance.yahoo.com/news/paypay-payp-rockets-16-higher-021029607.html?.tsrc=rss"
+        },
+        {
+          "title": "PayPay IPO surges 18% in second trading day, ARK buys shares",
+          "url": "https://finance.yahoo.com/news/paypay-ipo-surges-18-second-160709458.html?.tsrc=rss"
+        },
+        {
+          "title": "PayPay (PAYP) Ends 13.5% Higher on IPO",
+          "url": "https://finance.yahoo.com/news/paypay-payp-ends-13-5-004506734.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "See thesis for details",
+      "catalysts": [
+        "trending",
+        "top_gainer"
+      ],
+      "risks": [
+        "See full thesis for detailed risk analysis"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 21.14,
+      "currentPrice": 21.14,
+      "priceUpdatedAt": 1773666003113,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p579mpqy8ma6m5br87y2nny7ts82q5zq",
+      "ticker": "NVO",
+      "name": "Novo Nordisk",
+      "opportunityType": "catalyst_pullback",
+      "thesis": "Novo Nordisk looks investable here because the market is extrapolating pricing pressure without giving enough credit to demand durability and distribution expansion. The recent Hims relationship is important because it opens an additional channel for GLP-1 demand and supports the view that lower pricing can still coexist with very large volume growth.\n\nThe risk is that margin compression and competitive pressure from Lilly overwhelm the volume story. But if obesity demand remains structurally underpenetrated, Novo is still a high-quality franchise trading below the confidence investors once gave it.",
+      "sources": [
+        {
+          "title": "Reuters: Novo Nordisk to sell Wegovy through Hims platform",
+          "url": "https://www.reuters.com/markets/companies/HIMS.N/"
+        },
+        {
+          "title": "Reuters: Novo to cut US list prices up to 50%",
+          "url": "https://www.reuters.com/business/healthcare-pharmaceuticals/novo-nordisk-cut-prices/"
+        },
+        {
+          "title": "Yahoo Finance: NVO",
+          "url": "https://finance.yahoo.com/quote/NVO/"
+        }
+      ],
+      "expectedUpside": "50-80% (12-18 months)",
+      "catalysts": [
+        "Hims partnership expanding GLP-1 distribution (March 2026)",
+        "International Wegovy expansion",
+        "CagriSema Phase 3 results 2026",
+        "Volume growth offsetting price cuts"
+      ],
+      "risks": [
+        "Margin compression from 50% price cuts",
+        "Eli Lilly competition (Zepbound/Mounjaro)",
+        "Regulatory scrutiny on telehealth GLP-1 prescribing"
+      ],
+      "timeHorizon": "12-18 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 38.75,
+      "currentPrice": 37.96,
+      "priceUpdatedAt": 1773666003113,
+      "returnPct": -2.04,
+      "status": "active"
+    },
+    {
+      "id": "p579emjwmhawz9hhpn5k32xs4x82qyg6",
+      "ticker": "SOFI",
+      "name": "SoFi Technologies",
+      "opportunityType": "growth_inflection",
+      "thesis": "SoFi remains attractive because it is no longer just a “story fintech.” The company has crossed into real profitability while still growing members, deposits, and cross-sell. If management keeps proving the business can compound like a real digital financial institution, the market can continue re-rating the stock upward.\n\nThe risk is that credit or rate conditions turn against the model. This works only if SoFi preserves underwriting discipline while continuing to expand its product ecosystem and high-margin platform revenue.",
+      "sources": [
+        {
+          "title": "SoFi Q4 2025 Earnings Release",
+          "url": "https://investors.sofi.com/"
+        },
+        {
+          "title": "Yahoo Finance: SOFI data",
+          "url": "https://finance.yahoo.com/quote/SOFI/"
+        },
+        {
+          "title": "Reuters: SoFi Technologies profile",
+          "url": "https://www.reuters.com/markets/companies/SOFI.OQ/"
+        }
+      ],
+      "expectedUpside": "40-70% (6-12 months)",
+      "catalysts": [
+        "Continued GAAP profitability quarters",
+        "Galileo platform client wins",
+        "Student loan refinancing volume",
+        "Potential S&P 500 inclusion on sustained profitability"
+      ],
+      "risks": [
+        "Interest rate sensitivity on lending margins",
+        "Recession impact on consumer credit quality",
+        "Regulatory changes to bank charter advantages"
+      ],
+      "timeHorizon": "6-12 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 18.28,
+      "currentPrice": 17.76,
+      "priceUpdatedAt": 1773666003113,
+      "returnPct": -2.84,
+      "status": "active"
+    },
+    {
+      "id": "p579vcacpzc4n05w7jzyg7qcqx82qn83",
+      "ticker": "RKLB",
+      "name": "Rocket Lab USA",
+      "opportunityType": "secular_growth",
+      "thesis": "Rocket Lab is still one of the best infrastructure ways to play the long-term commercialization of space. The company has a real launch business today, a differentiated space-systems business, and a credible path to becoming more strategically important if Neutron executes. That combination makes it more durable than a single-program space speculation.\n\nThe thesis works if Rocket Lab keeps expanding from small launch into a broader aerospace platform with higher-value government and constellation work. The risk is execution slippage on Neutron and the constant need to compete in a sector where SpaceX sets the pace.",
+      "sources": [
+        {
+          "title": "Rocket Lab Investor Relations",
+          "url": "https://www.rocketlabusa.com/investors/"
+        },
+        {
+          "title": "Yahoo Finance: RKLB",
+          "url": "https://finance.yahoo.com/quote/RKLB/"
+        },
+        {
+          "title": "Reuters: Rocket Lab USA",
+          "url": "https://www.reuters.com/markets/companies/RKLB.OQ/"
+        }
+      ],
+      "expectedUpside": "50-100% (12-24 months)",
+      "catalysts": [
+        "Neutron first launch (2026)",
+        "Growing Electron launch cadence",
+        "National security space contracts (NSSL)",
+        "Space components revenue acceleration"
+      ],
+      "risks": [
+        "Neutron development delays",
+        "SpaceX pricing pressure",
+        "Capital-intensive business requires continued funding",
+        "Technical risk on reusable rocket development"
+      ],
+      "timeHorizon": "12-24 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 68.8,
+      "currentPrice": 68.4097,
+      "priceUpdatedAt": 1773666003113,
+      "returnPct": -0.57,
+      "status": "active"
+    },
+    {
+      "id": "p576zkzgb5n0ypxbxqxtwj7v3582wxaa",
+      "ticker": "SMCI",
+      "name": "Super Micro Computer",
+      "opportunityType": "event_driven",
+      "thesis": "Near 52-week low ($27.60) with 91% revenue growth. $28B revenue company trading at forward P/E of 12.67. Reinstated $40B FY2026 revenue guidance after massive Q2 beat. AI server demand is structural — SMCI is Nvidia's #1 GPU server partner. Accounting fears from 2024 (Hindenburg, delayed 10-K) are fading — 10-K filed, new auditor appointed. Asymmetry is exceptional: downside ~10% to 52-week low, upside 108% to analyst high target of $64. Rosenblatt Strong Buy at $50, Needham Strong Buy at $40. JP Morgan Private Bank (Dave's emails) is bullish on AI infrastructure spending — SMCI is the direct picks-and-shovels beneficiary. Pitzy Model Score: Event Certainty 7, Asymmetry 9, Retail Edge 5, Timing 7. Composite 7.0/10.",
+      "sources": [
+        {
+          "title": "CNBC Quote Data - SMCI",
+          "url": "https://www.cnbc.com/quotes/SMCI"
+        },
+        {
+          "title": "StockAnalysis.com Analyst Forecasts",
+          "url": "https://stockanalysis.com/stocks/smci/forecast/"
+        },
+        {
+          "title": "Seeking Alpha: Unloved Super Micro Is Due For A Rally (Mar 3, 2026)",
+          "url": "https://seekingalpha.com/article/4877648"
+        },
+        {
+          "title": "JP Morgan Private Bank: AI vs AI Arms Race (Feb 27, 2026)",
+          "url": "https://pages-pb.jpmorgan.com"
+        }
+      ],
+      "expectedUpside": "29-108% (analyst avg $39.53, high $64)",
+      "catalysts": [
+        "$40B FY2026 revenue guidance reinstated",
+        "AI data center buildout accelerating (TSMC Jan-Feb revenue +30% YoY)",
+        "Accounting stigma fading — 10-K filed, new auditor",
+        "Earnings ~May 4 — potential re-rating event",
+        "Forward P/E 12.67 on 91% revenue growth"
+      ],
+      "risks": [
+        "Gross margin compression (8% gross margin razor thin)",
+        "Lingering trust issues from accounting fiasco",
+        "Competition from Dell, HPE in AI servers",
+        "Oil shock wealth effect could compress tech multiples (per JPM)"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 30.75,
+      "currentPrice": 30.75,
+      "priceUpdatedAt": 1773666003113,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p571nqh1wen5wcd450pra5jq2582xbnb",
+      "ticker": "JOBY",
+      "name": "Joby Aviation",
+      "opportunityType": "event_driven",
+      "thesis": "Binary FAA certification catalyst. On March 11, 2026, Joby's first FAA-conforming aircraft took its maiden flight — the final configuration before type certification. Targeting commercial certification in 2026. Uber Air powered by Joby launching in Dubai. Toyota is strategic backer. Stock near yearly lows ($9.70 vs $20.95 high) due to poorly-timed $1.2B capital raise that spooked investors with dilution — but that cash funds through certification and operations. Revenue inflection: $53M 2025 → $109M 2026 → $225M 2027. Needham Strong Buy at $18 (86% upside), HC Wainwright Strong Buy at $18. Pitzy Model Score: Event Certainty 6, Asymmetry 8, Retail Edge 7, Timing 8. Composite 7.25/10.",
+      "sources": [
+        {
+          "title": "CNBC Quote Data - JOBY",
+          "url": "https://www.cnbc.com/quotes/JOBY"
+        },
+        {
+          "title": "StockAnalysis.com Analyst Forecasts",
+          "url": "https://stockanalysis.com/stocks/joby/forecast/"
+        },
+        {
+          "title": "Business Wire: Joby First FAA-Conforming Aircraft Takes Flight (Mar 11, 2026)",
+          "url": "https://www.businesswire.com/news/home/20260311169915/en/"
+        },
+        {
+          "title": "Seeking Alpha: Joby Aviation Monumental 2026 Ahead (Feb 27, 2026)",
+          "url": "https://seekingalpha.com/article/4876138"
+        }
+      ],
+      "expectedUpside": "38-86% (analyst avg $13.43, high $18)",
+      "catalysts": [
+        "FAA-conforming aircraft flying NOW (March 11, 2026)",
+        "FAA type certification expected 2026 — big binary event",
+        "Uber Air Dubai launch imminent",
+        "Revenue inflection: $53M → $109M → $225M",
+        "$1.2B cash runway through certification"
+      ],
+      "risks": [
+        "Pre-revenue, burning ~$680M/year EBITDA",
+        "FAA certification could slip (government process)",
+        "$1.2B dilutive raise — 979M shares outstanding",
+        "JP Morgan Sell at $7, Goldman Strong Sell at $10"
+      ],
+      "timeHorizon": "6-12 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 9.7,
+      "currentPrice": 9.7,
+      "priceUpdatedAt": 1773666003113,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p5729gye14qmq9c3j1w4e8dxsh82xnnx",
+      "ticker": "AEHR",
+      "name": "Aehr Test Systems",
+      "opportunityType": "event_driven",
+      "thesis": "Picks-and-shovels AI play that almost nobody covers. Only 2 analysts. $1B market cap. Makes burn-in and testing equipment every AI chip must go through before deployment. FOX-XP systems becoming industry standard for wafer-level burn-in of AI processors, optical interconnects, and silicon carbide. Order flow accelerating hard: Feb 11 — hyperscale customer next-gen AI ASIC win; Feb 26 — $14M order from lead AI processor customer; Mar 3 — follow-on order for AI optical I/O burn-in. William Blair upgraded to Buy Mar 2. Revenue dipped near-term (FY2026 down 18%) but FY2027 forecast $77.9M (60% growth) as new AI orders convert. WARNING: Stock already ran from $6.27 to $35.67 (469%) and trades above only analyst target ($21). Bull case requires continued order momentum and estimate raises. JPM Private Bank AI infrastructure thesis directly supports this name. Pitzy Model Score: Event Certainty 7, Asymmetry 6, Retail Edge 9, Timing 7. Composite 7.25/10.",
+      "sources": [
+        {
+          "title": "CNBC Quote Data - AEHR",
+          "url": "https://www.cnbc.com/quotes/AEHR"
+        },
+        {
+          "title": "StockAnalysis.com Analyst Forecasts",
+          "url": "https://stockanalysis.com/stocks/aehr/forecast/"
+        },
+        {
+          "title": "Accesswire: Aehr $14M AI Processor Order (Feb 26, 2026)",
+          "url": "https://www.accessnewswire.com/newsroom/en/industrial-and-manufacturing/aehr-receives-14-million-order-from-lead-ai-processor-customer-for-mul-1141825"
+        },
+        {
+          "title": "Accesswire: Aehr Hyperscale AI ASIC Win (Feb 11, 2026)",
+          "url": "https://www.accessnewswire.com/newsroom/en/industrial-and-manufacturing/aehr-secures-key-ai-production-burn-in-win-with-initial-order-of-sonom-1135852"
+        },
+        {
+          "title": "JP Morgan Private Bank: AI Strain Before Boom (Feb 20, 2026)",
+          "url": "https://pages-pb.jpmorgan.com"
+        }
+      ],
+      "expectedUpside": "60%+ if FY2027 estimates raised (analyst coverage too thin for reliable targets)",
+      "catalysts": [
+        "3 major AI orders in 3 weeks (Feb-Mar 2026)",
+        "FY2027 revenue inflection to 60% growth",
+        "William Blair upgrade to Buy (Mar 2, 2026)",
+        "Earnings ~April 6 — backlog data expected positive",
+        "Only 2 analysts = massive undercoverage, surprise potential high"
+      ],
+      "risks": [
+        "Trading well above only analyst target ($21)",
+        "Already up 469% from 52-week low",
+        "FY2026 revenue declining 18%",
+        "Micro-cap volatility — beta 2.31",
+        "Customer concentration risk"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 35.67,
+      "currentPrice": 35.67,
+      "priceUpdatedAt": 1773666003113,
+      "returnPct": 0,
+      "status": "active"
+    }
+  ],
+  "newResults": []
+}
+[2026-03-16 08:00:07] ok: daily-opportunity-scan
+[2026-03-16 08:00:07] start: discover-opportunities
+[discover] Starting opportunity discovery for 2026-03-16 (target: 3 new)
+[discover] Known tickers (18): AEHR, JOBY, SMCI, RKLB, SOFI, NVO, PAYP, S, MS, HIMS, IREN, ONDS, AAPL, PTRN, VST, ASTS, PLTR, META
+[discover] Fetching Yahoo Finance screeners...
+[discover] Yahoo data: 30 trending, 25 gainers, 25 active, 25 undervalued
+[discover] 83 fresh candidates after filtering
+[discover] Top candidates: MARA(top_gainer+most_active), NIO(top_gainer+most_active), MU(top_gainer+most_active), BBD(most_active+undervalued_growth), ADBE(trending), XYZ(trending), ULTA(trending), RBRK(trending), ABNB(trending), RCL(trending)
+[discover] Claude selected 6 candidates: MARA, NIO, MU, BBD, ADBE, XYZ
+[discover] Evaluating MARA — MARA Holdings, Inc....
+[discover] Generating thesis for MARA via https://mc.lookandseen.com...
+[discover] Site API response for MARA: status=ok, thesisLen=4204
+[discover] MARA — upserted as p5762s3cpnj1npgw87m4khcnyx83177b
+[discover] Evaluating NIO — NIO Inc....
+[discover] Generating thesis for NIO via https://mc.lookandseen.com...
+[discover] Site API response for NIO: status=ok, thesisLen=4180
+[discover] NIO — upserted as p57e5fh6dvxa866cvaw7zjacz9830n8s
+[discover] Evaluating MU — Micron Technology, Inc....
+[discover] Generating thesis for MU via https://mc.lookandseen.com...
+[discover] Site API response for MU: status=ok, thesisLen=4335
+[discover] MU — upserted as p57amhmttz554dkv5b89vj4dan831vnq
+{
+  "ok": true,
+  "dryRun": false,
+  "date": "2026-03-16",
+  "discovered": 3,
+  "target": 3,
+  "shortfall": 0,
+  "tickers": [
+    "MARA",
+    "NIO",
+    "MU"
+  ],
+  "failures": [],
+  "results": [
+    {
+      "id": "p5762s3cpnj1npgw87m4khcnyx83177b",
+      "ticker": "MARA",
+      "name": "MARA Holdings, Inc.",
+      "opportunityType": "momentum_breakout",
+      "thesis": "POSITION SUMMARY — MARA (MARA Holdings, Inc.)\nTicker verified as MARA. Current price is $9.32. Verified market cap is $3.54B via quoteSummary.price.marketCap. Portfolio type: opportunity. Entry price: $9.32. Shares: N/A. P&L: 0.0%. Time horizon: 3-6 months. Refresh reason: New discovery: top_gainer, most_active..\n\nBULL CASE — MARA is only investable if the verified operating profile keeps improving faster than the market expects. The capital structure needs watching: $3.65B debt against $547.13M cash. Short interest sits at 38.6% of float, which can amplify both squeezes and downside if the thesis cracks.\n\nPEER COMPARABLE ANALYSIS — Peer data did not resolve cleanly in this run, so valuation framing should stay conservative. Subject company verified facts: revenue $907.09M, gross margin 48.0%, operating margin -598.8%, forward P/E N/A. Use that to decide whether the current valuation is cheap for the quality level or cheap for a reason.\n\nSIMPLIFIED DCF — With revenue at $907.09M and free cash flow at $-401.11M, the clean way to frame value is scenario-based instead of fake precision. BEAR: growth slows hard and valuation compresses. BASE: current growth and margin structure broadly hold. BULL: growth persists and operating leverage expands. The key point is that the present market cap is $3.54B; underwriting should start from that verified value, not from an invented target.\n\nKEY CATALYSTS WITH PROBABILITY WEIGHTING — 1) Execution against the current growth profile (-5.6% revenue growth) is the primary upside driver. 2) Balance-sheet durability and cash generation ($547.13M cash, $3.65B debt, $-401.11M FCF) determine whether the company can self-fund its thesis. 3) Market narrative can shift quickly if recent source flow is confirmed by filings and earnings rather than headlines alone.\n\nEARNINGS REVISION MOMENTUM — No clean estimate-revision read came through the feed, so treat earnings-momentum confidence as limited.\nRecent beat/miss history did not resolve cleanly",
+      "sources": [
+        {
+          "title": "MARA Holdings (MARA) Is Up 16.4% After 2025 Loss Spike And AI Pivot Beyond Bitcoin Mining – Has The Bull Case Changed?",
+          "url": "https://finance.yahoo.com/news/mara-holdings-mara-16-4-221035141.html?.tsrc=rss"
+        },
+        {
+          "title": "A Look At Marathon Digital Holdings (MARA)'s Valuation As Bullish Options Activity Builds Ahead Of May 7 Earnings",
+          "url": "https://finance.yahoo.com/news/look-marathon-digital-holdings-mara-011225268.html?.tsrc=rss"
+        },
+        {
+          "title": "MARA Holdings, Inc. (MARA) Target Lowered to $9 at Clear Street Amid Mining Challenges",
+          "url": "https://finance.yahoo.com/news/mara-holdings-inc-mara-target-125311722.html?.tsrc=rss"
+        },
+        {
+          "title": "Coinbase stock rises on bitcoin rally, Carvana approves stock split",
+          "url": "https://finance.yahoo.com/video/coinbase-stock-rises-bitcoin-rally-151501540.html?.tsrc=rss"
+        },
+        {
+          "title": "Mara Holdings call volume above normal and directionally bullish",
+          "url": "https://finance.yahoo.com/news/mara-holdings-call-volume-above-140509156.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "78% to analyst mean target",
+      "catalysts": [
+        "top_gainer",
+        "most_active"
+      ],
+      "risks": [
+        "See full thesis for detailed risk analysis"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 9.32,
+      "currentPrice": 9.32,
+      "priceUpdatedAt": 1773666007612,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p57e5fh6dvxa866cvaw7zjacz9830n8s",
+      "ticker": "NIO",
+      "name": "NIO Inc.",
+      "opportunityType": "momentum_breakout",
+      "thesis": "POSITION SUMMARY — NIO (NIO Inc.)\nTicker verified as NIO. Current price is $5.86. Verified market cap is $14.82B via quoteSummary.price.marketCap. Portfolio type: opportunity. Entry price: $5.86. Shares: N/A. P&L: 0.0%. Time horizon: 3-6 months. Refresh reason: New discovery: top_gainer, most_active..\n\nBULL CASE — NIO is only investable if the verified operating profile keeps improving faster than the market expects. Revenue growth is still strong at 75.9%, which keeps the upside case alive if that pace holds. The balance sheet is net-cash positive with $31.03B cash against $26.23B debt.\n\nPEER COMPARABLE ANALYSIS — Peer data did not resolve cleanly in this run, so valuation framing should stay conservative. Subject company verified facts: revenue $87.49B, gross margin 13.7%, operating margin 2.3%, forward P/E N/A. Use that to decide whether the current valuation is cheap for the quality level or cheap for a reason.\n\nSIMPLIFIED DCF — With revenue at $87.49B and free cash flow at N/A, the clean way to frame value is scenario-based instead of fake precision. BEAR: growth slows hard and valuation compresses. BASE: current growth and margin structure broadly hold. BULL: growth persists and operating leverage expands. The key point is that the present market cap is $14.82B; underwriting should start from that verified value, not from an invented target.\n\nKEY CATALYSTS WITH PROBABILITY WEIGHTING — 1) Execution against the current growth profile (75.9% revenue growth) is the primary upside driver. 2) Balance-sheet durability and cash generation ($31.03B cash, $26.23B debt, N/A FCF) determine whether the company can self-fund its thesis. 3) Market narrative can shift quickly if recent source flow is confirmed by filings and earnings rather than headlines alone.\n\nEARNINGS REVISION MOMENTUM — 0q: 4 analysts | EPS est -0.39 | 30d revisions 0 up / 0 down\n+1q: 4 analysts | EPS est -0.38 | 30d revisions 0 up / 0 down\n0y: 6 analysts | EPS est -1.73 | 30d revisions 0 up / 0 down\n174",
+      "sources": [
+        {
+          "title": "Adobe downgraded, Nio upgraded: Wall Street’s top analyst calls",
+          "url": "https://finance.yahoo.com/news/adobe-downgraded-nio-upgraded-wall-134216950.html?.tsrc=rss"
+        },
+        {
+          "title": "HSBC upgrades NIO to Buy, citing new cycle and improving earnings visibility",
+          "url": "https://finance.yahoo.com/news/hsbc-upgrades-nio-buy-citing-131844303.html?.tsrc=rss"
+        },
+        {
+          "title": "Nio CEO William Li Bets Big On In-House Chips, Battery Swaps Amid Strong Q4 Earnings",
+          "url": "https://finance.yahoo.com/news/nio-ceo-william-li-bets-013051167.html?.tsrc=rss"
+        },
+        {
+          "title": "NIO Inc (NIO) Climbs 22.6% as HSBC Goes ‘Buy’, Hikes Price Target by 42%",
+          "url": "https://finance.yahoo.com/news/nio-inc-nio-climbs-22-094112617.html?.tsrc=rss"
+        },
+        {
+          "title": "NIO Inc. (NIO) Rallies 5.6% on 42% Price Target, Rating Hike",
+          "url": "https://finance.yahoo.com/news/nio-inc-nio-rallies-5-021135628.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "11% to analyst mean target",
+      "catalysts": [
+        "top_gainer",
+        "most_active"
+      ],
+      "risks": [
+        "See full thesis for detailed risk analysis"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 5.86,
+      "currentPrice": 5.86,
+      "priceUpdatedAt": 1773666007612,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p57amhmttz554dkv5b89vj4dan831vnq",
+      "ticker": "MU",
+      "name": "Micron Technology, Inc.",
+      "opportunityType": "momentum_breakout",
+      "thesis": "POSITION SUMMARY — MU (Micron Technology, Inc.)\nTicker verified as MU. Current price is $426.13. Verified market cap is $479.61B via quoteSummary.price.marketCap. Portfolio type: opportunity. Entry price: $426.13. Shares: N/A. P&L: 0.0%. Time horizon: 3-6 months. Refresh reason: New discovery: top_gainer, most_active..\n\nBULL CASE — MU is only investable if the verified operating profile keeps improving faster than the market expects. Revenue growth is still strong at 56.7%, which keeps the upside case alive if that pace holds. Free cash flow is positive at $444.25M, so this is not purely a story stock. The capital structure needs watching: $12.49B debt against $10.32B cash.\n\nPEER COMPARABLE ANALYSIS — Peer data did not resolve cleanly in this run, so valuation framing should stay conservative. Subject company verified facts: revenue $42.31B, gross margin 45.3%, operating margin 45.0%, forward P/E 7.8. Use that to decide whether the current valuation is cheap for the quality level or cheap for a reason.\n\nSIMPLIFIED DCF — With revenue at $42.31B and free cash flow at $444.25M, the clean way to frame value is scenario-based instead of fake precision. BEAR: growth slows hard and valuation compresses. BASE: current growth and margin structure broadly hold. BULL: growth persists and operating leverage expands. The key point is that the present market cap is $479.61B; underwriting should start from that verified value, not from an invented target.\n\nKEY CATALYSTS WITH PROBABILITY WEIGHTING — 1) Execution against the current growth profile (56.7% revenue growth) is the primary upside driver. 2) Balance-sheet durability and cash generation ($10.32B cash, $12.49B debt, $444.25M FCF) determine whether the company can self-fund its thesis. 3) Market narrative can shift quickly if recent source flow is confirmed by filings and earnings rather than headlines alone.\n\nEARNINGS REVISION MOMENTUM — 0q: 28 analysts | EPS est 8.65 | 30d revisions 0 up / 0 down\n+1q: 28 analysts | EPS est",
+      "sources": [
+        {
+          "title": "Bernstein sees 20% upside in TSMC stock despite Middle East war",
+          "url": "https://finance.yahoo.com/news/bernstein-sees-20-upside-tsmc-121215181.html?.tsrc=rss"
+        },
+        {
+          "title": "Micron gains as leading brokers raise targets on continued pricing strength",
+          "url": "https://finance.yahoo.com/news/micron-gains-leading-brokers-raise-111132178.html?.tsrc=rss"
+        },
+        {
+          "title": "Here's How Much Micron Stock Is Expected to Move After Earnings",
+          "url": "https://www.investopedia.com/here-is-how-much-micron-stock-is-expected-to-move-after-earnings-mu-q2-fy2026-11922240?.tsrc=rss"
+        },
+        {
+          "title": "Fed Meeting, PPI, Nvidia Conference: What to Watch This Week",
+          "url": "https://finance.yahoo.com/m/db3489b3-aa26-39b3-8002-33fda3558155/fed-meeting%2C-ppi%2C-nvidia.html?.tsrc=rss"
+        },
+        {
+          "title": "Dow Jones Futures Rise As Oil Prices Hit Resistance At $100; Nvidia GTC, Micron Earnings Ahead",
+          "url": "https://finance.yahoo.com/m/cb03c9e2-36cb-3935-874a-11f3d5b70bb4/dow-jones-futures-rise-as-oil.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "0% to analyst mean target",
+      "catalysts": [
+        "top_gainer",
+        "most_active"
+      ],
+      "risks": [
+        "See full thesis for detailed risk analysis"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 426.13,
+      "currentPrice": 426.13,
+      "priceUpdatedAt": 1773666007612,
+      "returnPct": 0,
+      "status": "active"
+    }
+  ]
+}
+[2026-03-16 08:00:23] ok: discover-opportunities
+[2026-03-16 08:00:23] start: investment-home-refresh
+{
+  "ok": true,
+  "date": "2026-03-16",
+  "briefingCreated": false,
+  "macro": {
+    "vix": 24.96,
+    "dxy": 100.005,
+    "spread": 42
+  },
+  "seededEvents": 2
+}
+[2026-03-16 08:00:32] ok: investment-home-refresh
+[2026-03-16 08:00:32] done

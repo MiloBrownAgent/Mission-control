@@ -72,7 +72,9 @@ export const getStats = query({
     const todayTs = new Date(today).getTime();
     const newToday = active.filter((p) => p.createdAt >= todayTs);
     const priceDrops = active.filter((p) => p.flags?.includes("PRICE_DROP"));
-    const withPSF = active.filter((p) => p.pricePerSF);
+    // Filter out garbage $/SF values (Crexi sometimes reports units as sqft)
+    // Reasonable CRE range in MSP: $20-$1,000/SF
+    const withPSF = active.filter((p) => p.pricePerSF && p.pricePerSF >= 20 && p.pricePerSF <= 1000);
     const avgPriceSF =
       withPSF.length > 0
         ? withPSF.reduce((s, p) => s + p.pricePerSF!, 0) / withPSF.length
