@@ -365,125 +365,281 @@ Return at most 15 candidates. If you can't find good candidates, return fewer.`;
   }
 }
 
-// ── Thesis Generation via Site API (uses Vercel-hosted Claude) ──
+// ── Full Yahoo Data Fetch ──
+
+async function fetchFullYahooData(ticker) {
+  try {
+    const cookieRes = await fetch("https://fc.yahoo.com", { redirect: "manual" });
+    const cookie = cookieRes.headers.get("set-cookie") || "";
+    const crumbRes = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", {
+      headers: { "User-Agent": "Mozilla/5.0", Cookie: cookie },
+    });
+    const crumb = crumbRes.ok ? await crumbRes.text() : "";
+    const cp = crumb ? `&crumb=${encodeURIComponent(crumb)}` : "";
+
+    const modules = "assetProfile,price,financialData,defaultKeyStatistics,recommendationTrend,earningsTrend";
+    const res = await fetch(
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=${modules}${cp}`,
+      { headers: { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) }, signal: AbortSignal.timeout(15_000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const r = data?.quoteSummary?.result?.[0];
+    if (!r) return null;
+
+    const fmtB = (v) => v ? `$${(v / 1e9).toFixed(2)}B` : "N/A";
+    const fmtPct = (v) => v != null ? `${(v * 100).toFixed(1)}%` : "N/A";
+
+    return {
+      // Company info
+      sector: r.assetProfile?.sector,
+      industry: r.assetProfile?.industry,
+      employees: r.assetProfile?.fullTimeEmployees,
+      website: r.assetProfile?.website,
+      summary: r.assetProfile?.longBusinessSummary,
+      // Price
+      price: r.price?.regularMarketPrice?.raw,
+      marketCap: r.price?.marketCap?.raw,
+      marketCapFmt: fmtB(r.price?.marketCap?.raw),
+      // Financials
+      revenue: r.financialData?.totalRevenue?.raw,
+      revenueFmt: fmtB(r.financialData?.totalRevenue?.raw),
+      revenueGrowth: r.financialData?.revenueGrowth?.raw,
+      revenueGrowthFmt: fmtPct(r.financialData?.revenueGrowth?.raw),
+      grossMargin: fmtPct(r.financialData?.grossMargins?.raw),
+      operatingMargin: fmtPct(r.financialData?.operatingMargins?.raw),
+      profitMargin: fmtPct(r.financialData?.profitMargins?.raw),
+      freeCashflow: r.financialData?.freeCashflow?.raw,
+      freeCashflowFmt: fmtB(r.financialData?.freeCashflow?.raw),
+      totalDebt: fmtB(r.financialData?.totalDebt?.raw),
+      totalCash: fmtB(r.financialData?.totalCash?.raw),
+      // Valuation
+      trailingPE: r.defaultKeyStatistics?.trailingPE?.raw?.toFixed(1),
+      forwardPE: r.defaultKeyStatistics?.forwardPE?.raw?.toFixed(1),
+      pegRatio: r.defaultKeyStatistics?.pegRatio?.raw?.toFixed(2),
+      priceToBook: r.defaultKeyStatistics?.priceToBook?.raw?.toFixed(2),
+      // Analyst
+      targetMean: r.financialData?.targetMeanPrice?.raw,
+      targetHigh: r.financialData?.targetHighPrice?.raw,
+      targetLow: r.financialData?.targetLowPrice?.raw,
+      recommendation: r.financialData?.recommendationKey,
+      numAnalysts: r.financialData?.numberOfAnalystOpinions?.raw,
+      // Short interest
+      shortPctFloat: r.defaultKeyStatistics?.shortPercentOfFloat?.raw,
+      shortPctFloatFmt: fmtPct(r.defaultKeyStatistics?.shortPercentOfFloat?.raw),
+      // Earnings
+      earningsTrend: r.earningsTrend?.trend?.map((t) => ({
+        period: t.period,
+        growth: t.growth?.raw,
+        estimate: t.earningsEstimate?.avg?.raw,
+        upRevisions: (t.earningsEstimate?.upLast30days?.raw || 0),
+        downRevisions: (t.earningsEstimate?.downLast30days?.raw || 0),
+      })),
+    };
+  } catch (err) {
+    console.error(`[discover] Full Yahoo data fetch failed for ${ticker}: ${err.message}`);
+    return null;
+  }
+}
+
+async function fetchYahooNews(ticker) {
+  try {
+    const rssUrl = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${ticker}&region=US&lang=en-US`;
+    const res = await fetch(rssUrl, { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const items = xml.split("<item>").slice(1, 8);
+    return items.map((item) => {
+      const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/);
+      const linkMatch = item.match(/<link>(.*?)<\/link>/);
+      return {
+        title: (titleMatch?.[1] || titleMatch?.[2] || "").replace(/&amp;/g, "&"),
+        url: linkMatch?.[1] || "",
+      };
+    }).filter((a) => a.title && a.url);
+  } catch { return []; }
+}
+
+// ── Thesis Generation via Site API ──
 
 async function generateThesis(candidate, yahooData) {
-  // Use the site's generate-thesis endpoint which has its own API keys
+  const ticker = candidate.ticker;
+
+  // Fetch rich data
+  const [fullData, news] = await Promise.all([
+    fetchFullYahooData(ticker),
+    fetchYahooNews(ticker),
+  ]);
+
+  const d = fullData || {};
+  const price = yahooData.price || d.price;
+
+  // Build data-rich context for thesis generation
+  const dataBlock = [
+    `TICKER: ${ticker}`,
+    `NAME: ${candidate.name}`,
+    `PRICE: $${price?.toFixed(2) || "N/A"}`,
+    `MARKET CAP: ${d.marketCapFmt || "N/A"}`,
+    `SECTOR: ${d.sector || "N/A"} | INDUSTRY: ${d.industry || "N/A"}`,
+    `REVENUE: ${d.revenueFmt || "N/A"} | REVENUE GROWTH: ${d.revenueGrowthFmt || "N/A"}`,
+    `GROSS MARGIN: ${d.grossMargin || "N/A"} | OPERATING MARGIN: ${d.operatingMargin || "N/A"}`,
+    `FREE CASH FLOW: ${d.freeCashflowFmt || "N/A"}`,
+    `TOTAL CASH: ${d.totalCash || "N/A"} | TOTAL DEBT: ${d.totalDebt || "N/A"}`,
+    `TRAILING P/E: ${d.trailingPE || "N/A"} | FORWARD P/E: ${d.forwardPE || "N/A"} | PEG: ${d.pegRatio || "N/A"}`,
+    `52W HIGH: $${yahooData.fiftyTwoWeekHigh?.toFixed(2) || "N/A"} | 52W LOW: $${yahooData.fiftyTwoWeekLow?.toFixed(2) || "N/A"}`,
+    `ANALYST TARGET: Mean $${d.targetMean || "N/A"} (Low $${d.targetLow || "N/A"} / High $${d.targetHigh || "N/A"}) | ${d.numAnalysts || 0} analysts | Consensus: ${d.recommendation || "N/A"}`,
+    `SHORT % OF FLOAT: ${d.shortPctFloatFmt || "N/A"}`,
+    `DISCOVERY SIGNALS: ${candidate.signals?.join(", ") || "N/A"}`,
+    d.employees ? `EMPLOYEES: ${d.employees.toLocaleString()}` : null,
+  ].filter(Boolean).join("\n");
+
+  const newsBlock = news.length > 0
+    ? "\nRECENT NEWS:\n" + news.slice(0, 5).map((n) => `- ${n.title}`).join("\n")
+    : "";
+
+  // Calculate upside to analyst target
+  const upsidePct = d.targetMean && price
+    ? Math.round(((d.targetMean - price) / price) * 100)
+    : null;
+
+  // Use site API for AI-generated thesis
   try {
-    console.error(`[discover] Generating thesis for ${candidate.ticker} via ${SITE_URL}...`);
-    const res = await fetch(`${SITE_URL}/api/investments/generate-thesis`, {
+    console.error(`[discover] Generating thesis for ${ticker} via ${SITE_URL}...`);
+    const res = await fetch(`${SITE_URL}/api/investments/opportunity-thesis`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ticker: candidate.ticker,
-        name: candidate.name,
-        positionId: null,
-        portfolioType: "opportunity",
-        shares: 0,
-        entryPrice: yahooData.price || 0,
-        timeHorizon: "3-6 months",
-        refreshReason: `New discovery: ${candidate.signals?.join(", ") || "screener hit"}. ${candidate.reason || ""}`.trim(),
-      }),
-      signal: AbortSignal.timeout(60_000),
-    });
-
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => "");
-      console.error(`[discover] Site thesis API error for ${candidate.ticker}: ${res.status} ${errBody.slice(0, 300)}`);
-      // Fall back to direct Claude if site fails
-      return generateThesisDirect(candidate, yahooData);
-    }
-
-    const data = await res.json();
-    console.error(`[discover] Site API response for ${candidate.ticker}: status=${data.status}, thesisLen=${data.thesis?.length || 0}`);
-    if (data.thesis) {
-      // The site returns a full-text thesis; extract structured data from verifiedFacts
-      const vf = data.verifiedFacts || {};
-      const sources = (data.sources || []).slice(0, 5).map((s) => ({
-        title: s.title || s.publisher || "Source",
-        url: s.url || "",
-      }));
-      return {
-        thesis: data.thesis.slice(0, 2000), // Truncate for opportunity card
-        opportunityType: candidate.signals?.includes("undervalued_growth") ? "contrarian_recovery"
-          : candidate.signals?.includes("top_gainer") ? "momentum_breakout"
-          : "growth_catalyst",
-        expectedUpside: vf.targetMeanPrice && vf.currentPrice
-          ? `${Math.round(((vf.targetMeanPrice - vf.currentPrice) / vf.currentPrice) * 100)}% to analyst mean target`
-          : "See thesis for details",
-        catalysts: candidate.signals || [],
-        risks: ["See full thesis for detailed risk analysis"],
-        timeHorizon: "3-6 months",
-        moralScreenPass: true,
-        sources,
-      };
-    }
-    return null;
-  } catch (err) {
-    console.error(`[discover] Site thesis error for ${candidate.ticker}: ${err.message}`);
-    return generateThesisDirect(candidate, yahooData);
-  }
-}
-
-async function generateThesisDirect(candidate, yahooData) {
-  if (!ANTHROPIC_API_KEY) {
-    console.error(`[discover] No ANTHROPIC_API_KEY — cannot generate thesis directly for ${candidate.ticker}`);
-    return null;
-  }
-
-  const context = {
-    ticker: candidate.ticker,
-    name: candidate.name,
-    discoveryReason: candidate.reason,
-    signals: candidate.signals,
-    ...yahooData,
-  };
-
-  const prompt = `You are a sharp, direct investment analyst. Write a concise opportunity thesis for this stock. Be specific about WHY this is an opportunity RIGHT NOW — what's the catalyst, what's mispriced, what does the market not see?
-
-Stock data:
-${JSON.stringify(context, null, 2)}
-
-Return ONLY a JSON object, no other text:
-{
-  "thesis": "2-4 sentence thesis explaining specifically why this is an opportunity now. Be concrete about catalysts, valuation gaps, or market mispricing. No generic filler.",
-  "opportunityType": "one of: growth_catalyst, momentum_breakout, contrarian_recovery, asymmetric_setup, earnings_momentum, sector_rotation, event_driven, secular_growth, catalyst_pullback, growth_inflection",
-  "expectedUpside": "e.g. 30-60% (6-12 months)",
-  "catalysts": ["specific catalyst 1", "specific catalyst 2", "specific catalyst 3"],
-  "risks": ["specific risk 1", "specific risk 2", "specific risk 3"],
-  "timeHorizon": "e.g. 3-6 months",
-  "moralScreenPass": true,
-  "sources": [{"title": "Source Name", "url": "https://..."}]
-}
-
-If the company is involved in surveillance, weapons targeting, or social media manipulation (like Palantir or Meta), set moralScreenPass to false.`;
-
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1500,
-        messages: [{ role: "user", content: prompt }],
-      }),
+      body: JSON.stringify({ ticker, name: candidate.name, dataBlock, newsBlock }),
       signal: AbortSignal.timeout(45_000),
     });
 
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text = data.content?.[0]?.text || "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return null;
-    return JSON.parse(jsonMatch[0]);
+    if (res.ok) {
+      const result = await res.json();
+      if (result.thesis) {
+        return {
+          thesis: result.thesis,
+          opportunityType: result.opportunityType || guessOpportunityType(candidate),
+          expectedUpside: upsidePct ? `${upsidePct}% to analyst mean ($${d.targetMean})` : (result.expectedUpside || "TBD"),
+          catalysts: result.catalysts || [],
+          risks: result.risks || [],
+          timeHorizon: result.timeHorizon || "3-6 months",
+          moralScreenPass: result.moralScreenPass !== false,
+          sources: news.slice(0, 5),
+        };
+      }
+    }
   } catch (err) {
-    console.error(`[discover] Direct thesis error for ${candidate.ticker}: ${err.message}`);
-    return null;
+    console.error(`[discover] Site thesis error for ${ticker}: ${err.message}`);
   }
+
+  // Fallback: build a deterministic data-driven thesis (no AI needed)
+  console.error(`[discover] Using deterministic thesis for ${ticker}`);
+  return buildDeterministicThesis(candidate, yahooData, d, news, upsidePct);
+}
+
+function guessOpportunityType(candidate) {
+  const s = candidate.signals || [];
+  if (s.includes("undervalued_growth")) return "contrarian_recovery";
+  if (s.includes("top_gainer")) return "momentum_breakout";
+  if (s.includes("most_active")) return "growth_catalyst";
+  return "growth_catalyst";
+}
+
+function buildDeterministicThesis(candidate, yahooData, d, news, upsidePct) {
+  const ticker = candidate.ticker;
+  const price = yahooData.price || d.price;
+  const lines = [];
+
+  // Key metrics header
+  lines.push(`MARKET CAP: ${d.marketCapFmt || "N/A"} | REVENUE: ${d.revenueFmt || "N/A"} | GROWTH: ${d.revenueGrowthFmt || "N/A"}`);
+  lines.push(`P/E (FWD): ${d.forwardPE || "N/A"} | GROSS MARGIN: ${d.grossMargin || "N/A"} | FCF: ${d.freeCashflowFmt || "N/A"}`);
+  if (d.targetMean && price) {
+    lines.push(`ANALYST TARGET: $${d.targetMean} mean (${upsidePct >= 0 ? "+" : ""}${upsidePct}%) | ${d.numAnalysts || 0} analysts | Consensus: ${(d.recommendation || "N/A").toUpperCase()}`);
+  }
+  lines.push("");
+
+  // Why it showed up
+  const signals = candidate.signals || [];
+  if (signals.length > 0) {
+    const signalDescriptions = signals.map((s) => {
+      if (s === "trending") return "trending on Yahoo Finance";
+      if (s === "top_gainer") return "top daily gainer";
+      if (s === "most_active") return "unusual volume / most active";
+      if (s === "undervalued_growth") return "flagged as undervalued growth";
+      if (s === "news_mention") return "recent news catalyst";
+      return s;
+    });
+    lines.push(`DISCOVERY: Surfaced because it is ${signalDescriptions.join(" + ")}.`);
+  }
+
+  // Valuation context
+  if (d.forwardPE && parseFloat(d.forwardPE) < 15) {
+    lines.push(`VALUATION: Forward P/E of ${d.forwardPE} is below market average, suggesting the market is underpricing growth or earnings power.`);
+  } else if (d.forwardPE && parseFloat(d.forwardPE) > 40) {
+    lines.push(`VALUATION: Forward P/E of ${d.forwardPE} is elevated — market is pricing in significant growth. Execution risk is high.`);
+  }
+
+  // Growth profile
+  if (d.revenueGrowth != null) {
+    const g = (d.revenueGrowth * 100).toFixed(1);
+    if (d.revenueGrowth > 0.2) {
+      lines.push(`GROWTH: Revenue growing ${g}% YoY — strong top-line expansion.`);
+    } else if (d.revenueGrowth > 0) {
+      lines.push(`GROWTH: Revenue growing ${g}% YoY — moderate but positive.`);
+    } else {
+      lines.push(`GROWTH: Revenue declining ${g}% YoY — turnaround story or structural challenge.`);
+    }
+  }
+
+  // Balance sheet
+  if (d.totalCash !== "N/A" && d.totalDebt !== "N/A") {
+    lines.push(`BALANCE SHEET: ${d.totalCash} cash vs ${d.totalDebt} debt. FCF: ${d.freeCashflowFmt || "N/A"}.`);
+  }
+
+  // 52-week range context
+  if (yahooData.fiftyTwoWeekHigh && yahooData.fiftyTwoWeekLow && price) {
+    const range = yahooData.fiftyTwoWeekHigh - yahooData.fiftyTwoWeekLow;
+    const position = range > 0 ? ((price - yahooData.fiftyTwoWeekLow) / range * 100).toFixed(0) : 50;
+    lines.push(`RANGE: Trading at ${position}% of 52-week range ($${yahooData.fiftyTwoWeekLow.toFixed(2)} - $${yahooData.fiftyTwoWeekHigh.toFixed(2)}).`);
+  }
+
+  // Short interest
+  if (d.shortPctFloat != null && d.shortPctFloat > 0.05) {
+    lines.push(`SHORT INTEREST: ${d.shortPctFloatFmt} of float is short — potential squeeze catalyst or bearish signal to investigate.`);
+  }
+
+  const thesis = lines.join("\n");
+
+  // Build real catalysts from data
+  const catalysts = [];
+  if (upsidePct && upsidePct > 20) catalysts.push(`${upsidePct}% upside to analyst consensus target of $${d.targetMean}`);
+  if (d.revenueGrowth > 0.15) catalysts.push(`Strong revenue growth at ${(d.revenueGrowth * 100).toFixed(1)}% YoY`);
+  if (d.forwardPE && parseFloat(d.forwardPE) < 15) catalysts.push(`Low forward P/E of ${d.forwardPE} — potential value unlock`);
+  if (d.earningsTrend) {
+    const nextQ = d.earningsTrend.find((t) => t.period === "+1q");
+    if (nextQ?.upRevisions > nextQ?.downRevisions) catalysts.push(`Positive earnings revision momentum (${nextQ.upRevisions} up vs ${nextQ.downRevisions} down last 30d)`);
+  }
+  if (news.length > 0) catalysts.push(`Recent news flow: ${news[0].title.slice(0, 80)}`);
+  if (catalysts.length === 0) catalysts.push("Screener signal — requires further catalyst identification");
+
+  // Build real risks from data
+  const risks = [];
+  if (d.forwardPE && parseFloat(d.forwardPE) > 40) risks.push(`Elevated valuation (${d.forwardPE}x forward P/E) leaves little margin of safety`);
+  if (d.revenueGrowth != null && d.revenueGrowth < 0) risks.push(`Revenue declining ${(d.revenueGrowth * 100).toFixed(1)}% — fundamental deterioration risk`);
+  if (d.operatingMargin && parseFloat(d.operatingMargin) < 0) risks.push(`Unprofitable at operating level (${d.operatingMargin} margin)`);
+  if (d.shortPctFloat > 0.1) risks.push(`High short interest (${d.shortPctFloatFmt}) — bears see something`);
+  if (d.totalDebt !== "N/A" && d.totalCash !== "N/A") risks.push(`Balance sheet: ${d.totalDebt} debt vs ${d.totalCash} cash`);
+  if (risks.length === 0) risks.push("Standard market and execution risk — no specific red flags identified");
+
+  return {
+    thesis,
+    opportunityType: guessOpportunityType(candidate),
+    expectedUpside: upsidePct ? `${upsidePct}% to analyst mean ($${d.targetMean})` : "TBD — insufficient analyst coverage",
+    catalysts,
+    risks,
+    timeHorizon: "3-6 months",
+    moralScreenPass: true,
+    sources: news.slice(0, 5),
+  };
 }
 
 // ── Main ──
