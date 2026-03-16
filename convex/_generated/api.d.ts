@@ -41,6 +41,7 @@ import type * as pipeline from "../pipeline.js";
 import type * as polymarket from "../polymarket.js";
 import type * as prospectEmails from "../prospectEmails.js";
 import type * as protocolNotes from "../protocolNotes.js";
+import type * as recommendations from "../recommendations.js";
 import type * as seed from "../seed.js";
 import type * as seedCrm from "../seedCrm.js";
 import type * as signals from "../signals.js";
@@ -94,6 +95,7 @@ declare const fullApi: ApiFromModules<{
   polymarket: typeof polymarket;
   prospectEmails: typeof prospectEmails;
   protocolNotes: typeof protocolNotes;
+  recommendations: typeof recommendations;
   seed: typeof seed;
   seedCrm: typeof seedCrm;
   signals: typeof signals;

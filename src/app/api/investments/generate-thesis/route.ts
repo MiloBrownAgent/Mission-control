@@ -1019,9 +1019,13 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { ticker, name, positionId, portfolioType, shares, entryPrice, timeHorizon, refreshReason } = body;
 
-  if (!ticker || !positionId) {
-    return NextResponse.json({ error: "Missing ticker or positionId" }, { status: 400 });
+  if (!ticker) {
+    return NextResponse.json({ error: "Missing ticker" }, { status: 400 });
   }
+
+  // When positionId is absent, we're in "discovery mode" — generate thesis and return it
+  // without writing to a position
+  const discoveryMode = !positionId;
 
   console.log(`\n📊 Deep thesis generation for ${ticker} (${name})${refreshReason ? ` — ${refreshReason}` : ""}...`);
 
@@ -1040,16 +1044,18 @@ export async function POST(req: NextRequest) {
   const verification = buildVerifiedFacts(ticker, name, priceData, profileData);
   if (!verification.ok) {
     const thesis = buildPartialThesisFromFacts(null, verification.errors, [], priceData, entryPrice, "N/A");
-    await convexMutation("investments:updatePosition", {
-      id: positionId,
-      thesis,
-      thesisStatus: "partial",
-      thesisValidationIssues: verification.errors,
-      verifiedFacts: undefined,
-      thesisSources: [],
-      thesisGeneratedAt: Date.now(),
-    });
-    return NextResponse.json({ status: "partial", ticker, errors: verification.errors }, { status: 422 });
+    if (!discoveryMode) {
+      await convexMutation("investments:updatePosition", {
+        id: positionId,
+        thesis,
+        thesisStatus: "partial",
+        thesisValidationIssues: verification.errors,
+        verifiedFacts: undefined,
+        thesisSources: [],
+        thesisGeneratedAt: Date.now(),
+      });
+    }
+    return NextResponse.json({ status: "partial", ticker, thesis, errors: verification.errors }, { status: 422 });
   }
 
   const verifiedFacts = verification.facts;
@@ -1219,66 +1225,76 @@ Critical rules: 1) Use the VERIFIED FACTS block exactly for current price and ma
     if (!fallbackValidation.ok) {
       console.log(`  ⚠️ Deterministic fallback validation failed: ${fallbackValidation.issues.join("; ")}`);
       const partialThesis = buildPartialThesisFromFacts(verifiedFacts, ["LLM synthesis failed", ...fallbackValidation.issues], worthyArticles, priceData, entryPrice, pnlPct);
+      if (!discoveryMode) {
+        await convexMutation("investments:updatePosition", {
+          id: positionId,
+          thesis: partialThesis,
+          thesisStatus: "partial",
+          thesisValidationIssues: ["LLM synthesis failed", ...fallbackValidation.issues],
+          verifiedFacts,
+          thesisSources: sources,
+          thesisGeneratedAt: Date.now(),
+        });
+      }
+
+      return NextResponse.json({ status: "partial", ticker, thesis: partialThesis, message: "Research saved, deterministic fallback failed validation", sources }, { status: 422 });
+    }
+
+    if (!discoveryMode) {
       await convexMutation("investments:updatePosition", {
         id: positionId,
-        thesis: partialThesis,
-        thesisStatus: "partial",
-        thesisValidationIssues: ["LLM synthesis failed", ...fallbackValidation.issues],
+        thesis: fallbackThesis,
+        thesisStatus: "final",
+        thesisValidationIssues: [],
         verifiedFacts,
         thesisSources: sources,
         thesisGeneratedAt: Date.now(),
       });
-
-      return NextResponse.json({ status: "partial", message: "Research saved, deterministic fallback failed validation" }, { status: 422 });
     }
 
-    await convexMutation("investments:updatePosition", {
-      id: positionId,
-      thesis: fallbackThesis,
-      thesisStatus: "final",
-      thesisValidationIssues: [],
-      verifiedFacts,
-      thesisSources: sources,
-      thesisGeneratedAt: Date.now(),
-    });
-
-    return NextResponse.json({ status: "ok", ticker, model: "deterministic-fallback", sourcesCount: sources.length, thesisLength: fallbackThesis.length, verifiedFacts });
+    return NextResponse.json({ status: "ok", ticker, thesis: fallbackThesis, model: "deterministic-fallback", sourcesCount: sources.length, thesisLength: fallbackThesis.length, verifiedFacts, sources });
   }
 
   const thesisValidation = validateGeneratedThesis(thesis, verifiedFacts);
   if (!thesisValidation.ok) {
     console.log(`  ⚠️ Thesis validation failed: ${thesisValidation.issues.join("; ")}`);
     const partialThesis = buildPartialThesisFromFacts(verifiedFacts, thesisValidation.issues, worthyArticles, priceData, entryPrice, pnlPct);
+    if (!discoveryMode) {
+      await convexMutation("investments:updatePosition", {
+        id: positionId,
+        thesis: partialThesis,
+        thesisStatus: "partial",
+        thesisValidationIssues: thesisValidation.issues,
+        verifiedFacts,
+        thesisSources: sources,
+        thesisGeneratedAt: Date.now(),
+      });
+    }
+    return NextResponse.json({ status: "partial", ticker, thesis: partialThesis, issues: thesisValidation.issues, sources }, { status: 422 });
+  }
+
+  if (!discoveryMode) {
     await convexMutation("investments:updatePosition", {
       id: positionId,
-      thesis: partialThesis,
-      thesisStatus: "partial",
-      thesisValidationIssues: thesisValidation.issues,
+      thesis,
+      thesisStatus: "final",
+      thesisValidationIssues: [],
       verifiedFacts,
       thesisSources: sources,
       thesisGeneratedAt: Date.now(),
     });
-    return NextResponse.json({ status: "partial", ticker, issues: thesisValidation.issues }, { status: 422 });
   }
 
-  await convexMutation("investments:updatePosition", {
-    id: positionId,
-    thesis,
-    thesisStatus: "final",
-    thesisValidationIssues: [],
-    verifiedFacts,
-    thesisSources: sources,
-    thesisGeneratedAt: Date.now(),
-  });
-
-  console.log(`  ✅ Thesis saved for ${ticker} with ${sources.length} sources`);
+  console.log(`  ✅ Thesis ${discoveryMode ? "generated" : "saved"} for ${ticker} with ${sources.length} sources`);
 
   return NextResponse.json({
     status: "ok",
     ticker,
+    thesis,
     model: usedModel,
     sourcesCount: sources.length,
     thesisLength: thesis.length,
     verifiedFacts,
+    sources,
   });
 }

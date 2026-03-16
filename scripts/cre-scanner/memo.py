@@ -102,15 +102,16 @@ Property data:
 Source: {source_name}
 
 Write the memo with these sections (use markdown headings):
-## Investment Thesis — 2-3 sentences on why this property is or isn't worth pursuing
+## Why This Is An Opportunity — Lead with the specific reason this property stands out. What market inefficiency, pricing dislocation, or catalyst makes this worth attention RIGHT NOW? Be concrete: is it underpriced vs. assessed value? A distressed seller? Below-market $/SF for the submarket? Zoning upside? Don't be generic — explain the specific edge.
 ## Key Metrics — markdown table with all available metrics
 ## Risk Analysis — specific risks based on the data (not generic boilerplate)
-## Recommendation — clear BUY/INVESTIGATE/MONITOR/PASS signal with reasoning
+## Recommendation — clear BUY/INVESTIGATE/MONITOR/PASS signal with 1-2 sentence reasoning
 
 Guidelines:
 - Score {score}/100 context: 75+ = strong, 60-74 = worth investigating, 45-59 = monitor, <45 = pass
-- If it's a distressed asset (sheriff sale, tax forfeiture, court filing), highlight the opportunity and extra due diligence needed
-- If assessed value is available, analyze the ask-to-assessed ratio
+- If it's a distressed asset (sheriff sale, tax forfeiture, court filing), explain the discount mechanism and what due diligence is needed
+- If assessed value is available, analyze the ask-to-assessed ratio as a value signal
+- Compare $/SF to typical submarket rates when possible
 - Keep it under 400 words
 - End with source attribution"""
 
@@ -141,54 +142,94 @@ def _generate_template_memo(prop: dict) -> str:
     score = prop.get("score", 50)
     justification = prop.get("scoreJustification", "")
 
-    # ── Investment Thesis ──
-    lines.append("## Investment Thesis")
+    # ── Why This Is An Opportunity ──
+    lines.append("## Why This Is An Opportunity")
     lines.append("")
+
+    source = prop.get("source", "")
+    price_per_sf = prop.get("pricePerSF")
+    assessed = prop.get("assessedValue")
+    cap_rate = prop.get("capRate")
+    days_on = prop.get("daysOnMarket")
+
+    # Build specific opportunity reasons
+    opp_reasons = []
+
+    if assessed and price and assessed > 0:
+        ratio = price / assessed
+        if ratio < 0.7:
+            opp_reasons.append(
+                f"Priced at just {ratio:.0%} of county assessed value (${assessed:,}) — "
+                f"a significant discount that suggests motivated seller or market dislocation"
+            )
+        elif ratio < 0.9:
+            opp_reasons.append(
+                f"Listed below county assessed value ({ratio:.0%} of ${assessed:,}) — "
+                f"potential value buy if condition supports it"
+            )
+
+    if source in ("hennepin_sheriff", "ramsey_sheriff"):
+        opp_reasons.append(
+            "Sheriff sale property — forced liquidation typically means "
+            "deep discount to market. Requires due diligence on liens, title, and condition"
+        )
+    elif source in ("hennepin_tax", "ramsey_tax"):
+        opp_reasons.append(
+            "Tax-forfeited property — government-seized and sold below market. "
+            "Clear title typically guaranteed, but inspect thoroughly"
+        )
+    elif source == "court_filing":
+        opp_reasons.append(
+            "Court-ordered sale (receivership/bankruptcy) — motivated seller "
+            "with court oversight creates potential for deep discount"
+        )
+
+    if cap_rate and cap_rate > 8:
+        opp_reasons.append(
+            f"Cap rate of {cap_rate}% is well above market average — "
+            f"strong cash flow if tenancy is stable"
+        )
+
+    if days_on and days_on > 120:
+        opp_reasons.append(
+            f"Sitting on market {days_on} days — potential negotiating leverage "
+            f"on price with a motivated seller"
+        )
+
+    if price_per_sf and price_per_sf < 80:
+        opp_reasons.append(
+            f"At ${price_per_sf:.0f}/SF, this is priced below typical MSP "
+            f"commercial rates — possible value play"
+        )
 
     if score >= 75:
         lines.append(
-            f"**Strong opportunity.** {address} scores {score}/100 — "
-            f"this property stands out in the current Minneapolis/St. Paul market."
+            f"**Strong opportunity** (score {score}/100). "
+            f"This property stands out in the Minneapolis/St. Paul market for specific reasons:"
         )
     elif score >= 60:
         lines.append(
-            f"**Worth investigating.** {address} scores {score}/100 — "
-            f"several favorable indicators make this worth a closer look."
+            f"**Worth investigating** (score {score}/100). "
+            f"Several indicators make this worth a closer look:"
         )
     else:
         lines.append(
-            f"**Market-rate opportunity.** {address} scores {score}/100 — "
-            f"fairly priced but limited upside signals at current ask."
+            f"**Monitor** (score {score}/100). "
+            f"Limited standout factors at current pricing, but worth tracking:"
         )
 
     lines.append("")
-    if justification:
+
+    if opp_reasons:
+        for reason in opp_reasons:
+            lines.append(f"- {reason}")
+    elif justification:
         for reason in justification.split("; "):
             lines.append(f"- {reason}")
-        lines.append("")
+    else:
+        lines.append(f"- Scoring driven by property type, location, and market positioning")
 
-    source = prop.get("source", "")
-    if source in ("hennepin_sheriff", "ramsey_sheriff"):
-        lines.append(
-            "**Distressed Asset:** Sheriff sale property. Expect significant "
-            "discount to market value. Due diligence on liens, title, and "
-            "property condition is critical."
-        )
-        lines.append("")
-    elif source in ("hennepin_tax", "ramsey_tax"):
-        lines.append(
-            "**Tax Forfeiture:** Government-seized property available at "
-            "below-market pricing. Clear title typically guaranteed. "
-            "Inspect thoroughly before bidding."
-        )
-        lines.append("")
-    elif source == "court_filing":
-        lines.append(
-            "**Court-Ordered Sale:** Receivership or bankruptcy disposition. "
-            "Motivated seller with court oversight. Potential for deep discount "
-            "but timeline may be uncertain."
-        )
-        lines.append("")
+    lines.append("")
 
     # ── Key Metrics ──
     lines.append("## Key Metrics")

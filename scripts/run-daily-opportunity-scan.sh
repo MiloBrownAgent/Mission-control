@@ -88,6 +88,34 @@ run_step() {
 
 cd "$ROOT"
 
+# Pull API keys from environment or OpenClaw auth
+if [ -z "${BRAVE_API_KEY:-}" ]; then
+  BRAVE_API_KEY=$(/opt/homebrew/bin/python3 -c "
+import json
+with open('$HOME/.openclaw/agents/infrastructure/agent/auth-profiles.json') as f:
+    d = json.load(f)
+print(d['profiles'].get('brave:default', {}).get('token', ''))
+" 2>/dev/null || true)
+  export BRAVE_API_KEY
+fi
+
+if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+  ANTHROPIC_API_KEY=$(/opt/homebrew/bin/python3 -c "
+import json
+with open('$HOME/.openclaw/agents/infrastructure/agent/auth-profiles.json') as f:
+    d = json.load(f)
+print(d['profiles']['anthropic:default']['token'])
+" 2>/dev/null || true)
+  export ANTHROPIC_API_KEY
+fi
+
 echo "[$TS] start" >> "$LOG_FILE"
+
+# Step 1: Refresh existing opportunity theses + prices
 run_step "daily-opportunity-scan" 240 "$NODE_BIN" scripts/daily-opportunity-scan.js
+
+# Step 2: Discover 3 new opportunities (requires Brave + Anthropic keys)
+run_step "discover-opportunities" 300 "$NODE_BIN" scripts/discover-opportunities.js
+
+# Step 3: Refresh the investment home page
 run_step "investment-home-refresh" 180 "$NODE_BIN" scripts/investment-home-refresh.js

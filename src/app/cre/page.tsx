@@ -934,8 +934,8 @@ function PropertyDetail({ property }: { property: any }) {
           <p className="text-xs font-semibold text-[#B8956A] uppercase tracking-wider mb-3">
             Investment Memo
           </p>
-          <div className="text-sm text-[#E8E4DF]/80 whitespace-pre-wrap leading-relaxed">
-            {property.investmentMemo}
+          <div className="text-sm text-[#E8E4DF]/80 leading-relaxed cre-memo">
+            <MarkdownContent content={property.investmentMemo} />
           </div>
         </div>
       )}
@@ -1098,6 +1098,224 @@ function PropertyDetail({ property }: { property: any }) {
 /* ═══════════════════════════════════════════════════════════
    SHARED COMPONENTS
    ═══════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════
+   MARKDOWN RENDERER (lightweight — no external dependency)
+   ═══════════════════════════════════════════════════════════ */
+
+function MarkdownContent({ content }: { content: string }) {
+  const lines = content.split("\n");
+  const elements: React.ReactNode[] = [];
+  let tableRows: string[][] = [];
+  let tableHeaders: string[] = [];
+  let inTable = false;
+  let key = 0;
+
+  const flushTable = () => {
+    if (tableHeaders.length > 0) {
+      elements.push(
+        <div key={key++} className="overflow-x-auto my-3">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-[#1A1816]">
+                {tableHeaders.map((h, i) => (
+                  <th
+                    key={i}
+                    className="px-3 py-2 text-left font-medium text-[#6B6560]"
+                  >
+                    {h.trim()}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.map((row, ri) => (
+                <tr key={ri} className="border-b border-[#1A1816]/50">
+                  {row.map((cell, ci) => (
+                    <td key={ci} className="px-3 py-2 text-[#E8E4DF]">
+                      <InlineMarkdown text={cell.trim()} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    tableHeaders = [];
+    tableRows = [];
+    inTable = false;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Table separator row (|---|---|)
+    if (/^\|[\s\-:|]+\|$/.test(line)) {
+      continue;
+    }
+
+    // Table row
+    if (line.startsWith("|") && line.endsWith("|")) {
+      const cells = line
+        .slice(1, -1)
+        .split("|")
+        .map((c) => c.trim());
+
+      if (!inTable) {
+        inTable = true;
+        tableHeaders = cells;
+      } else {
+        tableRows.push(cells);
+      }
+      continue;
+    }
+
+    // If we were in a table and hit a non-table line, flush
+    if (inTable) {
+      flushTable();
+    }
+
+    // Empty line
+    if (line.trim() === "") {
+      elements.push(<div key={key++} className="h-2" />);
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^---+$/.test(line.trim())) {
+      elements.push(
+        <hr key={key++} className="border-[#1A1816] my-3" />
+      );
+      continue;
+    }
+
+    // Headings
+    if (line.startsWith("## ")) {
+      elements.push(
+        <h3
+          key={key++}
+          className="text-sm font-semibold text-[#B8956A] mt-4 mb-2"
+        >
+          {line.slice(3)}
+        </h3>
+      );
+      continue;
+    }
+    if (line.startsWith("# ")) {
+      elements.push(
+        <h2
+          key={key++}
+          className="text-base font-bold text-[#E8E4DF] mt-4 mb-2"
+        >
+          {line.slice(2)}
+        </h2>
+      );
+      continue;
+    }
+
+    // List items
+    if (/^[-•*]\s/.test(line)) {
+      elements.push(
+        <div key={key++} className="flex gap-2 ml-1 my-0.5">
+          <span className="text-[#6B6560] shrink-0 mt-0.5">•</span>
+          <span>
+            <InlineMarkdown text={line.replace(/^[-•*]\s/, "")} />
+          </span>
+        </div>
+      );
+      continue;
+    }
+
+    // Regular paragraph
+    elements.push(
+      <p key={key++} className="my-1">
+        <InlineMarkdown text={line} />
+      </p>
+    );
+  }
+
+  // Flush any remaining table
+  if (inTable) flushTable();
+
+  return <>{elements}</>;
+}
+
+function InlineMarkdown({ text }: { text: string }) {
+  // Parse bold (**text**), italic (*text*), and links [text](url)
+  const parts: React.ReactNode[] = [];
+  let remaining = text;
+  let key = 0;
+
+  while (remaining.length > 0) {
+    // Bold: **text**
+    const boldMatch = remaining.match(/^(.*?)\*\*(.+?)\*\*(.*)/s);
+    // Italic: *text* (but not inside bold)
+    const italicMatch = remaining.match(/^(.*?)\*(.+?)\*(.*)/s);
+    // Link: [text](url)
+    const linkMatch = remaining.match(/^(.*?)\[(.+?)\]\((.+?)\)(.*)/s);
+
+    // Find the earliest match
+    type MatchInfo = { type: string; index: number; match: RegExpMatchArray };
+    const candidates: MatchInfo[] = [];
+
+    if (boldMatch && boldMatch[1] !== undefined) {
+      candidates.push({ type: "bold", index: boldMatch[1].length, match: boldMatch });
+    }
+    if (linkMatch && linkMatch[1] !== undefined) {
+      candidates.push({ type: "link", index: linkMatch[1].length, match: linkMatch });
+    }
+    if (italicMatch && italicMatch[1] !== undefined && (!boldMatch || italicMatch[1].length < boldMatch[1].length)) {
+      candidates.push({ type: "italic", index: italicMatch[1].length, match: italicMatch });
+    }
+
+    if (candidates.length === 0) {
+      parts.push(<span key={key++}>{remaining}</span>);
+      break;
+    }
+
+    candidates.sort((a, b) => a.index - b.index);
+    const winner = candidates[0];
+
+    if (winner.type === "bold") {
+      const m = winner.match;
+      if (m[1]) parts.push(<span key={key++}>{m[1]}</span>);
+      parts.push(
+        <strong key={key++} className="font-semibold text-[#E8E4DF]">
+          {m[2]}
+        </strong>
+      );
+      remaining = m[3];
+    } else if (winner.type === "italic") {
+      const m = winner.match;
+      if (m[1]) parts.push(<span key={key++}>{m[1]}</span>);
+      parts.push(
+        <em key={key++} className="italic text-[#E8E4DF]/70">
+          {m[2]}
+        </em>
+      );
+      remaining = m[3];
+    } else if (winner.type === "link") {
+      const m = winner.match;
+      if (m[1]) parts.push(<span key={key++}>{m[1]}</span>);
+      parts.push(
+        <a
+          key={key++}
+          href={m[3]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#B8956A] hover:underline"
+        >
+          {m[2]}
+        </a>
+      );
+      remaining = m[4];
+    }
+  }
+
+  return <>{parts}</>;
+}
 
 function StatCard({
   label,

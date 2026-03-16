@@ -894,4 +894,22 @@ export default defineSchema({
     marketState: v.string(),
     updatedAt: v.string(),
   }).index("by_ticker", ["ticker"]),
+
+  recommendations: defineTable({
+    title: v.string(),
+    description: v.string(),
+    category: v.union(
+      v.literal("health"),
+      v.literal("nutrition"),
+      v.literal("training"),
+      v.literal("recovery"),
+      v.literal("supplement")
+    ),
+    priority: v.union(v.literal("high"), v.literal("medium"), v.literal("low")),
+    status: v.union(v.literal("active"), v.literal("dismissed"), v.literal("completed")),
+    createdAt: v.number(),
+    dismissedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_priority", ["priority"]),
 });

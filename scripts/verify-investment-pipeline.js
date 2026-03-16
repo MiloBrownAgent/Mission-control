@@ -7,24 +7,34 @@ const path = require("node:path");
 const ROOT = path.resolve(__dirname, "..");
 const NODE_BIN = process.execPath;
 
-function run(label, args, timeoutMs = 120000) {
-  const result = spawnSync(NODE_BIN, args, {
-    cwd: ROOT,
-    encoding: "utf8",
-    timeout: timeoutMs,
-  });
+function run(label, args, timeoutMs = 120000, retries = 2) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const result = spawnSync(NODE_BIN, args, {
+      cwd: ROOT,
+      encoding: "utf8",
+      timeout: timeoutMs,
+    });
 
-  let parsed = null;
-  const stdout = (result.stdout || "").trim();
-  if (stdout) {
-    try {
-      parsed = JSON.parse(stdout);
-    } catch {
-      parsed = null;
+    let parsed = null;
+    const stdout = (result.stdout || "").trim();
+    if (stdout) {
+      try {
+        parsed = JSON.parse(stdout);
+      } catch {
+        parsed = null;
+      }
     }
-  }
 
-  return { label, args, result, parsed, stdout, stderr: (result.stderr || "").trim() };
+    const stderr = (result.stderr || "").trim();
+    const isTransient = result.error || (stderr.includes("ETIMEDOUT") || stderr.includes("ECONNRESET") || stderr.includes("fetch failed"));
+
+    if (result.status === 0 || attempt >= retries || !isTransient) {
+      return { label, args, result, parsed, stdout, stderr };
+    }
+
+    // Brief pause before retry
+    spawnSync("sleep", ["2"]);
+  }
 }
 
 function assert(condition, message) {
