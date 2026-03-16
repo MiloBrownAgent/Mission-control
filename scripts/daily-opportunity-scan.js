@@ -10,6 +10,7 @@ const FALLBACKS = [
   {
     ticker: "RKLB",
     name: "Rocket Lab USA",
+    description: "Rocket Lab designs and manufactures small and medium-lift launch vehicles and spacecraft. The company provides end-to-end space solutions including satellite components, flight software, and on-orbit management. (Industrials — Aerospace & Defense)",
     opportunityType: "secular_growth",
     expectedUpside: "50-100% (12-24 months)",
     catalysts: [
@@ -34,6 +35,7 @@ const FALLBACKS = [
   {
     ticker: "SOFI",
     name: "SoFi Technologies",
+    description: "SoFi Technologies operates a digital financial services platform offering lending, banking, investing, and financial planning. It also runs Galileo, a fintech infrastructure platform powering other financial apps. (Financial Services — Financial Conglomerates)",
     opportunityType: "growth_inflection",
     expectedUpside: "40-70% (6-12 months)",
     catalysts: [
@@ -58,6 +60,7 @@ const FALLBACKS = [
   {
     ticker: "NVO",
     name: "Novo Nordisk",
+    description: "Novo Nordisk is a global healthcare company specializing in diabetes care, obesity treatment, and rare disease therapies. It manufactures insulin, GLP-1 receptor agonists (Ozempic, Wegovy), and hemophilia products. (Healthcare — Drug Manufacturers)",
     opportunityType: "catalyst_pullback",
     expectedUpside: "50-80% (12-18 months)",
     catalysts: [
@@ -144,6 +147,7 @@ function buildUpsertPayload(template, now, livePrice) {
   return {
     ticker: normalizeTicker(template.ticker),
     name: template.name,
+    description: template.description,
     opportunityType: template.opportunityType,
     thesis: template.thesis,
     sources: (template.sources || []).slice(0, 5),

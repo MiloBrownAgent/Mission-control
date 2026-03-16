@@ -530,6 +530,7 @@ export const createOpportunityPublic = mutation({
   args: {
     ticker: v.string(),
     name: v.string(),
+    description: v.optional(v.string()),
     opportunityType: v.string(),
     thesis: v.string(),
     sources: v.array(v.object({ title: v.string(), url: v.string() })),
@@ -568,6 +569,7 @@ export const createOpportunityPublic = mutation({
     const payload = {
       ticker: normalizedTicker,
       name: args.name,
+      description: args.description ?? canonical?.description,
       opportunityType: args.opportunityType,
       thesis: args.thesis,
       sources: args.sources,

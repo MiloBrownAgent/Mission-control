@@ -25,15 +25,38 @@ const query = (path, args) => convexCall("query", path, args);
 const mutation = (path, args) => convexCall("mutation", path, args);
 
 async function yahooMeta(symbol) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`;
-  const res = await fetch(url, {
+  // Use spark endpoint for accurate previous close (chart endpoint's chartPreviousClose is unreliable)
+  const sparkUrl = `https://query2.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(symbol)}&range=1d&interval=1d`;
+  const sparkRes = await fetch(sparkUrl, {
     headers: { "User-Agent": "Mozilla/5.0" },
     signal: AbortSignal.timeout(15_000),
   });
-  if (!res.ok) throw new Error(`Yahoo fetch failed for ${symbol}: ${res.status}`);
-  const data = await res.json();
-  const meta = data?.chart?.result?.[0]?.meta;
-  if (!meta) throw new Error(`Yahoo meta missing for ${symbol}`);
+  if (!sparkRes.ok) throw new Error(`Yahoo spark failed for ${symbol}: ${sparkRes.status}`);
+  const sparkData = await sparkRes.json();
+  const spark = sparkData?.[symbol];
+  if (!spark) throw new Error(`Yahoo spark missing for ${symbol}`);
+
+  const price = spark.close?.[spark.close.length - 1];
+  const chartPreviousClose = spark.chartPreviousClose;
+
+  // Also fetch chart endpoint for 52-week data and other meta fields
+  let meta = {};
+  try {
+    const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`;
+    const chartRes = await fetch(chartUrl, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (chartRes.ok) {
+      const chartData = await chartRes.json();
+      meta = chartData?.chart?.result?.[0]?.meta ?? {};
+    }
+  } catch { /* chart meta is supplementary */ }
+
+  // Override price fields with accurate spark data
+  meta.regularMarketPrice = price;
+  meta.chartPreviousClose = chartPreviousClose;
+  meta.previousClose = chartPreviousClose;
   return meta;
 }
 

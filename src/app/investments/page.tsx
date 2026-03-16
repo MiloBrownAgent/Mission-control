@@ -2148,6 +2148,11 @@ function OpportunityCard({ opp, defaultOpen }: { opp: any; defaultOpen: boolean 
       {open && (
         <div className="px-5 pb-5 border-t border-[#1A1816]">
           <div className="pt-4">
+            {opp.description && (
+              <p className="text-sm text-[#6B6560] italic mb-3 leading-relaxed">
+                {opp.description}
+              </p>
+            )}
             {hasTracking && (
               <div className="flex items-center gap-4 mb-3 text-xs text-[#6B6560]">
                 <span>Rec price: ${opp.priceAtRecommendation?.toFixed(2)}</span>

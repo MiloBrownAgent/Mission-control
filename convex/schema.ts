@@ -557,6 +557,7 @@ export default defineSchema({
   investmentOpportunities: defineTable({
     ticker: v.string(),
     name: v.string(),
+    description: v.optional(v.string()),
     opportunityType: v.string(),
     thesis: v.string(),
     sources: v.array(v.object({

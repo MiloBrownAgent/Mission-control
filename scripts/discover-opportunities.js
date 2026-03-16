@@ -96,6 +96,44 @@ async function fetchYahooProfile(ticker) {
   } catch { return null; }
 }
 
+async function fetchYahooDescription(ticker) {
+  try {
+    // Get crumb + cookie for v10 API
+    const cookieRes = await fetch("https://fc.yahoo.com", { redirect: "manual" });
+    const cookie = cookieRes.headers.get("set-cookie") || "";
+    const crumbRes = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", {
+      headers: { "User-Agent": "Mozilla/5.0", Cookie: cookie },
+    });
+    const crumb = crumbRes.ok ? await crumbRes.text() : "";
+    const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : "";
+
+    const res = await fetch(
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=assetProfile${crumbParam}`,
+      { headers: { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) }, signal: AbortSignal.timeout(10_000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const profile = data?.quoteSummary?.result?.[0]?.assetProfile;
+    if (!profile) return null;
+
+    // Build a concise description: what the company does + sector/industry
+    const summary = profile.longBusinessSummary || "";
+    const sector = profile.sector || "";
+    const industry = profile.industry || "";
+
+    // Take first 2 sentences of the summary (concise)
+    const sentences = summary.match(/[^.!?]+[.!?]+/g) || [];
+    const shortSummary = sentences.slice(0, 2).join(" ").trim();
+
+    if (shortSummary) {
+      return sector && industry
+        ? `${shortSummary} (${sector} — ${industry})`
+        : shortSummary;
+    }
+    return sector && industry ? `${sector} — ${industry}` : null;
+  } catch { return null; }
+}
+
 // ── Yahoo Finance Screener / Trending ──
 
 async function fetchYahooTrending() {
@@ -555,12 +593,18 @@ async function main() {
     const ticker = candidate.ticker.toUpperCase();
     console.error(`[discover] Evaluating ${ticker} — ${candidate.name}...`);
 
-    // Validate ticker exists on Yahoo
-    const yahooData = await fetchYahooProfile(ticker);
+    // Validate ticker exists on Yahoo + get description
+    const [yahooData, description] = await Promise.all([
+      fetchYahooProfile(ticker),
+      fetchYahooDescription(ticker),
+    ]);
     if (!yahooData || !yahooData.price) {
       console.error(`[discover] ${ticker} — no Yahoo data, skipping`);
       failures.push({ ticker, reason: "no Yahoo Finance data" });
       continue;
+    }
+    if (description) {
+      console.error(`[discover] ${ticker} — got description (${description.length} chars)`);
     }
 
     // Generate thesis
@@ -582,6 +626,7 @@ async function main() {
     const payload = {
       ticker,
       name: candidate.name,
+      description: description || null,
       opportunityType: thesis.opportunityType || "growth_catalyst",
       thesis: thesis.thesis,
       sources: (thesis.sources || []).slice(0, 5),

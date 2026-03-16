@@ -127,26 +127,43 @@ async function requestThesisRefresh(position, reason) {
 
 async function fetchPrice(ticker) {
   try {
-    const res = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5d`,
+    // Use spark endpoint for accurate previous close (chart endpoint returns null previousClose)
+    const sparkRes = await fetch(
+      `https://query2.finance.yahoo.com/v8/finance/spark?symbols=${ticker}&range=1d&interval=1d`,
       { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(15_000) }
     );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const meta = data?.chart?.result?.[0]?.meta;
-    if (!meta?.regularMarketPrice || !meta?.previousClose) return null;
+    if (!sparkRes.ok) return null;
+    const sparkData = await sparkRes.json();
+    const sparkTicker = sparkData?.[ticker];
+    if (!sparkTicker?.close?.length || !sparkTicker?.chartPreviousClose) return null;
 
-    const price = meta.regularMarketPrice;
-    const previousClose = meta.previousClose;
+    const price = sparkTicker.close[sparkTicker.close.length - 1];
+    const previousClose = sparkTicker.chartPreviousClose;
     const dayChangePct = ((price - previousClose) / previousClose) * 100;
+
+    // Fetch 52-week data from chart endpoint (meta has these reliably)
+    let fiftyTwoWeekLow, fiftyTwoWeekHigh, marketCap;
+    try {
+      const chartRes = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5d`,
+        { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(10_000) }
+      );
+      if (chartRes.ok) {
+        const chartData = await chartRes.json();
+        const meta = chartData?.chart?.result?.[0]?.meta;
+        fiftyTwoWeekLow = meta?.fiftyTwoWeekLow;
+        fiftyTwoWeekHigh = meta?.fiftyTwoWeekHigh;
+        marketCap = meta?.marketCap;
+      }
+    } catch { /* 52-week data is nice-to-have, not critical */ }
 
     return {
       price,
       previousClose,
       dayChangePct,
-      fiftyTwoWeekLow: meta.fiftyTwoWeekLow,
-      fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh,
-      marketCap: meta.marketCap,
+      fiftyTwoWeekLow,
+      fiftyTwoWeekHigh,
+      marketCap,
     };
   } catch {
     return null;
