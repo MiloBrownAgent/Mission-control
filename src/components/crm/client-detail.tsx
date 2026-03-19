@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Plus, Mail, User, Building2, DollarSign } from "lucide-react";
+import { ArrowLeft, Plus, Mail, User, Building2, DollarSign, Shield } from "lucide-react";
 
 const statuses = ["prospect", "contacted", "responded", "meeting", "proposal", "active", "inactive"] as const;
 
@@ -62,6 +62,12 @@ export function ClientDetail({ clientId }: { clientId: string }) {
             </Select>
           </div>
         </div>
+        <Link href={`/crm/clients/${clientId}/portal`}>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Shield className="h-3.5 w-3.5" />
+            Portal Access
+          </Button>
+        </Link>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
