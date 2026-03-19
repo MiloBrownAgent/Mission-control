@@ -1,8 +1,10 @@
 import type { ImageGenProvider } from "./types";
 import { falFluxPro } from "./providers/fal-flux-pro";
+import { replicateFluxPro } from "./providers/replicate-flux-pro";
 
 const providerRegistry: Map<string, ImageGenProvider> = new Map([
   [falFluxPro.id, falFluxPro],
+  [replicateFluxPro.id, replicateFluxPro],
 ]);
 
 export function getProvider(id: string): ImageGenProvider {
