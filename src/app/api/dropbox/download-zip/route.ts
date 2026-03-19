@@ -3,11 +3,12 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 
 /**
- * ZIP download proxy — routes through Mac mini download-proxy server.
+ * ZIP download proxy — redirects client to Dropbox directly via Mac mini.
  *
  * 1. Reads proxyUrl from Convex (set by start-download-proxy.js on boot)
- * 2. Calls Mac mini at proxyUrl/download-zip?path=...
- * 3. Streams the ZIP back to the client (no Vercel timeout — Mac mini handles it)
+ * 2. Calls Mac mini at proxyUrl/zip?path=... which 302s to a Dropbox URL
+ * 3. Follows redirects server-side to resolve the final Dropbox URL
+ * 4. Returns a 302 redirect to the client — nothing streams through Vercel
  *
  * Falls back to Dropbox shared-link redirect if proxy is unavailable.
  */
@@ -95,24 +96,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing path" }, { status: 400, headers: CORS_HEADERS });
   }
 
-  // ── Path A: stream through Mac mini proxy ────────────────────────────────
+  // ── Path A: resolve Dropbox URL via Mac mini, redirect client directly ───
   const proxyUrl = await getProxyUrl();
   if (proxyUrl) {
     try {
-      const url = `${proxyUrl}/download-zip?path=${encodeURIComponent(path)}`;
-      const upstream = await fetch(url, { signal: AbortSignal.timeout(290_000) });
-      if (upstream.ok && upstream.body) {
-        const headers: Record<string, string> = { ...CORS_HEADERS };
-        const ct = upstream.headers.get("content-type");
-        const cd = upstream.headers.get("content-disposition");
-        const cl = upstream.headers.get("content-length");
-        if (ct) headers["Content-Type"] = ct;
-        if (cd) headers["Content-Disposition"] = cd;
-        if (cl) headers["Content-Length"] = cl;
-        return new NextResponse(upstream.body, { status: 200, headers });
+      const url = `${proxyUrl}/zip?path=${encodeURIComponent(path)}&token=${process.env.DOWNLOAD_SECRET}`;
+      const upstream = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(10_000) });
+      if (upstream.ok || upstream.redirected) {
+        // upstream.url is the final URL after all redirects (the Dropbox download URL)
+        return NextResponse.redirect(upstream.url, {
+          status: 302,
+          headers: { ...CORS_HEADERS, "Cache-Control": "no-store" },
+        });
       }
     } catch (err) {
-      console.error("[download-zip] Proxy error, falling back:", err);
+      console.error("[download-zip] Proxy redirect error, falling back:", err);
     }
   }
 
