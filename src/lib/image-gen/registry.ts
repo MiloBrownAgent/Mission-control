@@ -1,0 +1,32 @@
+import type { ImageGenProvider } from "./types";
+import { falFluxPro } from "./providers/fal-flux-pro";
+
+const providerRegistry: Map<string, ImageGenProvider> = new Map([
+  [falFluxPro.id, falFluxPro],
+]);
+
+export function getProvider(id: string): ImageGenProvider {
+  const provider = providerRegistry.get(id);
+  if (!provider) {
+    throw new Error(
+      `Unknown image provider "${id}". Available: ${[...providerRegistry.keys()].join(", ")}`
+    );
+  }
+  return provider;
+}
+
+export function listProviders(): Array<{
+  id: string;
+  name: string;
+  description: string;
+}> {
+  return [...providerRegistry.values()].map(({ id, name, description }) => ({
+    id,
+    name,
+    description,
+  }));
+}
+
+export function getDefaultProvider(): ImageGenProvider {
+  return falFluxPro;
+}

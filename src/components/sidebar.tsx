@@ -20,6 +20,7 @@ import {
   LayoutGrid,
   Wallet,
   Landmark,
+  Wand2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -33,6 +34,7 @@ const workNavigation = [
   { name: "CRM", href: "/crm", icon: Target },
   { name: "Projects", href: "/projects", icon: Layers },
   { name: "Content", href: "/content", icon: FileText },
+  { name: "Generate", href: "/generate", icon: Wand2 },
   { name: "LS Grid", href: "/ls-grid", icon: LayoutGrid },
   { name: "Team", href: "/team", icon: Users },
   { name: "Office", href: "/office", icon: Building2 },
