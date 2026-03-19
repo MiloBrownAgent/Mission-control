@@ -28,7 +28,8 @@ interface AddFormState {
 }
 
 function slugify(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  // Preserve original casing — slug must match the exact Dropbox folder name under /Clients/
+  return name.replace(/\s+/g, '');
 }
 
 export default function ClientPortalPage({ params }: { params: Promise<{ id: string }> }) {
@@ -155,7 +156,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
         <CardContent>
           <p className="text-sm text-muted-foreground mb-3">
             The slug ties portal users to this client&apos;s Dropbox folder path:{' '}
-            <code className="text-[#B8956A] text-xs">/Look &amp; Seen/Clients/{'{slug}'}</code>
+            <code className="text-[#B8956A] text-xs">/Clients/{'{slug}'}</code>
           </p>
           <div className="flex gap-2">
             <Input

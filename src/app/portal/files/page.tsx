@@ -50,7 +50,7 @@ export default function PortalFilesPage() {
 
   if (!me) return null;
 
-  const folderPath = `/Look & Seen/Clients/${me.clientSlug}`;
+  const folderPath = `/Clients/${me.clientSlug}`;
 
   return (
     <div className="min-h-screen bg-[#060606] flex flex-col">

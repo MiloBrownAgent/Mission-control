@@ -925,4 +925,16 @@ export default defineSchema({
   })
     .index("by_email", ["email"])
     .index("by_client", ["clientSlug"]),
+
+  clientPortalAccounts: defineTable({
+    email: v.string(),
+    passwordHash: v.string(),
+    passwordSalt: v.string(),
+    clientSlug: v.string(),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    lastLoginAt: v.optional(v.number()),
+  })
+    .index("by_email", ["email"])
+    .index("by_slug", ["clientSlug"]),
 });
