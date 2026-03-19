@@ -96,21 +96,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing path" }, { status: 400, headers: CORS_HEADERS });
   }
 
-  // ── Path A: resolve Dropbox URL via Mac mini, redirect client directly ───
+  // ── Path A: stream ZIP from Mac mini via /stream-zip (handles large files) ─
   const proxyUrl = await getProxyUrl();
   if (proxyUrl) {
     try {
-      const url = `${proxyUrl}/zip?path=${encodeURIComponent(path)}&token=${process.env.DOWNLOAD_SECRET}`;
-      const upstream = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(10_000) });
-      if (upstream.ok || upstream.redirected) {
-        // upstream.url is the final URL after all redirects (the Dropbox download URL)
-        return NextResponse.redirect(upstream.url, {
-          status: 302,
-          headers: { ...CORS_HEADERS, "Cache-Control": "no-store" },
+      const url = `${proxyUrl}/stream-zip?path=${encodeURIComponent(path)}&token=${process.env.DOWNLOAD_SECRET}`;
+      const upstream = await fetch(url, { signal: AbortSignal.timeout(300_000) });
+      if (upstream.ok && upstream.body) {
+        return new Response(upstream.body, {
+          status: 200,
+          headers: {
+            ...CORS_HEADERS,
+            "Content-Type": "application/zip",
+            "Content-Disposition": upstream.headers.get("Content-Disposition") || `attachment; filename="files.zip"`,
+            "Cache-Control": "no-store",
+          },
         });
       }
     } catch (err) {
-      console.error("[download-zip] Proxy redirect error, falling back:", err);
+      console.error("[download-zip] Proxy stream error, falling back:", err);
     }
   }
 
