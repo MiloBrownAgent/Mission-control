@@ -913,4 +913,16 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_priority", ["priority"]),
+
+  portalUsers: defineTable({
+    email: v.string(),           // login email
+    passwordHash: v.string(),    // bcrypt hash
+    clientSlug: v.string(),      // links to existing clients table slug (e.g. "lifetime", "target")
+    name: v.optional(v.string()),
+    active: v.boolean(),
+    createdAt: v.number(),
+    lastLoginAt: v.optional(v.number()),
+  })
+    .index("by_email", ["email"])
+    .index("by_client", ["clientSlug"]),
 });
