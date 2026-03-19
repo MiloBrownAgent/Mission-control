@@ -39,6 +39,7 @@ import type * as memories from "../memories.js";
 import type * as outreach from "../outreach.js";
 import type * as pipeline from "../pipeline.js";
 import type * as polymarket from "../polymarket.js";
+import type * as portalUsers from "../portalUsers.js";
 import type * as prospectEmails from "../prospectEmails.js";
 import type * as protocolNotes from "../protocolNotes.js";
 import type * as recommendations from "../recommendations.js";
@@ -93,6 +94,7 @@ declare const fullApi: ApiFromModules<{
   outreach: typeof outreach;
   pipeline: typeof pipeline;
   polymarket: typeof polymarket;
+  portalUsers: typeof portalUsers;
   prospectEmails: typeof prospectEmails;
   protocolNotes: typeof protocolNotes;
   recommendations: typeof recommendations;
