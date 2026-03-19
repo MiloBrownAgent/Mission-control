@@ -928,3 +928,1211 @@
 }
 [2026-03-16 08:00:32] ok: investment-home-refresh
 [2026-03-16 08:00:32] done
+[2026-03-17 08:00:00] start
+[2026-03-17 08:00:00] start: daily-opportunity-scan
+[2026-03-17 08:00:02] skip: scan already running (pid 37096)
+[2026-03-17 08:00:03] done
+{
+  "ok": true,
+  "dryRun": false,
+  "date": "2026-03-17",
+  "refreshedExisting": 12,
+  "surfacedNew": 0,
+  "skippedBecauseAlreadyKnown": [
+    "RKLB",
+    "SOFI",
+    "NVO"
+  ],
+  "refreshedTickers": [
+    "MU",
+    "NIO",
+    "MARA",
+    "AEHR",
+    "JOBY",
+    "SMCI",
+    "RKLB",
+    "SOFI",
+    "NVO",
+    "PAYP",
+    "S",
+    "MS"
+  ],
+  "newTickers": [],
+  "failures": [],
+  "refreshResults": [
+    {
+      "id": "p57amhmttz554dkv5b89vj4dan831vnq",
+      "ticker": "MU",
+      "name": "Micron Technology, Inc.",
+      "description": "Micron Technology, Inc.  designs, develops, manufactures, and sells memory and storage products in the United States, Taiwan, Japan, Mainland China, Hong Kong, Europe, and internationally. (Technology — Semiconductors)",
+      "opportunityType": "earnings_momentum",
+      "thesis": "Micron is a $503B memory/storage semiconductor giant (DRAM, NAND). 53,000 employees, $42.3B revenue growing 56.7% with 45.3% gross and 45.0% operating margins — AI memory cycle in full swing.\n\nThe opportunity: At 8.2x forward P/E with 57% revenue growth, one of the cheapest high-growth names in semis. Near 52-week high of $455 at $446. 39 analysts (BUY consensus). HBM (High Bandwidth Memory) for AI training is the secular driver.\n\nRisk: Memory is cyclical. Current 45% margins are near peak cycle. Mean analyst target ($427) is below current price, but high target is $650. The cycle will turn — question is when.",
+      "sources": [],
+      "expectedUpside": "46% to analyst high ($650) but mean below current price",
+      "catalysts": [
+        "HBM demand for AI training — structural shift in memory pricing",
+        "56.7% revenue growth with 45% operating margins",
+        "39 analysts cover — deep institutional interest"
+      ],
+      "risks": [
+        "Memory cycle peak risk — 45% margins may not sustain",
+        "Mean analyst target ($427) below current price",
+        "Capex-intensive — $12.5B debt needs continued strong cash flow"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 426.13,
+      "currentPrice": 441.8,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": 3.68,
+      "status": "active"
+    },
+    {
+      "id": "p57e5fh6dvxa866cvaw7zjacz9830n8s",
+      "ticker": "NIO",
+      "name": "NIO Inc.",
+      "description": "NIO Inc.  designs, develops, manufactures, and sells smart electric vehicles in China, Europe, and internationally. (Consumer Cyclical — Auto Manufacturers)",
+      "opportunityType": "growth_inflection",
+      "thesis": "NIO designs and manufactures premium smart electric vehicles in China and internationally. $15.3B market cap, ¥87.5B revenue growing 75.9% with 13.7% gross margins and 2.3% operating margins — approaching breakeven.\n\nThe opportunity: 24 analysts, BUY consensus, mean target $6.49 (7% upside), range $4-$9.32. Limited near-term upside but the story is margin expansion: 76% revenue growth and operating profitability inflection.\n\n$31B cash vs $26B debt provides runway. Upside depends on maintaining growth against BYD/Tesla in China while expanding into Europe. 7.7% short interest.",
+      "sources": [],
+      "expectedUpside": "7% to analyst mean ($6.49)",
+      "catalysts": [
+        "75.9% revenue growth — fastest in the portfolio",
+        "Operating margin turned positive at 2.3%",
+        "European expansion opening new addressable market"
+      ],
+      "risks": [
+        "China EV hyper-competitive — BYD and Tesla pricing pressure",
+        "Only 7% upside to analyst mean — limited re-rate potential",
+        "Geopolitical risk on international expansion"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 5.86,
+      "currentPrice": 6.03,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": 2.9,
+      "status": "active"
+    },
+    {
+      "id": "p5762s3cpnj1npgw87m4khcnyx83177b",
+      "ticker": "MARA",
+      "name": "MARA Holdings, Inc.",
+      "description": "MARA Holdings, Inc.  operates as an energy and digital infrastructure company in North America, the Middle East, Europe, and Latin America. (Financial Services — Capital Markets)",
+      "opportunityType": "momentum_breakout",
+      "thesis": "MARA is the largest publicly traded Bitcoin miner by market cap. $3.53B market cap, 266 employees, $910M revenue. Energy and digital infrastructure across North America, Middle East, Europe, Latin America.\n\nThe opportunity: Down 60% from 52-week high of $23.45 to $9.30. 11 analysts maintain BUY, mean target $16.57 (78% upside), range $8-$30. 38.6% of float is short — the highest here by far — creating massive squeeze potential if BTC rallies.\n\n$3.65B debt vs $550M cash is the key risk. -599% operating margin reflects massive impairments. Levered BTC play: if Bitcoin hits new highs, MARA re-rates violently. If BTC drops, debt load becomes existential.",
+      "sources": [],
+      "expectedUpside": "78% to analyst mean ($16.57)",
+      "catalysts": [
+        "78% upside to $16.57 analyst mean (11 analysts, BUY)",
+        "38.6% short interest — massive short squeeze potential",
+        "Bitcoin price appreciation directly drives revenue/valuation"
+      ],
+      "risks": [
+        "$3.65B debt vs $550M cash — highly leveraged",
+        "-599% operating margin — structural profitability challenges",
+        "38.6% short float = large-scale institutional bear thesis"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 9.32,
+      "currentPrice": 9.23,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": -0.97,
+      "status": "active"
+    },
+    {
+      "id": "p5729gye14qmq9c3j1w4e8dxsh82xnnx",
+      "ticker": "AEHR",
+      "name": "Aehr Test Systems",
+      "description": "Aehr Test Systems, Inc.  provides test solutions for testing, burning-in, and semiconductor devices in wafer level, singulated die, package part form, and installed systems in the United States, Asia, and Europe. (Technology — Semiconductor Equipment & Materials)",
+      "opportunityType": "asymmetric_setup",
+      "thesis": "Aehr makes wafer-level burn-in and test equipment for semiconductors — picks-and-shovels on AI chip testing. $1.17B market cap, 136 employees, $50M revenue (down 26.5% from prior cycle).\n\nThe opportunity: Every AI chip needs burn-in testing before deployment, and AEHR is one of very few with this capability. Only 3 analysts cover this $1.2B company (BUY consensus), mean target $36.33. Three major AI orders landed Feb-Mar 2026.\n\nThe bear case is real: 305x forward P/E, -49% operating margins, revenue declining 26.5%, 16.7% short interest. This is a bet the recent order surge marks cyclical inflection — not continuation of downturn.",
+      "sources": [],
+      "expectedUpside": "Wide range ($21-$50) — asymmetric if orders sustain",
+      "catalysts": [
+        "Three major AI chip test orders in Feb-Mar 2026",
+        "Only 3 analysts — inefficient price discovery for a $1.2B company",
+        "AI chip testing demand is structural — every chip needs burn-in"
+      ],
+      "risks": [
+        "16.7% short interest — significant bearish positioning",
+        "Revenue declining 26.5% — orders need to convert",
+        "-49% operating margin, 305x forward P/E — zero margin of safety"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 35.67,
+      "currentPrice": 37.48,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": 5.07,
+      "status": "active"
+    },
+    {
+      "id": "p571nqh1wen5wcd450pra5jq2582xbnb",
+      "ticker": "JOBY",
+      "name": "Joby Aviation",
+      "description": "Joby Aviation, Inc. , an air mobility company, engages in research, develop, test, manufacture, and sale of electric vertical takeoff and landing aircraft in the United States, Japan, Europe, and internationally. (Industrials — Airports & Air Services)",
+      "opportunityType": "asymmetric_setup",
+      "thesis": "Joby Aviation develops eVTOL aircraft for air taxi service. $9.7B market cap, 2,559 employees, pre-revenue ($50M from test/services). The FAA type certification binary bet.\n\nThe opportunity: First FAA-conforming aircraft flew March 11, 2026 — final config before type certification. At $9.90, near 52-week midpoint ($5-$21). 9 analysts, mean target $12.56 (27% upside), range $6-$18. $1.41B cash with only $40M debt = funded through certification.\n\nThe dilutive $1.2B raise that crushed the stock IS the setup: eliminated biggest risk (funding) while suppressing price. FAA certification in 2026 = massive re-rate. Failure = downside to $5-6.",
+      "sources": [],
+      "expectedUpside": "27% to analyst mean ($12.56)",
+      "catalysts": [
+        "27% upside to $12.56 analyst target, 100%+ if FAA certifies",
+        "First conforming aircraft flew March 2026 — certification milestone",
+        "$1.41B cash runway eliminates funding risk through certification"
+      ],
+      "risks": [
+        "10.3% short interest — institutional bears doubt timeline",
+        "Pre-revenue with -689% operating margins — purely speculative",
+        "FAA certification delay is binary downside risk"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 9.7,
+      "currentPrice": 9.82,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": 1.24,
+      "status": "active"
+    },
+    {
+      "id": "p576zkzgb5n0ypxbxqxtwj7v3582wxaa",
+      "ticker": "SMCI",
+      "name": "Super Micro Computer",
+      "description": "Super Micro Computer, Inc. , together with its subsidiaries, develops and sells server and storage solutions based on modular and open-standard architecture in the United States, Asia, Europe, and internationally. (Technology — Computer Hardware)",
+      "opportunityType": "contrarian_recovery",
+      "thesis": "Super Micro builds AI server and storage infrastructure — Nvidia's #1 GPU server partner. $19.2B market cap, $28.1B revenue growing 123.4% YoY. The AI infrastructure boom in one stock.\n\nThe opportunity: At 10.8x forward P/E with 123% revenue growth, absurdly cheap on a growth-adjusted basis. 16 analysts, mean target $41.31 (29% upside), range $15-$63. 2024 accounting scandal destroyed stock from $62 to $28, but 10-K filed, new auditor in place, fundamental demand unchanged.\n\nThe catch: 8% gross margins and 3.7% operating margins — volume pass-through business, not high-margin compounder. 18.9% short interest is the highest here — significant bearish positioning remains.",
+      "sources": [],
+      "expectedUpside": "29% to analyst mean ($41.31)",
+      "catalysts": [
+        "29% upside to $41.31 analyst target (16 analysts)",
+        "123% revenue growth driven by AI GPU server demand",
+        "Governance overhang clearing — 10-K filed, new auditor"
+      ],
+      "risks": [
+        "18.9% short interest — highest in portfolio, active bear case",
+        "8% gross margins — volume business with no pricing power",
+        "Accounting scandal reputation limits institutional buying"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 30.75,
+      "currentPrice": 31.86,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": 3.61,
+      "status": "active"
+    },
+    {
+      "id": "p579vcacpzc4n05w7jzyg7qcqx82qn83",
+      "ticker": "RKLB",
+      "name": "Rocket Lab USA",
+      "description": "Rocket Lab Corporation, a space company, provides launch services and space systems solutions in the United States, Canada, Japan, and internationally.  The company operates through launch services and space systems segments. (Industrials — Aerospace & Defense)",
+      "opportunityType": "secular_growth",
+      "thesis": "Rocket Lab is the #2 commercial launch provider behind SpaceX. $40.8B market cap, 2,600 employees. $600M revenue growing 35.7% from launch services and space systems (satellite components, software, on-orbit management).\n\nThe opportunity: 12 analysts, BUY consensus, mean target $89.88 (25% upside), range $68-$120. Neutron medium-lift rocket first launch is THE catalyst — transforms RKLB from small-launch niche to SpaceX's first credible competitor for NSSL contracts.\n\n$1.02B cash vs $270M debt funds development. The bear case (543x forward P/E, -28.4% operating margin, negative FCF) is real but priced into a pre-revenue-inflection growth story. Secular bet on space economy infrastructure.",
+      "sources": [],
+      "expectedUpside": "25% to analyst mean ($89.88)",
+      "catalysts": [
+        "25% upside to $89.88 analyst target (12 analysts, BUY)",
+        "Neutron medium-lift first launch — transforms competitive positioning",
+        "NSSL government launch contracts worth billions if Neutron succeeds"
+      ],
+      "risks": [
+        "543x forward P/E — no margin of safety",
+        "Neutron development risk — delays or failure craters the stock",
+        "Negative FCF (-$270M) means continued cash burn"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 68.8,
+      "currentPrice": 71.31,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": 3.65,
+      "status": "active"
+    },
+    {
+      "id": "p579emjwmhawz9hhpn5k32xs4x82qyg6",
+      "ticker": "SOFI",
+      "name": "SoFi Technologies",
+      "description": "SoFi Technologies, Inc.  provides various financial services in the United States, Latin America, Canada, and Hong Kong. (Financial Services — Credit Services)",
+      "opportunityType": "growth_inflection",
+      "thesis": "SoFi is a digital financial services platform: lending, banking, investing, plus Galileo fintech infrastructure backend. $22.4B market cap, $3.58B revenue growing 40.2% with 83% gross margins and 18.2% operating margins — now consistently profitable.\n\nThe opportunity: At 22.3x forward P/E with 40% revenue growth, PEG ratio is attractive. 19 analysts, mean target $26.50 (51% upside), range $12-$38. Pulled back from 52-week high of $32.73 to $17.58.\n\nGalileo platform revenue is the hidden asset — processing transactions for other fintechs. S&P 500 inclusion on the table if profitability sustains. 10.2% short interest creates squeeze potential as bears from the unprofitable era get forced out.",
+      "sources": [],
+      "expectedUpside": "51% to analyst mean ($26.50)",
+      "catalysts": [
+        "51% upside to $26.50 analyst mean (19 analysts)",
+        "40.2% revenue growth with sustained profitability — S&P 500 candidate",
+        "10.2% short interest — potential squeeze as bear thesis breaks"
+      ],
+      "risks": [
+        "Consumer credit quality deterioration in recession",
+        "Rate sensitivity — lending margins depend on rate environment",
+        "10.2% short interest means active institutional bear case"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 18.28,
+      "currentPrice": 17.63,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": -3.56,
+      "status": "active"
+    },
+    {
+      "id": "p579mpqy8ma6m5br87y2nny7ts82q5zq",
+      "ticker": "NVO",
+      "name": "Novo Nordisk",
+      "description": "Novo Nordisk A/S, together with its subsidiaries, engages in the research and development, manufacture, and distribution of pharmaceutical products.  It operates through two segments, Obesity and Diabetes Care, and Rare Disease. (Healthcare — Drug Manufacturers - General)",
+      "opportunityType": "catalyst_pullback",
+      "thesis": "Novo Nordisk is the world's leading GLP-1 manufacturer (Ozempic, Wegovy). $171B market cap, 68,794 employees. DKK 309B revenue with 82.4% gross margins and 44.5% operating margins — a pharma cash machine.\n\nThe opportunity: Down 53% from 52-week high of $82.57 to $38.43, pricing in worst-case on US list price cuts and Lilly competition. 11 analysts maintain BUY consensus, mean target $47.37 (23% upside), range $40-$63. At 1.8x forward P/E (DKK earnings), cheapest NVO has been in years.\n\nMarket prices pressure but ignores volume: global GLP-1 demand massively underpenetrated, CagriSema Phase 3 data upcoming, Hims partnership opens DTC distribution. 0.9% short = bears aren't even positioned, the market just panicked.",
+      "sources": [],
+      "expectedUpside": "23% to analyst mean ($47.37)",
+      "catalysts": [
+        "23% upside to $47.37 analyst target (11 analysts, BUY)",
+        "CagriSema Phase 3 data catalyst — next-gen obesity drug",
+        "Global GLP-1 volume growth massively outpacing price compression"
+      ],
+      "risks": [
+        "US 50% list price cuts compress near-term margins",
+        "Lilly tirzepatide competitive pressure in obesity",
+        "DKK/USD currency exposure adds volatility"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 38.75,
+      "currentPrice": 38.58,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": -0.44,
+      "status": "active"
+    },
+    {
+      "id": "p57cgv83kcrmyf7bjpn725ye9d831p98",
+      "ticker": "PAYP",
+      "name": "PayPay Corporation",
+      "description": "PayPay Corporation, a financial technology company, provides a digital finance platform with services that inlclude easy-to-use payments and other financial services in Japan.  The company operates through two segments, Payment and Financial Service. (Technology — Software - Infrastructure)",
+      "opportunityType": "growth_catalyst",
+      "thesis": "PayPay is Japan's dominant mobile payment platform — over 50% of Japan's mobile payments. $13B market cap, ¥355.5B revenue (~$2.4B USD) growing 23.9% with 52.4% gross margins and 24.8% operating margins. Profitable, fast-growing fintech.\n\nThe opportunity: Recently IPO'd on Nasdaq with ARK Invest buying shares on day two. Trading at $19.49 vs. 52-week high of $22. Visa partnership opens cross-border payment rails. Nasdaq dual-listing increases institutional access and index inclusion potential.\n\nThe embedded financial services play (lending, insurance, investing) drives ARPU expansion beyond core payments. Post-IPO volatility is creating the entry.",
+      "sources": [],
+      "expectedUpside": "25-40% (6-12 months) as post-IPO price discovery completes",
+      "catalysts": [
+        "Visa strategic partnership unlocking cross-border payment volume",
+        "ARK Invest accumulating shares — institutional validation",
+        "Japanese mobile payment market consolidation leader"
+      ],
+      "risks": [
+        "Post-IPO lockup expiration could create selling pressure",
+        "Revenue in JPY — currency risk for USD investors",
+        "Limited US analyst coverage means less price discovery"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 21.14,
+      "currentPrice": 19.35,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": -8.47,
+      "status": "active"
+    },
+    {
+      "id": "p570apptkwhhy80yfhwafhzre58318km",
+      "ticker": "S",
+      "name": "SentinelOne, Inc.",
+      "description": "SentinelOne, Inc.  operates as a cybersecurity provider in the United States and internationally. (Technology — Software - Infrastructure)",
+      "opportunityType": "growth_inflection",
+      "thesis": "SentinelOne is an AI-native cybersecurity platform providing endpoint protection, cloud security, and threat intelligence. $4.9B market cap, $1B revenue growing 20.2%, 74.2% gross margins, and now FCF positive at $292M — a critical inflection for a growth-stage security company.\n\nThe opportunity: At 30.3x forward P/E, S trades at a steep discount to CrowdStrike (60x+). 34 analysts cover with a mean target of $18.56 (28% upside), range $14-$26. Stock near 52-week low of $12.24 — asymmetric setup with limited downside and substantial re-rate potential from sustained profitability.\n\n$628M cash, zero debt. 6.9% short interest creates squeeze fuel as the profitability story solidifies.",
+      "sources": [],
+      "expectedUpside": "28% to analyst mean ($18.56)",
+      "catalysts": [
+        "28% upside to $18.56 analyst consensus (34 analysts, BUY)",
+        "$1B revenue milestone + FCF positive inflection point",
+        "AI-driven security platform gaining share in $50B+ TAM"
+      ],
+      "risks": [
+        "CrowdStrike dominance in endpoint — hard to displace market leader",
+        "Operating margin still -28% — profitability path needs sustained execution",
+        "6.9% short interest signals some institutional skepticism"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 14.52,
+      "currentPrice": 14.29,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": -1.58,
+      "status": "active"
+    },
+    {
+      "id": "p577ag468c0gggn8jr98fmhsc18312mh",
+      "ticker": "MS",
+      "name": "Morgan Stanley",
+      "description": "Morgan Stanley, a financial holding company, provides various financial products and services to corporations, governments, financial institutions, and individuals in the Americas, Asia, Europe, the Middle East, and Africa.  It operates through Institutional Securities, Wealth Management, and Investment Management segments. (Financial Services — Capital Markets)",
+      "opportunityType": "contrarian_recovery",
+      "thesis": "Morgan Stanley is a $247B financial powerhouse operating across institutional securities, wealth management, and investment management with 83,000 employees globally. Revenue of $70.3B growing 11% YoY with exceptional 87% gross margins and 38.6% operating margins.\n\nThe opportunity: MS trades at just 12.7x forward earnings — a steep discount for a diversified financial services firm with $600B in cash and buy-rated consensus from 21 analysts. Mean price target is $196 (26% upside). The stock is recovering from a pullback to $156 vs. its 52-week high of $193, creating a favorable entry. Wealth management AUM continues growing as rate environment normalizes and capital markets activity rebounds.\n\nKey valuation context: At 12.7x forward P/E with 11% revenue growth and 38.6% operating margins, MS is priced like a slow-growth bank, not a fee-generating asset management machine. Only 1.3% of float is short — bears are not positioned against this name.",
+      "sources": [],
+      "expectedUpside": "26% to analyst mean ($196)",
+      "catalysts": [
+        "26% upside to $196 analyst mean target (21 analysts, consensus BUY)",
+        "Capital markets activity rebound as rate cycle normalizes",
+        "Wealth management AUM growth and fee income expansion"
+      ],
+      "risks": [
+        "Recession could hit capital markets revenue and credit quality",
+        "Interest rate path uncertainty affects net interest margin",
+        "$513B debt load requires stable credit markets"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 154.87,
+      "currentPrice": 155.7,
+      "priceUpdatedAt": 1773752401135,
+      "returnPct": 0.54,
+      "status": "active"
+    }
+  ],
+  "newResults": []
+}
+[2026-03-17 08:00:06] ok: daily-opportunity-scan
+[2026-03-17 08:00:06] start: discover-opportunities
+[discover] Starting opportunity discovery for 2026-03-17 (target: 3 new)
+[discover] Known tickers (22): MS, S, PAYP, NVO, SOFI, RKLB, SMCI, JOBY, AEHR, MARA, NIO, MU, HIMS, IREN, ONDS, AAPL, PTRN, VST, ASTS, FSLR, PLTR, META
+[discover] Fetching Yahoo Finance screeners...
+[discover] Yahoo data: 30 trending, 25 gainers, 25 active, 25 undervalued
+[discover] 81 fresh candidates after filtering
+[discover] Top candidates: BMNR(top_gainer+most_active), WULF(top_gainer+most_active), CPNG(top_gainer+most_active), BBD(most_active+undervalued_growth), ADBE(trending), XYZ(trending), ULTA(trending), RBRK(trending), ABNB(trending), RCL(trending)
+[discover] Claude selected 6 candidates: BMNR, WULF, CPNG, BBD, ADBE, XYZ
+[discover] Evaluating BMNR — BitMine Immersion Technologies,...
+[discover] Researching BMNR across Yahoo, Google News, Finviz, Seeking Alpha...
+[discover] BMNR: 16 unique articles from Yahoo, Google, Finviz
+[discover] Generating thesis for BMNR via https://mc.lookandseen.com...
+[discover] Using deterministic thesis for BMNR
+[discover] BMNR — upserted as [object Object]
+[discover] Evaluating WULF — TeraWulf Inc....
+[discover] WULF — got description (156 chars)
+[discover] Researching WULF across Yahoo, Google News, Finviz, Seeking Alpha...
+[discover] WULF: 22 unique articles from Yahoo, Google, Finviz, SA
+[discover] Generating thesis for WULF via https://mc.lookandseen.com...
+[discover] Using deterministic thesis for WULF
+[discover] WULF — upserted as p57c3dr9q65jm8347v9835a16x8334bs
+[discover] Evaluating CPNG — Coupang, Inc....
+[discover] CPNG — got description (209 chars)
+[discover] Researching CPNG across Yahoo, Google News, Finviz, Seeking Alpha...
+[discover] CPNG: 19 unique articles from Yahoo, Google, Finviz
+[discover] Generating thesis for CPNG via https://mc.lookandseen.com...
+[discover] Using deterministic thesis for CPNG
+[discover] CPNG — upserted as p576591f3vv2rr8mympk4mr5j58339x4
+{
+  "ok": true,
+  "dryRun": false,
+  "date": "2026-03-17",
+  "discovered": 3,
+  "target": 3,
+  "shortfall": 0,
+  "tickers": [
+    "BMNR",
+    "WULF",
+    "CPNG"
+  ],
+  "failures": [],
+  "results": [
+    {
+      "id": {
+        "status": "error",
+        "errorMessage": "[Request ID: 76a92ac1c5cf7f7f] Server Error"
+      },
+      "ticker": "BMNR",
+      "name": "BitMine Immersion Technologies,",
+      "description": null,
+      "opportunityType": "momentum_breakout",
+      "thesis": "MARKET CAP: $10.64B | REVENUE: $0.01B | GROWTH: 90.9%\nP/E (FWD): 24.9 | GROSS MARGIN: 22.1% | FCF: $-0.01B\nANALYST TARGET: $34.5 mean (+47%) | 2 analysts | Consensus: NONE\n\nDISCOVERY: Surfaced because it is top daily gainer + unusual volume / most active.\nGROWTH: Revenue growing 90.9% YoY — strong top-line expansion.\nRANGE: Trading at 12% of 52-week range ($3.92 - $161.00).",
+      "sources": [
+        {
+          "title": "Bitmine (BMNR) Climbs 13.9% on OpenAI Exposure, Accelerated ETH Purchase",
+          "url": "https://finance.yahoo.com/news/bitmine-bmnr-climbs-13-9-044008919.html?.tsrc=rss"
+        },
+        {
+          "title": "Why Bitmine Immersion Technologies Stock Rocked the Market on Monday",
+          "url": "https://www.fool.com/investing/2026/03/16/why-bitmine-immersion-technologies-stock-rocked-th/?.tsrc=rss"
+        },
+        {
+          "title": "Bitmine Soars 11% — Tom Lee’s Ethereum Bet Just Got Even Bigger",
+          "url": "https://247wallst.com/investing/2026/03/16/bitmine-soars-11-tom-lees-ethereum-bet-just-got-even-bigger/?.tsrc=rss"
+        },
+        {
+          "title": "Ethereum Price Hits 6-Week High as Tom Lee's BitMine Reveals Latest ETH Buy",
+          "url": "https://decrypt.co/361236/ethereum-price-6-week-high-tom-lee-bitmine-eth-buy?.tsrc=rss"
+        },
+        {
+          "title": "Ether-linked stocks rise after cryptocurrency hits five-week high",
+          "url": "https://finance.yahoo.com/news/ether-linked-stocks-rise-cryptocurrency-101304108.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "47% to analyst mean ($34.5)",
+      "catalysts": [
+        "47% upside to analyst consensus target of $34.5",
+        "Strong revenue growth at 90.9% YoY",
+        "Recent news flow: Bitmine (BMNR) Climbs 13.9% on OpenAI Exposure, Accelerated ETH Purchase"
+      ],
+      "risks": [
+        "Unprofitable at operating level (-9688.9% margin)"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 23.39,
+      "currentPrice": 23.39,
+      "priceUpdatedAt": 1773752406294,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p57c3dr9q65jm8347v9835a16x8334bs",
+      "ticker": "WULF",
+      "name": "TeraWulf Inc.",
+      "description": "TeraWulf Inc. , together with its subsidiaries, owns, develops, operates digital infrastructure in the United States. (Financial Services — Capital Markets)",
+      "opportunityType": "momentum_breakout",
+      "thesis": "MARKET CAP: N/A | REVENUE: N/A | GROWTH: N/A\nP/E (FWD): N/A | GROSS MARGIN: N/A | FCF: N/A\n\nDISCOVERY: Surfaced because it is top daily gainer + unusual volume / most active.\nBALANCE SHEET: undefined cash vs undefined debt. FCF: N/A.\nRANGE: Trading at 87% of 52-week range ($2.06 - $18.51).",
+      "sources": [
+        {
+          "title": "TeraWulf (WULF) Skyrockets 11.9% as Firm Kicks Off New Data Center Expansion",
+          "url": "https://finance.yahoo.com/news/terawulf-wulf-skyrockets-11-9-043945345.html?.tsrc=rss"
+        },
+        {
+          "title": "Fluor Signs Limited Notice to Proceed with TeraWulf for Large-Scale Data Center Project in Kentucky",
+          "url": "https://finance.yahoo.com/news/fluor-signs-limited-notice-proceed-203300568.html?.tsrc=rss"
+        },
+        {
+          "title": "TeraWulf, Cipher Digital, and Coinbase Lead Monday’s Crypto Rally — Here’s What’s Driving the Move",
+          "url": "https://247wallst.com/investing/2026/03/16/terawulf-cipher-digital-and-coinbase-lead-mondays-crypto-rally-heres-whats-driving-the-move/?.tsrc=rss"
+        },
+        {
+          "title": "TeraWulf secures $500 million loan for Kentucky AI/HPC data center",
+          "url": "https://blockspace.media/insight/terawulf-secures-500-million-loan-for-kentucky-ai-hpc-data-center/?.tsrc=rss"
+        },
+        {
+          "title": "TeraWulf (WULF) Is Up 6.7% After Pivoting From Bitcoin Mining To Google‑Backed AI Leases",
+          "url": "https://finance.yahoo.com/news/terawulf-wulf-6-7-pivoting-220859781.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "TBD — insufficient analyst coverage",
+      "catalysts": [
+        "Recent news flow: TeraWulf (WULF) Skyrockets 11.9% as Firm Kicks Off New Data Center Expansion"
+      ],
+      "risks": [
+        "Balance sheet: undefined debt vs undefined cash"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 16.41,
+      "currentPrice": 16.41,
+      "priceUpdatedAt": 1773752406294,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p576591f3vv2rr8mympk4mr5j58339x4",
+      "ticker": "CPNG",
+      "name": "Coupang, Inc.",
+      "description": "Coupang, Inc. , together with its subsidiaries, owns and operates retail business through its mobile applications and internet websites in South Korea and internationally. (Consumer Cyclical — Internet Retail)",
+      "opportunityType": "momentum_breakout",
+      "thesis": "MARKET CAP: $37.39B | REVENUE: $34.53B | GROWTH: 10.9%\nP/E (FWD): 35.0 | GROSS MARGIN: 29.4% | FCF: $0.84B\nANALYST TARGET: $27.27059 mean (+33%) | 17 analysts | Consensus: BUY\n\nDISCOVERY: Surfaced because it is top daily gainer + unusual volume / most active.\nGROWTH: Revenue growing 10.9% YoY — moderate but positive.\nBALANCE SHEET: $6.32B cash vs $4.63B debt. FCF: $0.84B.\nRANGE: Trading at 21% of 52-week range ($16.74 - $34.08).",
+      "sources": [
+        {
+          "title": "Coupang (CPNG) Is Up 8.7% After Director Neil Mehta’s US$136.5m Insider Buy - What's Changed",
+          "url": "https://finance.yahoo.com/news/coupang-cpng-8-7-director-081543993.html?.tsrc=rss"
+        },
+        {
+          "title": "Coupang (CPNG) Soars 10.8% as Exec Buys $136-Million Shares",
+          "url": "https://finance.yahoo.com/news/coupang-cpng-soars-10-8-043934199.html?.tsrc=rss"
+        },
+        {
+          "title": "2 Millionaire-Maker Technology Stocks",
+          "url": "https://www.fool.com/investing/2026/03/16/2-millionaire-maker-technology-stocks/?.tsrc=rss"
+        },
+        {
+          "title": "Chegg, Coupang, Lyft, Wayfair, and Roku Shares Are Soaring, What You Need To Know",
+          "url": "https://finance.yahoo.com/news/chegg-coupang-lyft-wayfair-roku-174046233.html?.tsrc=rss"
+        },
+        {
+          "title": "Here’s What Analysts Think About Coupang (CPNG) After Q4 Results",
+          "url": "https://finance.yahoo.com/news/analysts-think-coupang-cpng-q4-183457886.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "33% to analyst mean ($27.27059)",
+      "catalysts": [
+        "33% upside to analyst consensus target of $27.27059",
+        "Recent news flow: Coupang (CPNG) Is Up 8.7% After Director Neil Mehta’s US$136.5m Insider Buy - Wh"
+      ],
+      "risks": [
+        "Balance sheet: $4.63B debt vs $6.32B cash"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 20.45,
+      "currentPrice": 20.45,
+      "priceUpdatedAt": 1773752406294,
+      "returnPct": 0,
+      "status": "active"
+    }
+  ]
+}
+[2026-03-17 08:00:22] ok: discover-opportunities
+[2026-03-17 08:00:22] start: investment-home-refresh
+{
+  "ok": true,
+  "date": "2026-03-17",
+  "briefingCreated": true,
+  "macro": {
+    "vix": 22.71,
+    "dxy": 99.706,
+    "spread": 42
+  },
+  "seededEvents": 2
+}
+[2026-03-17 08:00:28] ok: investment-home-refresh
+[2026-03-17 08:00:28] done
+[2026-03-18 08:00:01] start
+[2026-03-18 08:00:01] start: daily-opportunity-scan
+[2026-03-18 08:00:03] skip: scan already running (pid 35878)
+[2026-03-18 08:00:03] done
+{
+  "ok": true,
+  "dryRun": false,
+  "date": "2026-03-18",
+  "refreshedExisting": 14,
+  "surfacedNew": 0,
+  "skippedBecauseAlreadyKnown": [
+    "RKLB",
+    "SOFI",
+    "NVO"
+  ],
+  "refreshedTickers": [
+    "MU",
+    "NIO",
+    "MARA",
+    "AEHR",
+    "JOBY",
+    "SMCI",
+    "RKLB",
+    "SOFI",
+    "NVO",
+    "PAYP",
+    "S",
+    "MS",
+    "WULF",
+    "CPNG"
+  ],
+  "newTickers": [],
+  "failures": [],
+  "refreshResults": [
+    {
+      "id": "p57amhmttz554dkv5b89vj4dan831vnq",
+      "ticker": "MU",
+      "name": "Micron Technology, Inc.",
+      "description": "Micron Technology, Inc.  designs, develops, manufactures, and sells memory and storage products in the United States, Taiwan, Japan, Mainland China, Hong Kong, Europe, and internationally. (Technology — Semiconductors)",
+      "opportunityType": "earnings_momentum",
+      "thesis": "Micron is a $503B memory/storage semiconductor giant (DRAM, NAND). 53,000 employees, $42.3B revenue growing 56.7% with 45.3% gross and 45.0% operating margins — AI memory cycle in full swing.\n\nThe opportunity: At 8.2x forward P/E with 57% revenue growth, one of the cheapest high-growth names in semis. Near 52-week high of $455 at $446. 39 analysts (BUY consensus). HBM (High Bandwidth Memory) for AI training is the secular driver.\n\nRisk: Memory is cyclical. Current 45% margins are near peak cycle. Mean analyst target ($427) is below current price, but high target is $650. The cycle will turn — question is when.",
+      "sources": [],
+      "expectedUpside": "46% to analyst high ($650) but mean below current price",
+      "catalysts": [
+        "HBM demand for AI training — structural shift in memory pricing",
+        "56.7% revenue growth with 45% operating margins",
+        "39 analysts cover — deep institutional interest"
+      ],
+      "risks": [
+        "Memory cycle peak risk — 45% margins may not sustain",
+        "Mean analyst target ($427) below current price",
+        "Capex-intensive — $12.5B debt needs continued strong cash flow"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 426.13,
+      "currentPrice": 461.69,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": 8.34,
+      "status": "active"
+    },
+    {
+      "id": "p57e5fh6dvxa866cvaw7zjacz9830n8s",
+      "ticker": "NIO",
+      "name": "NIO Inc.",
+      "description": "NIO Inc.  designs, develops, manufactures, and sells smart electric vehicles in China, Europe, and internationally. (Consumer Cyclical — Auto Manufacturers)",
+      "opportunityType": "growth_inflection",
+      "thesis": "NIO designs and manufactures premium smart electric vehicles in China and internationally. $15.3B market cap, ¥87.5B revenue growing 75.9% with 13.7% gross margins and 2.3% operating margins — approaching breakeven.\n\nThe opportunity: 24 analysts, BUY consensus, mean target $6.49 (7% upside), range $4-$9.32. Limited near-term upside but the story is margin expansion: 76% revenue growth and operating profitability inflection.\n\n$31B cash vs $26B debt provides runway. Upside depends on maintaining growth against BYD/Tesla in China while expanding into Europe. 7.7% short interest.",
+      "sources": [],
+      "expectedUpside": "7% to analyst mean ($6.49)",
+      "catalysts": [
+        "75.9% revenue growth — fastest in the portfolio",
+        "Operating margin turned positive at 2.3%",
+        "European expansion opening new addressable market"
+      ],
+      "risks": [
+        "China EV hyper-competitive — BYD and Tesla pricing pressure",
+        "Only 7% upside to analyst mean — limited re-rate potential",
+        "Geopolitical risk on international expansion"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 5.86,
+      "currentPrice": 5.96,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": 1.71,
+      "status": "active"
+    },
+    {
+      "id": "p5762s3cpnj1npgw87m4khcnyx83177b",
+      "ticker": "MARA",
+      "name": "MARA Holdings, Inc.",
+      "description": "MARA Holdings, Inc.  operates as an energy and digital infrastructure company in North America, the Middle East, Europe, and Latin America. (Financial Services — Capital Markets)",
+      "opportunityType": "momentum_breakout",
+      "thesis": "MARA is the largest publicly traded Bitcoin miner by market cap. $3.53B market cap, 266 employees, $910M revenue. Energy and digital infrastructure across North America, Middle East, Europe, Latin America.\n\nThe opportunity: Down 60% from 52-week high of $23.45 to $9.30. 11 analysts maintain BUY, mean target $16.57 (78% upside), range $8-$30. 38.6% of float is short — the highest here by far — creating massive squeeze potential if BTC rallies.\n\n$3.65B debt vs $550M cash is the key risk. -599% operating margin reflects massive impairments. Levered BTC play: if Bitcoin hits new highs, MARA re-rates violently. If BTC drops, debt load becomes existential.",
+      "sources": [],
+      "expectedUpside": "78% to analyst mean ($16.57)",
+      "catalysts": [
+        "78% upside to $16.57 analyst mean (11 analysts, BUY)",
+        "38.6% short interest — massive short squeeze potential",
+        "Bitcoin price appreciation directly drives revenue/valuation"
+      ],
+      "risks": [
+        "$3.65B debt vs $550M cash — highly leveraged",
+        "-599% operating margin — structural profitability challenges",
+        "38.6% short float = large-scale institutional bear thesis"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 9.32,
+      "currentPrice": 9.24,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": -0.86,
+      "status": "active"
+    },
+    {
+      "id": "p5729gye14qmq9c3j1w4e8dxsh82xnnx",
+      "ticker": "AEHR",
+      "name": "Aehr Test Systems",
+      "description": "Aehr Test Systems, Inc.  provides test solutions for testing, burning-in, and semiconductor devices in wafer level, singulated die, package part form, and installed systems in the United States, Asia, and Europe. (Technology — Semiconductor Equipment & Materials)",
+      "opportunityType": "asymmetric_setup",
+      "thesis": "Aehr makes wafer-level burn-in and test equipment for semiconductors — picks-and-shovels on AI chip testing. $1.17B market cap, 136 employees, $50M revenue (down 26.5% from prior cycle).\n\nThe opportunity: Every AI chip needs burn-in testing before deployment, and AEHR is one of very few with this capability. Only 3 analysts cover this $1.2B company (BUY consensus), mean target $36.33. Three major AI orders landed Feb-Mar 2026.\n\nThe bear case is real: 305x forward P/E, -49% operating margins, revenue declining 26.5%, 16.7% short interest. This is a bet the recent order surge marks cyclical inflection — not continuation of downturn.",
+      "sources": [],
+      "expectedUpside": "Wide range ($21-$50) — asymmetric if orders sustain",
+      "catalysts": [
+        "Three major AI chip test orders in Feb-Mar 2026",
+        "Only 3 analysts — inefficient price discovery for a $1.2B company",
+        "AI chip testing demand is structural — every chip needs burn-in"
+      ],
+      "risks": [
+        "16.7% short interest — significant bearish positioning",
+        "Revenue declining 26.5% — orders need to convert",
+        "-49% operating margin, 305x forward P/E — zero margin of safety"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 35.67,
+      "currentPrice": 37.09,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": 3.98,
+      "status": "active"
+    },
+    {
+      "id": "p571nqh1wen5wcd450pra5jq2582xbnb",
+      "ticker": "JOBY",
+      "name": "Joby Aviation",
+      "description": "Joby Aviation, Inc. , an air mobility company, engages in research, develop, test, manufacture, and sale of electric vertical takeoff and landing aircraft in the United States, Japan, Europe, and internationally. (Industrials — Airports & Air Services)",
+      "opportunityType": "asymmetric_setup",
+      "thesis": "Joby Aviation develops eVTOL aircraft for air taxi service. $9.7B market cap, 2,559 employees, pre-revenue ($50M from test/services). The FAA type certification binary bet.\n\nThe opportunity: First FAA-conforming aircraft flew March 11, 2026 — final config before type certification. At $9.90, near 52-week midpoint ($5-$21). 9 analysts, mean target $12.56 (27% upside), range $6-$18. $1.41B cash with only $40M debt = funded through certification.\n\nThe dilutive $1.2B raise that crushed the stock IS the setup: eliminated biggest risk (funding) while suppressing price. FAA certification in 2026 = massive re-rate. Failure = downside to $5-6.",
+      "sources": [],
+      "expectedUpside": "27% to analyst mean ($12.56)",
+      "catalysts": [
+        "27% upside to $12.56 analyst target, 100%+ if FAA certifies",
+        "First conforming aircraft flew March 2026 — certification milestone",
+        "$1.41B cash runway eliminates funding risk through certification"
+      ],
+      "risks": [
+        "10.3% short interest — institutional bears doubt timeline",
+        "Pre-revenue with -689% operating margins — purely speculative",
+        "FAA certification delay is binary downside risk"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 9.7,
+      "currentPrice": 9.93,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": 2.37,
+      "status": "active"
+    },
+    {
+      "id": "p576zkzgb5n0ypxbxqxtwj7v3582wxaa",
+      "ticker": "SMCI",
+      "name": "Super Micro Computer",
+      "description": "Super Micro Computer, Inc. , together with its subsidiaries, develops and sells server and storage solutions based on modular and open-standard architecture in the United States, Asia, Europe, and internationally. (Technology — Computer Hardware)",
+      "opportunityType": "contrarian_recovery",
+      "thesis": "Super Micro builds AI server and storage infrastructure — Nvidia's #1 GPU server partner. $19.2B market cap, $28.1B revenue growing 123.4% YoY. The AI infrastructure boom in one stock.\n\nThe opportunity: At 10.8x forward P/E with 123% revenue growth, absurdly cheap on a growth-adjusted basis. 16 analysts, mean target $41.31 (29% upside), range $15-$63. 2024 accounting scandal destroyed stock from $62 to $28, but 10-K filed, new auditor in place, fundamental demand unchanged.\n\nThe catch: 8% gross margins and 3.7% operating margins — volume pass-through business, not high-margin compounder. 18.9% short interest is the highest here — significant bearish positioning remains.",
+      "sources": [],
+      "expectedUpside": "29% to analyst mean ($41.31)",
+      "catalysts": [
+        "29% upside to $41.31 analyst target (16 analysts)",
+        "123% revenue growth driven by AI GPU server demand",
+        "Governance overhang clearing — 10-K filed, new auditor"
+      ],
+      "risks": [
+        "18.9% short interest — highest in portfolio, active bear case",
+        "8% gross margins — volume business with no pricing power",
+        "Accounting scandal reputation limits institutional buying"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 30.75,
+      "currentPrice": 31.51,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": 2.47,
+      "status": "active"
+    },
+    {
+      "id": "p579vcacpzc4n05w7jzyg7qcqx82qn83",
+      "ticker": "RKLB",
+      "name": "Rocket Lab USA",
+      "description": "Rocket Lab Corporation, a space company, provides launch services and space systems solutions in the United States, Canada, Japan, and internationally.  The company operates through launch services and space systems segments. (Industrials — Aerospace & Defense)",
+      "opportunityType": "secular_growth",
+      "thesis": "Rocket Lab is the #2 commercial launch provider behind SpaceX. $40.8B market cap, 2,600 employees. $600M revenue growing 35.7% from launch services and space systems (satellite components, software, on-orbit management).\n\nThe opportunity: 12 analysts, BUY consensus, mean target $89.88 (25% upside), range $68-$120. Neutron medium-lift rocket first launch is THE catalyst — transforms RKLB from small-launch niche to SpaceX's first credible competitor for NSSL contracts.\n\n$1.02B cash vs $270M debt funds development. The bear case (543x forward P/E, -28.4% operating margin, negative FCF) is real but priced into a pre-revenue-inflection growth story. Secular bet on space economy infrastructure.",
+      "sources": [],
+      "expectedUpside": "25% to analyst mean ($89.88)",
+      "catalysts": [
+        "25% upside to $89.88 analyst target (12 analysts, BUY)",
+        "Neutron medium-lift first launch — transforms competitive positioning",
+        "NSSL government launch contracts worth billions if Neutron succeeds"
+      ],
+      "risks": [
+        "543x forward P/E — no margin of safety",
+        "Neutron development risk — delays or failure craters the stock",
+        "Negative FCF (-$270M) means continued cash burn"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 68.8,
+      "currentPrice": 78.59,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": 14.23,
+      "status": "active"
+    },
+    {
+      "id": "p579emjwmhawz9hhpn5k32xs4x82qyg6",
+      "ticker": "SOFI",
+      "name": "SoFi Technologies",
+      "description": "SoFi Technologies, Inc.  provides various financial services in the United States, Latin America, Canada, and Hong Kong. (Financial Services — Credit Services)",
+      "opportunityType": "growth_inflection",
+      "thesis": "SoFi is a digital financial services platform: lending, banking, investing, plus Galileo fintech infrastructure backend. $22.4B market cap, $3.58B revenue growing 40.2% with 83% gross margins and 18.2% operating margins — now consistently profitable.\n\nThe opportunity: At 22.3x forward P/E with 40% revenue growth, PEG ratio is attractive. 19 analysts, mean target $26.50 (51% upside), range $12-$38. Pulled back from 52-week high of $32.73 to $17.58.\n\nGalileo platform revenue is the hidden asset — processing transactions for other fintechs. S&P 500 inclusion on the table if profitability sustains. 10.2% short interest creates squeeze potential as bears from the unprofitable era get forced out.",
+      "sources": [],
+      "expectedUpside": "51% to analyst mean ($26.50)",
+      "catalysts": [
+        "51% upside to $26.50 analyst mean (19 analysts)",
+        "40.2% revenue growth with sustained profitability — S&P 500 candidate",
+        "10.2% short interest — potential squeeze as bear thesis breaks"
+      ],
+      "risks": [
+        "Consumer credit quality deterioration in recession",
+        "Rate sensitivity — lending margins depend on rate environment",
+        "10.2% short interest means active institutional bear case"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 18.28,
+      "currentPrice": 17.37,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": -4.98,
+      "status": "active"
+    },
+    {
+      "id": "p579mpqy8ma6m5br87y2nny7ts82q5zq",
+      "ticker": "NVO",
+      "name": "Novo Nordisk",
+      "description": "Novo Nordisk A/S, together with its subsidiaries, engages in the research and development, manufacture, and distribution of pharmaceutical products.  It operates through two segments, Obesity and Diabetes Care, and Rare Disease. (Healthcare — Drug Manufacturers - General)",
+      "opportunityType": "catalyst_pullback",
+      "thesis": "Novo Nordisk is the world's leading GLP-1 manufacturer (Ozempic, Wegovy). $171B market cap, 68,794 employees. DKK 309B revenue with 82.4% gross margins and 44.5% operating margins — a pharma cash machine.\n\nThe opportunity: Down 53% from 52-week high of $82.57 to $38.43, pricing in worst-case on US list price cuts and Lilly competition. 11 analysts maintain BUY consensus, mean target $47.37 (23% upside), range $40-$63. At 1.8x forward P/E (DKK earnings), cheapest NVO has been in years.\n\nMarket prices pressure but ignores volume: global GLP-1 demand massively underpenetrated, CagriSema Phase 3 data upcoming, Hims partnership opens DTC distribution. 0.9% short = bears aren't even positioned, the market just panicked.",
+      "sources": [],
+      "expectedUpside": "23% to analyst mean ($47.37)",
+      "catalysts": [
+        "23% upside to $47.37 analyst target (11 analysts, BUY)",
+        "CagriSema Phase 3 data catalyst — next-gen obesity drug",
+        "Global GLP-1 volume growth massively outpacing price compression"
+      ],
+      "risks": [
+        "US 50% list price cuts compress near-term margins",
+        "Lilly tirzepatide competitive pressure in obesity",
+        "DKK/USD currency exposure adds volatility"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 38.75,
+      "currentPrice": 38.43,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": -0.83,
+      "status": "active"
+    },
+    {
+      "id": "p57cgv83kcrmyf7bjpn725ye9d831p98",
+      "ticker": "PAYP",
+      "name": "PayPay Corporation",
+      "description": "PayPay Corporation, a financial technology company, provides a digital finance platform with services that inlclude easy-to-use payments and other financial services in Japan.  The company operates through two segments, Payment and Financial Service. (Technology — Software - Infrastructure)",
+      "opportunityType": "growth_catalyst",
+      "thesis": "PayPay is Japan's dominant mobile payment platform — over 50% of Japan's mobile payments. $13B market cap, ¥355.5B revenue (~$2.4B USD) growing 23.9% with 52.4% gross margins and 24.8% operating margins. Profitable, fast-growing fintech.\n\nThe opportunity: Recently IPO'd on Nasdaq with ARK Invest buying shares on day two. Trading at $19.49 vs. 52-week high of $22. Visa partnership opens cross-border payment rails. Nasdaq dual-listing increases institutional access and index inclusion potential.\n\nThe embedded financial services play (lending, insurance, investing) drives ARPU expansion beyond core payments. Post-IPO volatility is creating the entry.",
+      "sources": [],
+      "expectedUpside": "25-40% (6-12 months) as post-IPO price discovery completes",
+      "catalysts": [
+        "Visa strategic partnership unlocking cross-border payment volume",
+        "ARK Invest accumulating shares — institutional validation",
+        "Japanese mobile payment market consolidation leader"
+      ],
+      "risks": [
+        "Post-IPO lockup expiration could create selling pressure",
+        "Revenue in JPY — currency risk for USD investors",
+        "Limited US analyst coverage means less price discovery"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 21.14,
+      "currentPrice": 19.79,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": -6.39,
+      "status": "active"
+    },
+    {
+      "id": "p570apptkwhhy80yfhwafhzre58318km",
+      "ticker": "S",
+      "name": "SentinelOne, Inc.",
+      "description": "SentinelOne, Inc.  operates as a cybersecurity provider in the United States and internationally. (Technology — Software - Infrastructure)",
+      "opportunityType": "growth_inflection",
+      "thesis": "SentinelOne is an AI-native cybersecurity platform providing endpoint protection, cloud security, and threat intelligence. $4.9B market cap, $1B revenue growing 20.2%, 74.2% gross margins, and now FCF positive at $292M — a critical inflection for a growth-stage security company.\n\nThe opportunity: At 30.3x forward P/E, S trades at a steep discount to CrowdStrike (60x+). 34 analysts cover with a mean target of $18.56 (28% upside), range $14-$26. Stock near 52-week low of $12.24 — asymmetric setup with limited downside and substantial re-rate potential from sustained profitability.\n\n$628M cash, zero debt. 6.9% short interest creates squeeze fuel as the profitability story solidifies.",
+      "sources": [],
+      "expectedUpside": "28% to analyst mean ($18.56)",
+      "catalysts": [
+        "28% upside to $18.56 analyst consensus (34 analysts, BUY)",
+        "$1B revenue milestone + FCF positive inflection point",
+        "AI-driven security platform gaining share in $50B+ TAM"
+      ],
+      "risks": [
+        "CrowdStrike dominance in endpoint — hard to displace market leader",
+        "Operating margin still -28% — profitability path needs sustained execution",
+        "6.9% short interest signals some institutional skepticism"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 14.52,
+      "currentPrice": 14.49,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": -0.21,
+      "status": "active"
+    },
+    {
+      "id": "p577ag468c0gggn8jr98fmhsc18312mh",
+      "ticker": "MS",
+      "name": "Morgan Stanley",
+      "description": "Morgan Stanley, a financial holding company, provides various financial products and services to corporations, governments, financial institutions, and individuals in the Americas, Asia, Europe, the Middle East, and Africa.  It operates through Institutional Securities, Wealth Management, and Investment Management segments. (Financial Services — Capital Markets)",
+      "opportunityType": "contrarian_recovery",
+      "thesis": "Morgan Stanley is a $247B financial powerhouse operating across institutional securities, wealth management, and investment management with 83,000 employees globally. Revenue of $70.3B growing 11% YoY with exceptional 87% gross margins and 38.6% operating margins.\n\nThe opportunity: MS trades at just 12.7x forward earnings — a steep discount for a diversified financial services firm with $600B in cash and buy-rated consensus from 21 analysts. Mean price target is $196 (26% upside). The stock is recovering from a pullback to $156 vs. its 52-week high of $193, creating a favorable entry. Wealth management AUM continues growing as rate environment normalizes and capital markets activity rebounds.\n\nKey valuation context: At 12.7x forward P/E with 11% revenue growth and 38.6% operating margins, MS is priced like a slow-growth bank, not a fee-generating asset management machine. Only 1.3% of float is short — bears are not positioned against this name.",
+      "sources": [],
+      "expectedUpside": "26% to analyst mean ($196)",
+      "catalysts": [
+        "26% upside to $196 analyst mean target (21 analysts, consensus BUY)",
+        "Capital markets activity rebound as rate cycle normalizes",
+        "Wealth management AUM growth and fee income expansion"
+      ],
+      "risks": [
+        "Recession could hit capital markets revenue and credit quality",
+        "Interest rate path uncertainty affects net interest margin",
+        "$513B debt load requires stable credit markets"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 154.87,
+      "currentPrice": 157.83,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": 1.91,
+      "status": "active"
+    },
+    {
+      "id": "p57c3dr9q65jm8347v9835a16x8334bs",
+      "ticker": "WULF",
+      "name": "TeraWulf Inc.",
+      "description": "TeraWulf Inc. , together with its subsidiaries, owns, develops, operates digital infrastructure in the United States. (Financial Services — Capital Markets)",
+      "opportunityType": "momentum_breakout",
+      "thesis": "MARKET CAP: N/A | REVENUE: N/A | GROWTH: N/A\nP/E (FWD): N/A | GROSS MARGIN: N/A | FCF: N/A\n\nDISCOVERY: Surfaced because it is top daily gainer + unusual volume / most active.\nBALANCE SHEET: undefined cash vs undefined debt. FCF: N/A.\nRANGE: Trading at 87% of 52-week range ($2.06 - $18.51).",
+      "sources": [
+        {
+          "title": "TeraWulf (WULF) Skyrockets 11.9% as Firm Kicks Off New Data Center Expansion",
+          "url": "https://finance.yahoo.com/news/terawulf-wulf-skyrockets-11-9-043945345.html?.tsrc=rss"
+        },
+        {
+          "title": "Fluor Signs Limited Notice to Proceed with TeraWulf for Large-Scale Data Center Project in Kentucky",
+          "url": "https://finance.yahoo.com/news/fluor-signs-limited-notice-proceed-203300568.html?.tsrc=rss"
+        },
+        {
+          "title": "TeraWulf, Cipher Digital, and Coinbase Lead Monday’s Crypto Rally — Here’s What’s Driving the Move",
+          "url": "https://247wallst.com/investing/2026/03/16/terawulf-cipher-digital-and-coinbase-lead-mondays-crypto-rally-heres-whats-driving-the-move/?.tsrc=rss"
+        },
+        {
+          "title": "TeraWulf secures $500 million loan for Kentucky AI/HPC data center",
+          "url": "https://blockspace.media/insight/terawulf-secures-500-million-loan-for-kentucky-ai-hpc-data-center/?.tsrc=rss"
+        },
+        {
+          "title": "TeraWulf (WULF) Is Up 6.7% After Pivoting From Bitcoin Mining To Google‑Backed AI Leases",
+          "url": "https://finance.yahoo.com/news/terawulf-wulf-6-7-pivoting-220859781.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "TBD — insufficient analyst coverage",
+      "catalysts": [
+        "Recent news flow: TeraWulf (WULF) Skyrockets 11.9% as Firm Kicks Off New Data Center Expansion"
+      ],
+      "risks": [
+        "Balance sheet: undefined debt vs undefined cash"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 16.41,
+      "currentPrice": 16.04,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": -2.25,
+      "status": "active"
+    },
+    {
+      "id": "p576591f3vv2rr8mympk4mr5j58339x4",
+      "ticker": "CPNG",
+      "name": "Coupang, Inc.",
+      "description": "Coupang, Inc. , together with its subsidiaries, owns and operates retail business through its mobile applications and internet websites in South Korea and internationally. (Consumer Cyclical — Internet Retail)",
+      "opportunityType": "momentum_breakout",
+      "thesis": "MARKET CAP: $37.39B | REVENUE: $34.53B | GROWTH: 10.9%\nP/E (FWD): 35.0 | GROSS MARGIN: 29.4% | FCF: $0.84B\nANALYST TARGET: $27.27059 mean (+33%) | 17 analysts | Consensus: BUY\n\nDISCOVERY: Surfaced because it is top daily gainer + unusual volume / most active.\nGROWTH: Revenue growing 10.9% YoY — moderate but positive.\nBALANCE SHEET: $6.32B cash vs $4.63B debt. FCF: $0.84B.\nRANGE: Trading at 21% of 52-week range ($16.74 - $34.08).",
+      "sources": [
+        {
+          "title": "Coupang (CPNG) Is Up 8.7% After Director Neil Mehta’s US$136.5m Insider Buy - What's Changed",
+          "url": "https://finance.yahoo.com/news/coupang-cpng-8-7-director-081543993.html?.tsrc=rss"
+        },
+        {
+          "title": "Coupang (CPNG) Soars 10.8% as Exec Buys $136-Million Shares",
+          "url": "https://finance.yahoo.com/news/coupang-cpng-soars-10-8-043934199.html?.tsrc=rss"
+        },
+        {
+          "title": "2 Millionaire-Maker Technology Stocks",
+          "url": "https://www.fool.com/investing/2026/03/16/2-millionaire-maker-technology-stocks/?.tsrc=rss"
+        },
+        {
+          "title": "Chegg, Coupang, Lyft, Wayfair, and Roku Shares Are Soaring, What You Need To Know",
+          "url": "https://finance.yahoo.com/news/chegg-coupang-lyft-wayfair-roku-174046233.html?.tsrc=rss"
+        },
+        {
+          "title": "Here’s What Analysts Think About Coupang (CPNG) After Q4 Results",
+          "url": "https://finance.yahoo.com/news/analysts-think-coupang-cpng-q4-183457886.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "33% to analyst mean ($27.27059)",
+      "catalysts": [
+        "33% upside to analyst consensus target of $27.27059",
+        "Recent news flow: Coupang (CPNG) Is Up 8.7% After Director Neil Mehta’s US$136.5m Insider Buy - Wh"
+      ],
+      "risks": [
+        "Balance sheet: $4.63B debt vs $6.32B cash"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 20.45,
+      "currentPrice": 20.8,
+      "priceUpdatedAt": 1773838801530,
+      "returnPct": 1.71,
+      "status": "active"
+    }
+  ],
+  "newResults": []
+}
+[2026-03-18 08:00:05] ok: daily-opportunity-scan
+[2026-03-18 08:00:05] start: discover-opportunities
+[discover] Starting opportunity discovery for 2026-03-18 (target: 3 new)
+[discover] Known tickers (24): CPNG, WULF, MS, S, PAYP, NVO, SOFI, RKLB, SMCI, JOBY, AEHR, MARA, NIO, MU, HIMS, IREN, ONDS, AAPL, PTRN, VST, ASTS, FSLR, PLTR, META
+[discover] Fetching Yahoo Finance screeners...
+[discover] Yahoo data: 30 trending, 25 gainers, 25 active, 25 undervalued
+[discover] 83 fresh candidates after filtering
+[discover] Top candidates: TTD(trending+most_active), M(trending+undervalued_growth), RIG(trending+most_active), RCAT(trending+top_gainer), OPEN(top_gainer+most_active), BBD(most_active+undervalued_growth), SWMR(trending), DVLT(trending), GIS(trending), LULU(trending)
+[discover] Claude selected 6 candidates: TTD, M, RIG, RCAT, OPEN, BBD
+[discover] Evaluating TTD — The Trade Desk, Inc....
+[discover] TTD — got description (144 chars)
+[discover] Researching TTD across Yahoo, Google News, Finviz, Seeking Alpha...
+[discover] TTD: 16 unique articles from Yahoo, Google, Finviz
+[discover] Generating thesis for TTD via https://mc.lookandseen.com...
+[discover] Using deterministic thesis for TTD
+[discover] TTD — upserted as p57efcftjtr4kcp0dstfd4r2wx834t4y
+[discover] Evaluating M — Macy's Inc...
+[discover] M — got description (164 chars)
+[discover] Researching M across Yahoo, Google News, Finviz, Seeking Alpha...
+[discover] M: 17 unique articles from Yahoo, Google, Finviz
+[discover] Generating thesis for M via https://mc.lookandseen.com...
+[discover] Using deterministic thesis for M
+[discover] M — upserted as p574016mhf35cd06hnp60afhas834gxw
+[discover] Evaluating RIG — Transocean Ltd (Switzerland)...
+[discover] RIG — got description (182 chars)
+[discover] Researching RIG across Yahoo, Google News, Finviz, Seeking Alpha...
+[discover] RIG: 17 unique articles from Yahoo, Google, Finviz
+[discover] Generating thesis for RIG via https://mc.lookandseen.com...
+[discover] Using deterministic thesis for RIG
+[discover] RIG — upserted as p57a5qpdh9epnfqprejabd2g19835v8w
+{
+  "ok": true,
+  "dryRun": false,
+  "date": "2026-03-18",
+  "discovered": 3,
+  "target": 3,
+  "shortfall": 0,
+  "tickers": [
+    "TTD",
+    "M",
+    "RIG"
+  ],
+  "failures": [],
+  "results": [
+    {
+      "id": "p57efcftjtr4kcp0dstfd4r2wx834t4y",
+      "ticker": "TTD",
+      "name": "The Trade Desk, Inc.",
+      "description": "The Trade Desk, Inc.  operates as a technology company in the United States and internationally. (Communication Services — Advertising Agencies)",
+      "opportunityType": "growth_catalyst",
+      "thesis": "MARKET CAP: $11.93B | REVENUE: $2.90B | GROWTH: 14.3%\nP/E (FWD): 10.5 | GROSS MARGIN: 78.6% | FCF: $0.60B\nANALYST TARGET: $32.63636 mean (+30%) | 33 analysts | Consensus: BUY\n\nDISCOVERY: Surfaced because it is trending on Yahoo Finance + unusual volume / most active.\nVALUATION: Forward P/E of 10.5 is below market average, suggesting the market is underpricing growth or earnings power.\nGROWTH: Revenue growing 14.3% YoY — moderate but positive.\nBALANCE SHEET: $1.30B cash vs $0.44B debt. FCF: $0.60B.\nRANGE: Trading at 6% of 52-week range ($21.08 - $91.45).\nSHORT INTEREST: 10.8% of float is short — potential squeeze catalyst or bearish signal to investigate.",
+      "sources": [
+        {
+          "title": "Why The Trade Desk (TTD) Stock Is Nosediving",
+          "url": "https://finance.yahoo.com/news/why-trade-desk-ttd-stock-031200544.html?.tsrc=rss"
+        },
+        {
+          "title": "Trade Desk (TTD) Is Down 9.4% After Publicis Audit, Kokai Concerns And CEO Share Buying - Has The Bull Case Changed?",
+          "url": "https://finance.yahoo.com/news/trade-desk-ttd-down-9-020849596.html?.tsrc=rss"
+        },
+        {
+          "title": "A Look At Trade Desk (TTD) Valuation After Insider Buying And OpenAI Partnership Speculation",
+          "url": "https://finance.yahoo.com/news/look-trade-desk-ttd-valuation-010900788.html?.tsrc=rss"
+        },
+        {
+          "title": "The Trade Desk's CTV Push: Can Ventura, OpenAds, and Kokai Deliver?",
+          "url": "https://finance.yahoo.com/news/trade-desks-ctv-push-ventura-162500899.html?.tsrc=rss"
+        },
+        {
+          "title": "TTD Trades at a Discounted P/E: Should You Buy the Stock?",
+          "url": "https://finance.yahoo.com/news/ttd-trades-discounted-p-e-162100725.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "30% to analyst mean ($32.63636)",
+      "catalysts": [
+        "30% upside to analyst consensus target of $32.63636",
+        "Low forward P/E of 10.5 — potential value unlock",
+        "Recent news flow: Why The Trade Desk (TTD) Stock Is Nosediving"
+      ],
+      "risks": [
+        "High short interest (10.8%) — bears see something",
+        "Balance sheet: $0.44B debt vs $1.30B cash"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 25.07,
+      "currentPrice": 25.07,
+      "priceUpdatedAt": 1773838805674,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p574016mhf35cd06hnp60afhas834gxw",
+      "ticker": "M",
+      "name": "Macy's Inc",
+      "description": "Macy's, Inc. , an omni-channel retail organization, operates stores, websites, and mobile applications in the United States. (Consumer Cyclical — Department Stores)",
+      "opportunityType": "contrarian_recovery",
+      "thesis": "MARKET CAP: $4.50B | REVENUE: $22.71B | GROWTH: 0.2%\nP/E (FWD): 7.9 | GROSS MARGIN: 40.4% | FCF: $0.90B\nANALYST TARGET: $21.4 mean (+26%) | 10 analysts | Consensus: HOLD\n\nDISCOVERY: Surfaced because it is trending on Yahoo Finance + flagged as undervalued growth.\nVALUATION: Forward P/E of 7.9 is below market average, suggesting the market is underpricing growth or earnings power.\nGROWTH: Revenue growing 0.2% YoY — moderate but positive.\nBALANCE SHEET: $0.45B cash vs $5.24B debt. FCF: $0.90B.\nRANGE: Trading at 49% of 52-week range ($9.76 - $24.41).\nSHORT INTEREST: 10.4% of float is short — potential squeeze catalyst or bearish signal to investigate.",
+      "sources": [
+        {
+          "title": "Macy's stock pops as earnings beat low expectations, uncertainty clouds outlook",
+          "url": "https://finance.yahoo.com/news/macys-stock-pops-as-earnings-beat-low-expectations-uncertainty-clouds-outlook-123712046.html?.tsrc=rss"
+        },
+        {
+          "title": "Macy’s Rises on Sales Outlook While Cautioning on Iran, Tariffs",
+          "url": "https://finance.yahoo.com/news/macy-issues-prudent-2026-guidance-110654010.html?.tsrc=rss"
+        },
+        {
+          "title": "Macy’s Stock Jumps on Earnings Beat. The Department Store Is Putting Up a Fight.",
+          "url": "https://finance.yahoo.com/m/cdf3a15a-af32-3886-8655-32ae579c7b23/macy%E2%80%99s-stock-jumps-on.html?.tsrc=rss"
+        },
+        {
+          "title": "Macy’s surges on earnings beat, strong revenue outlook",
+          "url": "https://finance.yahoo.com/news/macy-surges-earnings-beat-strong-115308624.html?.tsrc=rss"
+        },
+        {
+          "title": "These Stocks Are Today’s Movers: Micron, Macy’s, Swarmer, Lululemon, Gemini Space Station, Docusign, and More",
+          "url": "https://finance.yahoo.com/m/c259e6fa-48e5-3ad3-81ad-d29f3ce376c9/these-stocks-are-today%E2%80%99s.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "26% to analyst mean ($21.4)",
+      "catalysts": [
+        "26% upside to analyst consensus target of $21.4",
+        "Low forward P/E of 7.9 — potential value unlock",
+        "Recent news flow: Macy's stock pops as earnings beat low expectations, uncertainty clouds outlook"
+      ],
+      "risks": [
+        "High short interest (10.4%) — bears see something",
+        "Balance sheet: $5.24B debt vs $0.45B cash"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 16.92,
+      "currentPrice": 16.92,
+      "priceUpdatedAt": 1773838805674,
+      "returnPct": 0,
+      "status": "active"
+    },
+    {
+      "id": "p57a5qpdh9epnfqprejabd2g19835v8w",
+      "ticker": "RIG",
+      "name": "Transocean Ltd (Switzerland)",
+      "description": "Transocean Ltd. , together with its subsidiaries, provides offshore contract drilling services for oil and gas wells in Switzerland and internationally. (Energy — Oil & Gas Drilling)",
+      "opportunityType": "growth_catalyst",
+      "thesis": "MARKET CAP: $7.26B | REVENUE: $3.96B | GROWTH: 9.6%\nP/E (FWD): 54.1 | GROSS MARGIN: 39.3% | FCF: $1.05B\nANALYST TARGET: $5.64091 mean (-14%) | 11 analysts | Consensus: HOLD\n\nDISCOVERY: Surfaced because it is trending on Yahoo Finance + unusual volume / most active.\nVALUATION: Forward P/E of 54.1 is elevated — market is pricing in significant growth. Execution risk is high.\nGROWTH: Revenue growing 9.6% YoY — moderate but positive.\nBALANCE SHEET: $0.62B cash vs $5.97B debt. FCF: $1.05B.\nRANGE: Trading at 92% of 52-week range ($1.97 - $6.96).\nSHORT INTEREST: 17.6% of float is short — potential squeeze catalyst or bearish signal to investigate.",
+      "sources": [
+        {
+          "title": "Baker Hughes, Halliburton, and Transocean Are All Up 5% — Here’s the Story Behind Each Stock’s Move",
+          "url": "https://247wallst.com/investing/2026/03/17/baker-hughes-halliburton-and-transocean-are-all-up-5-heres-the-story-behind-each-stocks-move/?.tsrc=rss"
+        },
+        {
+          "title": "How to Find Strong Oils-Energy Stocks Slated for Positive Earnings Surprises",
+          "url": "https://finance.yahoo.com/news/strong-oils-energy-stocks-slated-130004515.html?.tsrc=rss"
+        },
+        {
+          "title": "2 Momentum  Stocks to Consider Right Now and 1 That Underwhelm",
+          "url": "https://finance.yahoo.com/news/2-momentum-stocks-consider-now-101820457.html?.tsrc=rss"
+        },
+        {
+          "title": "Transocean Valaris All Stock Deal Reshapes Offshore Drilling Exposure",
+          "url": "https://finance.yahoo.com/news/transocean-valaris-stock-deal-reshapes-090544521.html?.tsrc=rss"
+        },
+        {
+          "title": "Woodside, Pemex Start Drilling for Trion Development Project",
+          "url": "https://finance.yahoo.com/news/woodside-pemex-start-drilling-trion-164018675.html?.tsrc=rss"
+        }
+      ],
+      "expectedUpside": "-14% to analyst mean ($5.64091)",
+      "catalysts": [
+        "Recent news flow: Baker Hughes, Halliburton, and Transocean Are All Up 5% — Here’s the Story Behin"
+      ],
+      "risks": [
+        "Elevated valuation (54.1x forward P/E) leaves little margin of safety",
+        "High short interest (17.6%) — bears see something",
+        "Balance sheet: $5.97B debt vs $0.62B cash"
+      ],
+      "timeHorizon": "3-6 months",
+      "moralScreenPass": true,
+      "priceAtRecommendation": 6.58,
+      "currentPrice": 6.58,
+      "priceUpdatedAt": 1773838805674,
+      "returnPct": 0,
+      "status": "active"
+    }
+  ]
+}
+[2026-03-18 08:00:28] ok: discover-opportunities
+[2026-03-18 08:00:28] start: investment-home-refresh
+{
+  "ok": true,
+  "date": "2026-03-18",
+  "briefingCreated": false,
+  "macro": {
+    "vix": 23.46,
+    "dxy": 99.821,
+    "spread": 41
+  },
+  "seededEvents": 2
+}
+[2026-03-18 08:00:30] ok: investment-home-refresh
+[2026-03-18 08:00:30] done
