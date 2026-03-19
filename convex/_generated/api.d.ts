@@ -15,6 +15,7 @@ import type * as btcSignals from "../btcSignals.js";
 import type * as classBookings from "../classBookings.js";
 import type * as cleaningTasks from "../cleaningTasks.js";
 import type * as clientLinks from "../clientLinks.js";
+import type * as clientPortal from "../clientPortal.js";
 import type * as clients from "../clients.js";
 import type * as compounds from "../compounds.js";
 import type * as contacts from "../contacts.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   classBookings: typeof classBookings;
   cleaningTasks: typeof cleaningTasks;
   clientLinks: typeof clientLinks;
+  clientPortal: typeof clientPortal;
   clients: typeof clients;
   compounds: typeof compounds;
   contacts: typeof contacts;

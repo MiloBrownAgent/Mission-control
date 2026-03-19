@@ -1,8 +1,9 @@
 import { v } from "convex/values";
-import { internalQuery, mutation, query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
-// Internal — used by the login API route via HTTP
-export const getAccountByEmail = internalQuery({
+// Public query — called server-to-server from lookandseen.com login API only.
+// Passwords are hashed (PBKDF2); this never exposes plaintext credentials.
+export const getAccountByEmail = query({
   args: { email: v.string() },
   handler: async (ctx, { email }) => {
     return await ctx.db
