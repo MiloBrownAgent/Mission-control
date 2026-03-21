@@ -8,3 +8,4 @@ export type {
 export { getProvider, listProviders, getDefaultProvider } from "./registry";
 
 export { falFluxPro } from "./providers/fal-flux-pro";
+export { replicateFluxPro } from "./providers/replicate-flux-pro";
