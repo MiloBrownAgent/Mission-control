@@ -30,5 +30,7 @@ export function listProviders(): Array<{
 }
 
 export function getDefaultProvider(): ImageGenProvider {
-  return falFluxPro;
+  // Use fal.ai if FAL_API_KEY is set, otherwise fall back to Replicate
+  if (process.env.FAL_API_KEY) return falFluxPro;
+  return replicateFluxPro;
 }
