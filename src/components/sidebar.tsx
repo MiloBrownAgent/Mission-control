@@ -21,6 +21,7 @@ import {
   Wallet,
   Landmark,
   Wand2,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
