@@ -297,53 +297,76 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Milo To-Dos ─────────────────────────────────────────────────────── */}
-      {miloTodos && miloTodos.length > 0 && (
-        <div className="animate-fade-in-up">
-          <div className="mb-3 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-[#B8956A]" />
-            <h2 className="text-sm font-semibold font-[family-name:var(--font-syne)] text-[#B8956A] uppercase tracking-wider">Needs Your Attention</h2>
-            <span className="ml-auto rounded-full bg-[#B8956A]/10 px-2 py-0.5 text-[10px] font-semibold text-[#B8956A]">{miloTodos.length} open</span>
-          </div>
-          <div className="space-y-2">
-            {miloTodos.map((todo) => {
-              const catColors: Record<string, string> = {
-                grove:    "text-[#5C6B5E] bg-[#5C6B5E]/10",
-                infra:    "text-[#6B7A9E] bg-[#6B7A9E]/10",
-                ops:      "text-[#CDAA7E] bg-[#CDAA7E]/10",
-                business: "text-[#B8956A] bg-[#B8956A]/10",
-                personal: "text-[#9E6B6B] bg-[#9E6B6B]/10",
-              };
-              const priorityDot: Record<string, string> = {
-                high:   "bg-[#C4533A]",
-                medium: "bg-[#C07A1A]",
-                low:    "bg-[#2E6B50]",
-              };
-              const catColor = catColors[todo.category] ?? catColors.ops;
-              const dot = priorityDot[todo.priority] ?? priorityDot.medium;
-              return (
-                <Card key={todo._id} className="rounded-xl border-[#1A1816] bg-[#0D0C0A] p-4 border-l-2 border-l-[#B8956A]/40">
-                  <div className="flex items-start gap-3">
-                    <div className={cn("mt-1 h-2 w-2 shrink-0 rounded-full", dot)} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[#E8E4DF] leading-snug">{todo.title}</p>
-                      {todo.notes && (
-                        <p className="mt-1 text-xs text-[#6B6560] leading-relaxed">{todo.notes}</p>
-                      )}
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium capitalize", catColor)}>{todo.category}</span>
-                        {todo.source && (
-                          <span className="text-[10px] text-[#6B6560]">from {todo.source}</span>
-                        )}
-                      </div>
-                    </div>
+      {/* ── To-Dos ──────────────────────────────────────────────────────────── */}
+      {miloTodos && miloTodos.length > 0 && (() => {
+        const daveTodos = miloTodos.filter((t) => t.owner === "dave");
+        const miloOwnTodos = miloTodos.filter((t) => t.owner === "milo");
+        const catColors: Record<string, string> = {
+          grove:    "text-[#5C6B5E] bg-[#5C6B5E]/10",
+          infra:    "text-[#6B7A9E] bg-[#6B7A9E]/10",
+          ops:      "text-[#CDAA7E] bg-[#CDAA7E]/10",
+          business: "text-[#B8956A] bg-[#B8956A]/10",
+          personal: "text-[#9E6B6B] bg-[#9E6B6B]/10",
+          family:   "text-[#6B9E7A] bg-[#6B9E7A]/10",
+        };
+        const priorityDot: Record<string, string> = {
+          high:   "bg-[#C4533A]",
+          medium: "bg-[#C07A1A]",
+          low:    "bg-[#2E6B50]",
+        };
+        const TodoCard = ({ todo }: { todo: typeof miloTodos[0] }) => (
+          <Card key={todo._id} className="rounded-xl border-[#1A1816] bg-[#0D0C0A] p-4">
+            <div className="flex items-start gap-3">
+              <div className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", priorityDot[todo.priority] ?? "bg-[#C07A1A]")} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[#E8E4DF] leading-snug">{todo.title}</p>
+                {todo.notes && <p className="mt-1 text-xs text-[#6B6560] leading-relaxed">{todo.notes}</p>}
+                <div className="mt-2 flex items-center gap-2">
+                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium capitalize", catColors[todo.category] ?? catColors.ops)}>{todo.category}</span>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", todo.priority === "high" ? "text-[#C4533A] bg-[#C4533A]/10" : todo.priority === "medium" ? "text-[#C07A1A] bg-[#C07A1A]/10" : "text-[#2E6B50] bg-[#2E6B50]/10")}>{todo.priority}</span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        );
+        return (
+          <div className="animate-fade-in-up">
+            <div className="mb-4 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-[#B8956A]" />
+              <h2 className="text-sm font-semibold font-[family-name:var(--font-syne)] text-[#B8956A] uppercase tracking-wider">Open To-Dos</h2>
+              <span className="ml-auto rounded-full bg-[#B8956A]/10 px-2 py-0.5 text-[10px] font-semibold text-[#B8956A]">{miloTodos.length} open</span>
+            </div>
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Dave's column */}
+              {daveTodos.length > 0 && (
+                <div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#B8956A] text-[10px] font-bold text-[#060606]">D</div>
+                    <span className="text-xs font-semibold text-[#E8E4DF]">Dave</span>
+                    <span className="text-[10px] text-[#6B6560]">— {daveTodos.length} item{daveTodos.length !== 1 ? "s" : ""}</span>
                   </div>
-                </Card>
-              );
-            })}
+                  <div className="space-y-2">
+                    {daveTodos.map((todo) => <TodoCard key={todo._id} todo={todo} />)}
+                  </div>
+                </div>
+              )}
+              {/* Milo's column */}
+              {miloOwnTodos.length > 0 && (
+                <div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#5C6B5E] text-[10px] font-bold text-white">M</div>
+                    <span className="text-xs font-semibold text-[#E8E4DF]">Milo</span>
+                    <span className="text-[10px] text-[#6B6560]">— {miloOwnTodos.length} item{miloOwnTodos.length !== 1 ? "s" : ""}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {miloOwnTodos.map((todo) => <TodoCard key={todo._id} todo={todo} />)}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Quick Stats ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

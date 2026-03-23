@@ -942,13 +942,15 @@ export default defineSchema({
   milo_todos: defineTable({
     title: v.string(),
     notes: v.optional(v.string()),
-    category: v.string(), // "grove" | "ops" | "infra" | "business" | "personal"
+    category: v.string(), // "grove" | "ops" | "infra" | "business" | "personal" | "family"
     status: v.string(),   // "open" | "done" | "blocked"
     priority: v.string(), // "high" | "medium" | "low"
+    owner: v.string(),    // "dave" | "milo"
     addedAt: v.number(),
     doneAt: v.optional(v.number()),
-    source: v.optional(v.string()), // e.g. "dave" | "milo" | "cron"
-  }).index("by_status", ["status"]),
+    source: v.optional(v.string()),
+  }).index("by_status", ["status"])
+    .index("by_owner", ["owner"]),
 
   // ── Grove — Private Family Legacy Platform ────────────────────────────────
 
