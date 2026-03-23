@@ -937,4 +937,149 @@ export default defineSchema({
   })
     .index("by_email", ["email"])
     .index("by_slug", ["clientSlug"]),
+
+  // ── Milo To-Dos ───────────────────────────────────────────────────────────
+  milo_todos: defineTable({
+    title: v.string(),
+    notes: v.optional(v.string()),
+    category: v.string(), // "grove" | "ops" | "infra" | "business" | "personal"
+    status: v.string(),   // "open" | "done" | "blocked"
+    priority: v.string(), // "high" | "medium" | "low"
+    addedAt: v.number(),
+    doneAt: v.optional(v.number()),
+    source: v.optional(v.string()), // e.g. "dave" | "milo" | "cron"
+  }).index("by_status", ["status"]),
+
+  // ── Grove — Private Family Legacy Platform ────────────────────────────────
+
+  grove_families: defineTable({
+    familyId: v.string(),
+    familyName: v.string(),
+    childName: v.string(),
+    childDob: v.string(),
+    childPhotoUrl: v.optional(v.string()),
+    timezone: v.string(),
+    plan: v.string(),
+    createdAt: v.number(),
+    borndayData: v.optional(v.object({
+      weatherHigh: v.optional(v.number()),
+      weatherLow: v.optional(v.number()),
+      weatherDesc: v.optional(v.string()),
+      song: v.optional(v.string()),
+      songArtist: v.optional(v.string()),
+      headlines: v.optional(v.array(v.string())),
+      spClose: v.optional(v.number()),
+      quote: v.optional(v.string()),
+    })),
+  }).index("by_familyId", ["familyId"]),
+
+  grove_chronicle: defineTable({
+    familyId: v.string(),
+    date: v.string(),
+    ageMonths: v.number(),
+    ageDays: v.number(),
+    weather: v.optional(v.string()),
+    weatherHigh: v.optional(v.number()),
+    daycareSummary: v.optional(v.string()),
+    daycarePhotoUrl: v.optional(v.string()),
+    dinnerThatNight: v.optional(v.string()),
+    miloNarrative: v.string(),
+    headlines: v.optional(v.array(v.string())),
+    mood: v.optional(v.string()),
+    milestoneReached: v.optional(v.string()),
+    isBackfilled: v.optional(v.boolean()),
+  })
+    .index("by_familyId_date", ["familyId", "date"])
+    .index("by_familyId", ["familyId"]),
+
+  grove_milestones: defineTable({
+    familyId: v.string(),
+    name: v.string(),
+    category: v.string(),
+    expectedAgeMonths: v.number(),
+    reachedAt: v.optional(v.number()),
+    note: v.optional(v.string()),
+    isCustom: v.optional(v.boolean()),
+  }).index("by_familyId", ["familyId"]),
+
+  grove_letters: defineTable({
+    familyId: v.string(),
+    author: v.string(),
+    subject: v.string(),
+    body: v.string(),
+    openOn: v.string(),
+    isOpen: v.boolean(),
+    writtenAt: v.number(),
+    openedAt: v.optional(v.number()),
+  }).index("by_familyId", ["familyId"]),
+
+  grove_circle: defineTable({
+    familyId: v.string(),
+    name: v.string(),
+    relationship: v.string(),
+    relationshipKey: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    city: v.optional(v.string()),
+    inviteToken: v.string(),
+    shareToken: v.string(),
+    hasAccepted: v.boolean(),
+    acceptedAt: v.optional(v.number()),
+    lastActiveAt: v.optional(v.number()),
+    contributionCount: v.optional(v.number()),
+  })
+    .index("by_familyId", ["familyId"])
+    .index("by_inviteToken", ["inviteToken"])
+    .index("by_shareToken", ["shareToken"]),
+
+  grove_contributions: defineTable({
+    familyId: v.string(),
+    memberId: v.id("grove_circle"),
+    type: v.string(),
+    subject: v.optional(v.string()),
+    body: v.optional(v.string()),
+    audioUrl: v.optional(v.string()),
+    photoUrl: v.optional(v.string()),
+    openOn: v.optional(v.string()),
+    isOpen: v.boolean(),
+    prompt: v.optional(v.string()),
+    submittedAt: v.number(),
+  })
+    .index("by_familyId", ["familyId"])
+    .index("by_memberId", ["memberId"]),
+
+  grove_recipes: defineTable({
+    familyId: v.string(),
+    contributorName: v.string(),
+    contributorRelationship: v.string(),
+    title: v.string(),
+    story: v.string(),
+    ingredients: v.array(v.string()),
+    instructions: v.string(),
+    audioNoteUrl: v.optional(v.string()),
+    photoUrl: v.optional(v.string()),
+    submittedAt: v.number(),
+  }).index("by_familyId", ["familyId"]),
+
+  grove_feed: defineTable({
+    familyId: v.string(),
+    authorName: v.string(),
+    authorRelationship: v.string(),
+    caption: v.optional(v.string()),
+    photoUrl: v.optional(v.string()),
+    postedAt: v.number(),
+    addedToChronicle: v.optional(v.boolean()),
+  }).index("by_familyId", ["familyId"]),
+
+  grove_prompts_sent: defineTable({
+    familyId: v.string(),
+    memberId: v.id("grove_circle"),
+    prompt: v.string(),
+    promptType: v.string(),
+    triggerEvent: v.optional(v.string()),
+    sentAt: v.number(),
+    respondedAt: v.optional(v.number()),
+  })
+    .index("by_familyId", ["familyId"])
+    .index("by_memberId", ["memberId"]),
 });

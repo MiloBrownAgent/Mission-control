@@ -22,6 +22,7 @@ import {
   Users,
   Heart,
   Link2,
+  AlertCircle,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -202,6 +203,7 @@ export default function DashboardPage() {
   const actionBatch     = useQuery(api.actionItems.getLatestBatch);
   const crmStats        = useQuery(api.clients.dashboardStats);
   const pipelineSummary = useQuery(api.pipeline.summary);
+  const miloTodos       = useQuery(api.miloTodos.list, { status: "open" });
   // WHOOP removed — personal health data lives on dts.sweeney.family
 
   const [checkedIds, setCheckedIds]   = useState<Set<string>>(new Set());
@@ -294,6 +296,54 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Milo To-Dos ─────────────────────────────────────────────────────── */}
+      {miloTodos && miloTodos.length > 0 && (
+        <div className="animate-fade-in-up">
+          <div className="mb-3 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-[#B8956A]" />
+            <h2 className="text-sm font-semibold font-[family-name:var(--font-syne)] text-[#B8956A] uppercase tracking-wider">Needs Your Attention</h2>
+            <span className="ml-auto rounded-full bg-[#B8956A]/10 px-2 py-0.5 text-[10px] font-semibold text-[#B8956A]">{miloTodos.length} open</span>
+          </div>
+          <div className="space-y-2">
+            {miloTodos.map((todo) => {
+              const catColors: Record<string, string> = {
+                grove:    "text-[#5C6B5E] bg-[#5C6B5E]/10",
+                infra:    "text-[#6B7A9E] bg-[#6B7A9E]/10",
+                ops:      "text-[#CDAA7E] bg-[#CDAA7E]/10",
+                business: "text-[#B8956A] bg-[#B8956A]/10",
+                personal: "text-[#9E6B6B] bg-[#9E6B6B]/10",
+              };
+              const priorityDot: Record<string, string> = {
+                high:   "bg-[#C4533A]",
+                medium: "bg-[#C07A1A]",
+                low:    "bg-[#2E6B50]",
+              };
+              const catColor = catColors[todo.category] ?? catColors.ops;
+              const dot = priorityDot[todo.priority] ?? priorityDot.medium;
+              return (
+                <Card key={todo._id} className="rounded-xl border-[#1A1816] bg-[#0D0C0A] p-4 border-l-2 border-l-[#B8956A]/40">
+                  <div className="flex items-start gap-3">
+                    <div className={cn("mt-1 h-2 w-2 shrink-0 rounded-full", dot)} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#E8E4DF] leading-snug">{todo.title}</p>
+                      {todo.notes && (
+                        <p className="mt-1 text-xs text-[#6B6560] leading-relaxed">{todo.notes}</p>
+                      )}
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium capitalize", catColor)}>{todo.category}</span>
+                        {todo.source && (
+                          <span className="text-[10px] text-[#6B6560]">from {todo.source}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Quick Stats ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
