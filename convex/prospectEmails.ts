@@ -128,3 +128,37 @@ export const listApproved = query({
       .collect();
   },
 });
+
+export const requestRewrite = mutation({
+  args: { id: v.id("prospectEmails") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      rewriteRequestedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const fulfillRewrite = mutation({
+  args: {
+    id: v.id("prospectEmails"),
+    subject: v.string(),
+    body: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      subject: args.subject,
+      body: args.body,
+      rewriteRequestedAt: undefined,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const listPendingRewrites = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("prospectEmails").collect();
+    return all.filter(e => e.rewriteRequestedAt !== undefined);
+  },
+});

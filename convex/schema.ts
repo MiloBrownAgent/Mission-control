@@ -190,6 +190,7 @@ export default defineSchema({
     notes: v.optional(v.string()),
     approvedAt: v.optional(v.number()),
     sentAt: v.optional(v.number()),
+    rewriteRequestedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_status", ["status"]),

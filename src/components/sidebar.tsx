@@ -32,6 +32,7 @@ const workNavigation = [
   { name: "Tasks", href: "/tasks", icon: ListTodo },
   { name: "Calendar", href: "/calendar", icon: CalendarDays },
   { name: "CRM", href: "/crm", icon: Target },
+  { name: "Outreach Queue", href: "/crm/outreach-queue", icon: Mail },
   { name: "Projects", href: "/projects", icon: Layers },
   { name: "Content", href: "/content", icon: FileText },
   { name: "Generate", href: "/generate", icon: Wand2 },

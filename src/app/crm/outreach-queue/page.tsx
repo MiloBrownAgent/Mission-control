@@ -6,9 +6,19 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, CheckCircle, Send, Mail, Building2, User, SkipForward } from "lucide-react";
+import {
+  CheckCircle,
+  Send,
+  Mail,
+  Building2,
+  User,
+  SkipForward,
+  RefreshCw,
+  AtSign,
+} from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
+
+const FROM_EMAIL = "milo@lookandseen.com";
 
 const statusColors: Record<string, string> = {
   draft: "bg-slate-500/20 text-slate-400",
@@ -46,9 +56,11 @@ export default function OutreachQueuePage() {
   const approve = useMutation(api.prospectEmails.approve);
   const unapprove = useMutation(api.prospectEmails.unapprove);
   const skip = useMutation(api.prospectEmails.skip);
+  const requestRewrite = useMutation(api.prospectEmails.requestRewrite);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "draft" | "approved" | "sent">("all");
+  const [rewritingIds, setRewritingIds] = useState<Set<string>>(new Set());
 
   const filtered = emails?.filter((e) => {
     if (filter === "all") return e.status !== "skipped";
@@ -69,22 +81,24 @@ export default function OutreachQueuePage() {
     await skip({ id });
   };
 
+  const handleRewrite = async (id: Id<"prospectEmails">) => {
+    setRewritingIds((prev) => new Set(prev).add(id));
+    await requestRewrite({ id });
+    // UI will update via Convex live query once Milo fulfills the rewrite
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/crm">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight">Outreach Queue</h1>
-              <p className="text-sm text-muted-foreground">Review and approve personalized prospect emails</p>
-            </div>
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">Outreach Queue</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Emails send from{" "}
+              <span className="text-[#B8956A] font-medium">{FROM_EMAIL}</span>
+            </p>
           </div>
           {approvedEmails.length > 0 && (
             <Button className="bg-emerald-600 hover:bg-emerald-500 text-white gap-2">
@@ -141,10 +155,13 @@ export default function OutreachQueuePage() {
             filtered.map((email) => {
               const isExpanded = expandedId === email._id;
               const domain = getCompanyDomain(email.company);
+              const isPendingRewrite = !!email.rewriteRequestedAt;
+              const isRewriteLoading = rewritingIds.has(email._id);
+
               return (
                 <Card
                   key={email._id}
-                  className={`border-border bg-card transition-all ${email.status === "approved" ? "border-emerald-800/50" : ""}`}
+                  className={`border-border bg-card transition-all ${email.status === "approved" ? "border-emerald-800/50" : ""} ${isPendingRewrite ? "border-amber-800/50" : ""}`}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-4">
@@ -166,10 +183,14 @@ export default function OutreachQueuePage() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-sm">{email.company}</p>
                             <Badge className={`text-xs ${statusColors[email.status]}`}>{email.status}</Badge>
+                            {isPendingRewrite && (
+                              <Badge className="text-xs bg-amber-500/20 text-amber-400">rewrite pending</Badge>
+                            )}
                           </div>
+                          {/* Recipient name + role */}
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <User className="h-3 w-3 text-muted-foreground" />
-                            <p className="text-xs text-muted-foreground">{email.prospectName}</p>
+                            <p className="text-xs font-medium text-foreground/80">{email.prospectName}</p>
                             {email.role && (
                               <>
                                 <span className="text-muted-foreground/40">·</span>
@@ -177,11 +198,43 @@ export default function OutreachQueuePage() {
                               </>
                             )}
                           </div>
+                          {/* To / From */}
+                          <div className="flex items-center gap-3 mt-1">
+                            <div className="flex items-center gap-1">
+                              <AtSign className="h-3 w-3 text-muted-foreground/60" />
+                              <span className="text-[11px] text-muted-foreground">
+                                <span className="text-muted-foreground/50">To:</span>{" "}
+                                <span className="text-foreground/70">{email.email || "—"}</span>
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Mail className="h-3 w-3 text-muted-foreground/60" />
+                              <span className="text-[11px] text-muted-foreground">
+                                <span className="text-muted-foreground/50">From:</span>{" "}
+                                <span className="text-[#B8956A]">{FROM_EMAIL}</span>
+                              </span>
+                            </div>
+                          </div>
                           <p className="text-xs font-medium mt-1 text-foreground/80">Subject: {email.subject}</p>
                         </div>
                       </div>
+
                       {/* Right: actions */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                        {/* Rewrite button — always shown for draft/approved */}
+                        {(email.status === "draft" || email.status === "approved") && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-amber-400/70 hover:text-amber-400 h-7 px-2 text-xs gap-1"
+                            disabled={isPendingRewrite || isRewriteLoading}
+                            onClick={() => handleRewrite(email._id as Id<"prospectEmails">)}
+                          >
+                            <RefreshCw className={`h-3 w-3 ${isPendingRewrite ? "animate-spin" : ""}`} />
+                            {isPendingRewrite ? "Rewriting…" : "Rewrite"}
+                          </Button>
+                        )}
+
                         {email.status === "draft" && (
                           <>
                             <Button
@@ -216,6 +269,7 @@ export default function OutreachQueuePage() {
                       </div>
                     </div>
                   </CardHeader>
+
                   <CardContent className="pt-0">
                     <button
                       className="w-full text-left"
@@ -227,13 +281,11 @@ export default function OutreachQueuePage() {
                         </div>
                       ) : (
                         <p className="text-xs text-muted-foreground line-clamp-2 hover:text-muted-foreground/80 transition-colors">
-                          {email.body.split("\n")[0]}... <span className="text-emerald-500/70">Read more</span>
+                          {email.body.split("\n")[0]}…{" "}
+                          <span className="text-emerald-500/70">Read more</span>
                         </p>
                       )}
                     </button>
-                    {email.email && (
-                      <p className="text-xs text-muted-foreground/50 mt-2">To: {email.email}</p>
-                    )}
                   </CardContent>
                 </Card>
               );
