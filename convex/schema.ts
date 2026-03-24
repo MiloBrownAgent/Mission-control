@@ -961,6 +961,8 @@ export default defineSchema({
     childName: v.string(),
     childDob: v.string(),
     childPhotoUrl: v.optional(v.string()),
+    childEmailAlias: v.optional(v.string()), // e.g. "soren@sweeney.family" — sending address for this child
+    parentNames: v.optional(v.string()),     // e.g. "Dave & Amanda" — used in email footer
     timezone: v.string(),
     plan: v.string(),
     createdAt: v.number(),
@@ -1038,18 +1040,64 @@ export default defineSchema({
   grove_contributions: defineTable({
     familyId: v.string(),
     memberId: v.id("grove_circle"),
-    type: v.string(),
+    type: v.string(),                          // "letter" | "photo" | "video" | "voice" | "nomination"
     subject: v.optional(v.string()),
     body: v.optional(v.string()),
     audioUrl: v.optional(v.string()),
     photoUrl: v.optional(v.string()),
-    openOn: v.optional(v.string()),
+    videoUrl: v.optional(v.string()),
+    mediaStorageId: v.optional(v.string()),    // Convex file storage ID
+    mediaMimeType: v.optional(v.string()),
+    openOn: v.optional(v.string()),            // ISO date string — when this unlocks
+    unlocksAtAge: v.optional(v.number()),      // age in years (alternative to openOn)
+    unlocksAtEvent: v.optional(v.string()),    // "graduation" | "wedding" | "custom"
     isOpen: v.boolean(),
-    prompt: v.optional(v.string()),
+    openedAt: v.optional(v.number()),
+    openedByParent: v.optional(v.boolean()),
+    prompt: v.optional(v.string()),            // the prompt text that generated this
+    promptId: v.optional(v.string()),          // reference to grove_prompts_sent
     submittedAt: v.number(),
   })
     .index("by_familyId", ["familyId"])
-    .index("by_memberId", ["memberId"]),
+    .index("by_memberId", ["memberId"])
+    .index("by_familyId_isOpen", ["familyId", "isOpen"]),
+
+  // AI-generated prompt bank — one row per generated prompt per member
+  // The self-scheduling chain reads from here; when stock < 3, triggers regeneration
+  grove_generated_prompts: defineTable({
+    memberId: v.id("grove_circle"),
+    familyId: v.string(),
+    promptIndex: v.number(),           // 0, 1, 2, ... monotonically increasing per member
+    text: v.string(),
+    category: v.string(),
+    unlocksAtAge: v.optional(v.number()),
+    unlocksAtEvent: v.optional(v.string()),
+    tone: v.optional(v.string()),
+    generatedAt: v.number(),
+  })
+    .index("by_memberId_index", ["memberId", "promptIndex"])
+    .index("by_familyId", ["familyId"]),
+
+  grove_prompt_queue: defineTable({
+    familyId: v.string(),
+    memberId: v.id("grove_circle"),
+    promptText: v.string(),
+    promptCategory: v.string(),        // "memory" | "wisdom" | "story" | "photo" | "voice" | "milestone"
+    promptUnlocksAtAge: v.optional(v.number()),
+    promptUnlocksAtEvent: v.optional(v.string()),
+    scheduledFor: v.string(),          // ISO date — when to send
+    sentAt: v.optional(v.number()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("sent"),
+      v.literal("responded"),
+      v.literal("skipped")
+    ),
+    submissionToken: v.optional(v.string()), // unique token for reply-by-email
+  })
+    .index("by_familyId", ["familyId"])
+    .index("by_memberId", ["memberId"])
+    .index("by_status_scheduledFor", ["status", "scheduledFor"]),
 
   grove_recipes: defineTable({
     familyId: v.string(),

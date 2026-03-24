@@ -30,6 +30,8 @@ import type * as events from "../events.js";
 import type * as flightDeals from "../flightDeals.js";
 import type * as groceryItems from "../groceryItems.js";
 import type * as grove from "../grove.js";
+import type * as groveAI from "../groveAI.js";
+import type * as grovePrompts from "../grovePrompts.js";
 import type * as healthInvestments from "../healthInvestments.js";
 import type * as healthSeed from "../healthSeed.js";
 import type * as himsSentiment from "../himsSentiment.js";
@@ -88,6 +90,8 @@ declare const fullApi: ApiFromModules<{
   flightDeals: typeof flightDeals;
   groceryItems: typeof groceryItems;
   grove: typeof grove;
+  groveAI: typeof groveAI;
+  grovePrompts: typeof grovePrompts;
   healthInvestments: typeof healthInvestments;
   healthSeed: typeof healthSeed;
   himsSentiment: typeof himsSentiment;

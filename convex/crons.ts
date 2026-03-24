@@ -15,6 +15,9 @@ crons.cron(
 // Keeps the dashboard current even if webhooks stop firing
 crons.interval("whoop-sync", { hours: 2 }, internal.whoopSync.syncAll);
 
+// Grove: no cron needed. Each member has their own self-scheduling chain.
+// See grovePrompts:addMemberAndStart — kicks off on member add, perpetuates itself.
+
 // Investment thesis sweep is handled by OpenClaw cron (local Mac) — use scripts/thesis-refresh.js.
 // scripts/auto-thesis.js and scripts/investment-thesis-generator.js are compatibility aliases.
 

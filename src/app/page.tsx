@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -204,6 +204,7 @@ export default function DashboardPage() {
   const crmStats        = useQuery(api.clients.dashboardStats);
   const pipelineSummary = useQuery(api.pipeline.summary);
   const miloTodos       = useQuery(api.miloTodos.list, { status: "open" });
+  const markTodoDone    = useMutation(api.miloTodos.markDone);
   // WHOOP removed — personal health data lives on dts.sweeney.family
 
   const [checkedIds, setCheckedIds]   = useState<Set<string>>(new Set());
@@ -317,7 +318,13 @@ export default function DashboardPage() {
         const TodoCard = ({ todo }: { todo: typeof miloTodos[0] }) => (
           <Card key={todo._id} className="rounded-xl border-[#1A1816] bg-[#0D0C0A] p-4">
             <div className="flex items-start gap-3">
-              <div className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", priorityDot[todo.priority] ?? "bg-[#C07A1A]")} />
+              <button
+                onClick={() => markTodoDone({ id: todo._id })}
+                className="mt-0.5 shrink-0 h-5 w-5 rounded-full border border-[#3A3835] hover:border-[#2E6B50] hover:bg-[#2E6B50]/10 transition-colors flex items-center justify-center group"
+                title="Mark complete"
+              >
+                <CheckCircle2 className="h-3 w-3 text-[#3A3835] group-hover:text-[#2E6B50] transition-colors" />
+              </button>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[#E8E4DF] leading-snug">{todo.title}</p>
                 {todo.notes && <p className="mt-1 text-xs text-[#6B6560] leading-relaxed">{todo.notes}</p>}

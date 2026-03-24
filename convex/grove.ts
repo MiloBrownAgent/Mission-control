@@ -35,8 +35,10 @@ export const seedFamily = mutation({
     return await ctx.db.insert("grove_families", {
       familyId: "sweeney",
       familyName: "The Sweeneys",
-      childName: "Soren",
+      childName: "Soren Sweeney",
       childDob: "2025-06-21",
+      childEmailAlias: "soren@sweeney.family",
+      parentNames: "Dave & Amanda",
       timezone: "America/Chicago",
       plan: "pilot",
       createdAt: Date.now(),
@@ -56,6 +58,35 @@ export const seedFamily = mutation({
         quote: "The beginning is always today. — Mary Shelley",
       },
     });
+  },
+});
+
+export const patchFamily = mutation({
+  args: {
+    familyId: v.string(),
+    parentNames: v.optional(v.string()),
+    childEmailAlias: v.optional(v.string()),
+    childName: v.optional(v.string()),
+    childPhotoUrl: v.optional(v.string()),
+    borndayData: v.optional(v.object({
+      weatherHigh: v.optional(v.number()),
+      weatherLow: v.optional(v.number()),
+      weatherDesc: v.optional(v.string()),
+      song: v.optional(v.string()),
+      songArtist: v.optional(v.string()),
+      headlines: v.optional(v.array(v.string())),
+      spClose: v.optional(v.number()),
+      quote: v.optional(v.string()),
+    })),
+  },
+  handler: async (ctx, { familyId, ...patch }) => {
+    const existing = await ctx.db
+      .query("grove_families")
+      .withIndex("by_familyId", (q) => q.eq("familyId", familyId))
+      .first();
+    if (!existing) return null;
+    await ctx.db.patch(existing._id, Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined)));
+    return existing._id;
   },
 });
 
@@ -151,6 +182,20 @@ export const addMilestone = mutation({
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("grove_milestones", args);
+  },
+});
+
+export const markMilestoneReached = mutation({
+  args: {
+    milestoneId: v.id("grove_milestones"),
+    reachedAt: v.optional(v.number()),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, { milestoneId, reachedAt, note }) => {
+    await ctx.db.patch(milestoneId, {
+      reachedAt: reachedAt ?? Date.now(),
+      ...(note !== undefined ? { note } : {}),
+    });
   },
 });
 
@@ -257,6 +302,13 @@ export const listCircle = query({
       .query("grove_circle")
       .withIndex("by_familyId", (q) => q.eq("familyId", familyId))
       .collect();
+  },
+});
+
+export const getCircleMember = query({
+  args: { memberId: v.id("grove_circle") },
+  handler: async (ctx, { memberId }) => {
+    return await ctx.db.get(memberId);
   },
 });
 
@@ -469,3 +521,465 @@ export const getShareData = query({
     };
   },
 });
+
+// ── Vault (Contributions v2) ──────────────────────────────────────────────────
+
+export const listVaultEntries = query({
+  args: {
+    familyId: v.string(),
+    includeSealed: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { familyId, includeSealed = false }) => {
+    const all = await ctx.db
+      .query("grove_contributions")
+      .withIndex("by_familyId", (q) => q.eq("familyId", familyId))
+      .order("desc")
+      .collect();
+    if (includeSealed) return all;
+    return all.filter((e) => e.isOpen);
+  },
+});
+
+export const listSealedEntries = query({
+  args: { familyId: v.string() },
+  handler: async (ctx, { familyId }) => {
+    return await ctx.db
+      .query("grove_contributions")
+      .withIndex("by_familyId_isOpen", (q) =>
+        q.eq("familyId", familyId).eq("isOpen", false)
+      )
+      .order("desc")
+      .collect();
+  },
+});
+
+export const unlockEntry = mutation({
+  args: {
+    entryId: v.id("grove_contributions"),
+    byParent: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { entryId, byParent = false }) => {
+    await ctx.db.patch(entryId, {
+      isOpen: true,
+      openedAt: Date.now(),
+      openedByParent: byParent,
+    });
+  },
+});
+
+export const submitVaultEntry = mutation({
+  args: {
+    familyId: v.string(),
+    memberId: v.id("grove_circle"),
+    type: v.string(),
+    subject: v.optional(v.string()),
+    body: v.optional(v.string()),
+    audioUrl: v.optional(v.string()),
+    photoUrl: v.optional(v.string()),
+    videoUrl: v.optional(v.string()),
+    mediaStorageId: v.optional(v.string()),
+    mediaMimeType: v.optional(v.string()),
+    openOn: v.optional(v.string()),
+    unlocksAtAge: v.optional(v.number()),
+    unlocksAtEvent: v.optional(v.string()),
+    prompt: v.optional(v.string()),
+    promptId: v.optional(v.string()),
+    submissionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Calculate isOpen based on unlock criteria
+    const today = new Date().toISOString().slice(0, 10);
+    let isOpen = false;
+    if (args.openOn && args.openOn <= today) isOpen = true;
+    if (!args.openOn && !args.unlocksAtAge && !args.unlocksAtEvent) isOpen = false; // sealed until parent opens
+
+    const id = await ctx.db.insert("grove_contributions", {
+      ...args,
+      isOpen,
+      submittedAt: Date.now(),
+    });
+
+    // Mark prompt as responded if promptId provided
+    if (args.submissionToken) {
+      const queueEntry = await ctx.db
+        .query("grove_prompt_queue")
+        .withIndex("by_memberId", (q) => q.eq("memberId", args.memberId))
+        .filter((q) => q.eq(q.field("submissionToken"), args.submissionToken))
+        .first();
+      if (queueEntry) {
+        await ctx.db.patch(queueEntry._id, { status: "responded" });
+      }
+    }
+
+    // Update member contribution count
+    const member = await ctx.db.get(args.memberId);
+    if (member) {
+      await ctx.db.patch(args.memberId, {
+        contributionCount: (member.contributionCount ?? 0) + 1,
+        lastActiveAt: Date.now(),
+      });
+    }
+
+    return id;
+  },
+});
+
+// Generate Convex upload URL for media (photo/video/voice)
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const getMediaUrl = query({
+  args: { storageId: v.string() },
+  handler: async (ctx, { storageId }) => {
+    return await ctx.storage.getUrl(storageId);
+  },
+});
+
+// ── Prompt Queue ──────────────────────────────────────────────────────────────
+
+export const queuePrompt = mutation({
+  args: {
+    familyId: v.string(),
+    memberId: v.id("grove_circle"),
+    promptText: v.string(),
+    promptCategory: v.string(),
+    promptUnlocksAtAge: v.optional(v.number()),
+    promptUnlocksAtEvent: v.optional(v.string()),
+    scheduledFor: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const token = generateToken();
+    return await ctx.db.insert("grove_prompt_queue", {
+      ...args,
+      status: "pending",
+      submissionToken: token,
+    });
+  },
+});
+
+export const listPromptQueue = query({
+  args: { familyId: v.string() },
+  handler: async (ctx, { familyId }) => {
+    return await ctx.db
+      .query("grove_prompt_queue")
+      .withIndex("by_familyId", (q) => q.eq("familyId", familyId))
+      .collect();
+  },
+});
+
+export const getPendingPrompts = query({
+  args: { asOfDate: v.string() },
+  handler: async (ctx, { asOfDate }) => {
+    return await ctx.db
+      .query("grove_prompt_queue")
+      .withIndex("by_status_scheduledFor", (q) =>
+        q.eq("status", "pending")
+      )
+      .filter((q) => q.lte(q.field("scheduledFor"), asOfDate))
+      .collect();
+  },
+});
+
+export const markPromptSent = mutation({
+  args: { promptId: v.id("grove_prompt_queue") },
+  handler: async (ctx, { promptId }) => {
+    await ctx.db.patch(promptId, { status: "sent", sentAt: Date.now() });
+  },
+});
+
+export const getPromptByToken = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    const prompt = await ctx.db
+      .query("grove_prompt_queue")
+      .withIndex("by_memberId")
+      .filter((q) => q.eq(q.field("submissionToken"), token))
+      .first();
+    if (!prompt) return null;
+
+    const member = await ctx.db.get(prompt.memberId);
+    if (!member) return null;
+
+    const family = await ctx.db
+      .query("grove_families")
+      .withIndex("by_familyId", (q) => q.eq("familyId", prompt.familyId))
+      .first();
+
+    return { prompt, member, family };
+  },
+});
+
+export const seedPromptQueue = mutation({
+  args: { familyId: v.string() },
+  handler: async (ctx, { familyId }) => {
+    const members = await ctx.db
+      .query("grove_circle")
+      .withIndex("by_familyId", (q) => q.eq("familyId", familyId))
+      .collect();
+
+    const family = await ctx.db
+      .query("grove_families")
+      .withIndex("by_familyId", (q) => q.eq("familyId", familyId))
+      .first();
+
+    if (!family) return;
+
+    const childName = family.childName.split(" ")[0];
+    const today = new Date();
+
+    // Schedule first prompt for each member — 1 week from now, staggered by 2 days each
+    for (let i = 0; i < members.length; i++) {
+      const member = members[i];
+      const scheduledDate = new Date(today);
+      scheduledDate.setDate(scheduledDate.getDate() + 7 + i * 2);
+
+      const prompt = getFirstPromptForRelationship(member.relationshipKey, childName, family.parentNames ?? "Dave & Amanda");
+      if (!prompt) continue;
+
+      const existing = await ctx.db
+        .query("grove_prompt_queue")
+        .withIndex("by_memberId", (q) => q.eq("memberId", member._id))
+        .first();
+
+      if (!existing) {
+        const token = generateToken();
+        await ctx.db.insert("grove_prompt_queue", {
+          familyId,
+          memberId: member._id,
+          promptText: prompt.text,
+          promptCategory: prompt.category,
+          promptUnlocksAtAge: prompt.unlocksAtAge,
+          promptUnlocksAtEvent: prompt.unlocksAtEvent,
+          scheduledFor: scheduledDate.toISOString().slice(0, 10),
+          status: "pending",
+          submissionToken: token,
+        });
+      }
+    }
+  },
+});
+
+// ── Prompt library ────────────────────────────────────────────────────────────
+
+interface PromptDef {
+  text: string;
+  category: string;
+  unlocksAtAge?: number;
+  unlocksAtEvent?: string;
+}
+
+// Map circle relationship keys to prompt library keys
+const KEY_MAP: Record<string, string> = {
+  dads_mom: "grandmother",
+  moms_mom: "grandmother",
+  dads_dad: "grandfather",
+  moms_dad: "grandfather",
+  dads_sister: "aunt",
+  moms_sister: "aunt",
+  dads_brother: "uncle",
+  moms_brother: "uncle",
+  dads_best_friend: "dads_best_friend",
+  moms_best_friend: "moms_best_friend",
+  family_friend: "family_friend",
+  godparent: "godparent",
+  cousin: "cousin",
+  grandmother: "grandmother",
+  grandfather: "grandfather",
+  aunt: "aunt",
+  uncle: "uncle",
+};
+
+function resolvePromptKey(relationshipKey: string): string {
+  return KEY_MAP[relationshipKey] ?? "family_friend";
+}
+
+function getFirstPromptForRelationship(
+  relationshipKey: string,
+  childName: string,
+  parentNames: string
+): PromptDef | null {
+  const key = resolvePromptKey(relationshipKey);
+  const prompts = PROMPT_LIBRARY[key] ?? PROMPT_LIBRARY["family_friend"];
+  return prompts?.[0]
+    ? {
+        ...prompts[0],
+        text: prompts[0].text
+          .replace(/\{childName\}/g, childName)
+          .replace(/\{parentNames\}/g, parentNames),
+      }
+    : null;
+}
+
+export function getPromptsForRelationship(
+  relationshipKey: string,
+  childName: string,
+  parentNames: string
+): PromptDef[] {
+  const key = resolvePromptKey(relationshipKey);
+  const prompts = PROMPT_LIBRARY[key] ?? PROMPT_LIBRARY["family_friend"];
+  return prompts.map((p) => ({
+    ...p,
+    text: p.text
+      .replace(/\{childName\}/g, childName)
+      .replace(/\{parentNames\}/g, parentNames),
+  }));
+}
+
+const PROMPT_LIBRARY: Record<string, PromptDef[]> = {
+  grandmother: [
+    {
+      text: "Tell {childName} a story about when you were growing up. What was one of the most impactful moments of your life — something you'd want them to carry with them?",
+      category: "story",
+      unlocksAtAge: 13,
+    },
+    {
+      text: "Share a photo of yourself when you were young — around {childName}'s age someday — with a few lines about what life was like then. What do you wish someone had told you?",
+      category: "photo",
+      unlocksAtAge: 16,
+    },
+    {
+      text: "Record a voice memo telling {childName} how you'd like to be remembered. What do you want them to know about you — not the grandmother role, but the person you are?",
+      category: "voice",
+      unlocksAtAge: 18,
+    },
+    {
+      text: "Write a letter to {childName} for their wedding day. What do you know about love, about making a life with someone, that took you years to understand?",
+      category: "memory",
+      unlocksAtEvent: "wedding",
+    },
+  ],
+  grandfather: [
+    {
+      text: "Tell {childName} about the work of your life — what you built, what you're proud of, what you'd do differently. What does a life well-lived look like to you?",
+      category: "wisdom",
+      unlocksAtAge: 18,
+    },
+    {
+      text: "Share a photo of yourself with {parentNames} — one that tells a story. Write a sentence or two about what was happening that day.",
+      category: "photo",
+      unlocksAtAge: 13,
+    },
+    {
+      text: "Record a voice memo for {childName}. Tell them one thing about being a person in this world that you wish someone had told you when you were young.",
+      category: "voice",
+      unlocksAtAge: 16,
+    },
+    {
+      text: "Write {childName} a letter for when they graduate. What advice do you have for someone stepping out into the world for the first time?",
+      category: "memory",
+      unlocksAtEvent: "graduation",
+    },
+  ],
+  great_grandmother: [
+    {
+      text: "Record a voice memo for {childName} explaining how you would like them to remember you when you're gone. Speak directly to them — they'll hear your voice someday.",
+      category: "voice",
+      unlocksAtAge: 18,
+    },
+    {
+      text: "Tell {childName} about the world as you knew it growing up. What was different? What stayed the same? What do you want them to know about where the family comes from?",
+      category: "story",
+      unlocksAtAge: 16,
+    },
+  ],
+  great_grandfather: [
+    {
+      text: "Record a voice memo for {childName}. Tell them about the hardest thing you've ever done — and what it taught you.",
+      category: "voice",
+      unlocksAtAge: 18,
+    },
+    {
+      text: "Tell {childName} one thing about the family — where you came from, what you built, what you want them to carry forward.",
+      category: "story",
+      unlocksAtAge: 16,
+    },
+  ],
+  aunt: [
+    {
+      text: "Share a photo of you with {parentNames} — the sillier the better — with a story behind it. What do you want {childName} to know about who their parent was before they were a parent?",
+      category: "photo",
+      unlocksAtAge: 13,
+    },
+    {
+      text: "Write a letter to {childName} for when they're a teenager. What's something you know about growing up that would have been useful at 16?",
+      category: "memory",
+      unlocksAtAge: 16,
+    },
+  ],
+  uncle: [
+    {
+      text: "Share a photo of you and {parentNames} — something candid, real, from before {childName} was born. Write a sentence about what was happening.",
+      category: "photo",
+      unlocksAtAge: 13,
+    },
+    {
+      text: "Write {childName} a letter for when they graduate. What advice do you actually wish someone had given you?",
+      category: "wisdom",
+      unlocksAtEvent: "graduation",
+    },
+  ],
+  family_friend: [
+    {
+      text: "You've been part of {childName}'s family circle. Submit a photo of you with their parents — with a little backstory. What moment does it capture?",
+      category: "photo",
+      unlocksAtAge: 13,
+    },
+    {
+      text: "Write {childName} something for when they're older. What's one thing you know about life that took you too long to learn?",
+      category: "wisdom",
+      unlocksAtAge: 18,
+    },
+  ],
+  dads_best_friend: [
+    {
+      text: "Submit a photo of you and {parentNames}. Make sure it's age-appropriate — {childName} will see this when they turn 13. Write a little backstory behind the photo.",
+      category: "photo",
+      unlocksAtAge: 13,
+    },
+    {
+      text: "Tell {childName} a story about their dad that he'd probably never tell himself. Keep it real, keep it warm — they'll read this when they're older.",
+      category: "story",
+      unlocksAtAge: 18,
+    },
+    {
+      text: "Record a voice memo or write a note for {childName} about what their father was like before he was a dad. What should they know about him?",
+      category: "voice",
+      unlocksAtAge: 16,
+    },
+  ],
+  moms_best_friend: [
+    {
+      text: "Submit a photo of you and {parentNames} — something real, from before {childName} was born. Write a few lines about what was happening.",
+      category: "photo",
+      unlocksAtAge: 13,
+    },
+    {
+      text: "Tell {childName} something about their mother that she would never say about herself. What do you see in her that they should know?",
+      category: "story",
+      unlocksAtAge: 18,
+    },
+  ],
+  godparent: [
+    {
+      text: "You are {childName}'s godparent. Write them a letter for when they turn 18 — about what that role meant to you, and what you hope for them.",
+      category: "memory",
+      unlocksAtAge: 18,
+    },
+    {
+      text: "Share something you want {childName} to know about faith, values, or how to be a good person. You can write it, record it, or send a photo — whatever feels right.",
+      category: "wisdom",
+      unlocksAtAge: 16,
+    },
+  ],
+  cousin: [
+    {
+      text: "Write {childName} a note for when they're a teenager. What's it like growing up in this family? What do you want them to know about being part of it?",
+      category: "memory",
+      unlocksAtAge: 13,
+    },
+  ],
+};
